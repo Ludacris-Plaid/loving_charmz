@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 import type { ReactNode } from 'react';
 
 type AdminGuardProps = {
@@ -17,8 +18,9 @@ export async function AdminGuard({ children }: AdminGuardProps) {
     redirect('/login');
   }
 
-  // Check if user has admin role
-  const { data: roles } = await supabase
+  // Use admin client (service_role) to bypass RLS
+  const adminClient = createAdminClient();
+  const { data: roles } = await adminClient
     .from('user_roles')
     .select('role')
     .eq('user_id', user.id)
@@ -46,7 +48,8 @@ export async function getSession() {
 
   if (!user) return null;
 
-  const { data: roles } = await supabase
+  const adminClient = createAdminClient();
+  const { data: roles } = await adminClient
     .from('user_roles')
     .select('role')
     .eq('user_id', user.id)
