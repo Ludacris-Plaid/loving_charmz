@@ -403,12 +403,19 @@ Add RLS policies in the migration:
 All queries are server-only (read from DB with RLS enforcing public read).
 
 #### 3.2 Seed Data (`supabase/seed.sql`)
-Insert 8–12 initial products across 2–3 collections:
-- **Bond Collection**: The Loyal Companion necklace, Pawprint charm bracelet, Always With You ring, Forever Bond pendant
-- **Memorial Collection**: Remembrance locket, In Loving Memory bracelet, Eternal Heart necklace, Tribute charm
-- **Connection Collection**: Side-by-Side necklace, Linked Souls bracelet, Two Hearts ring, Together charm
+Insert the 4 Bond Collection products (Phase 1: one collection, MVP launch):
 
-Each with variants (metal: silver/gold/rose gold), base prices ($48–$128 range), and proper descriptions.
+**Bond Collection** — "Each piece is designed to represent connection, whether it's with your pet, your story, or a moment you want to hold onto."
+
+| Product | Type | Tagline | Variants | Base Price |
+|---------|------|---------|----------|------------|
+| The Loyal Companion | Dog silhouette charm | "Always by your side. Always in your heart." | Silver / Gold / Rose Gold | $55-75 |
+| Forever Pawprint | Paw + heart cutout | "They walk beside you for a time, but their mark stays forever." | Silver / Gold / Rose Gold | $55-75 |
+| Unbreakable Bond | Infinity bond | "Love that loops endlessly—seen and unseen." | Silver / Gold / Rose Gold | $55-75 |
+| Always with Me | Name charm | "Carry their name. Carry their presence." | Silver / Gold / Rose Gold | $65-95 |
+
+**Pricing tiers**: Simple charms $35-65, Personalized/name $55-95, Sea glass + symbolic $85-150+.
+All products are `is_personalizable = true` (engraving, charm selection).
 
 #### 3.3 Shop Page
 - **File**: `app/(marketing)/shop/page.tsx`

@@ -39,13 +39,14 @@ export default function HomePage() {
 
         <div className="grid gap-10 lg:grid-cols-[1.2fr_0.8fr] lg:items-center">
           <div>
-            <Badge>Bond Collection now featured</Badge>
+            <Badge>Bond Collection — 4 pieces</Badge>
             <h1 className="mt-6 max-w-3xl text-4xl font-semibold leading-tight text-brand-800 sm:text-5xl lg:text-6xl">
-              Symbolic jewelry for women who want to carry meaning, memories, and connection.
+              Modern keepsake jewelry for women who carry what matters—love, memory, and connection.
             </h1>
             <p className="mt-6 max-w-2xl text-base leading-8 text-brand-600 sm:text-lg">
-              Loving Charmz creates modern keepsakes inspired by the bond between women and the pets they love.
-              Shop heartfelt pieces, start a personalized order, and create a profile that honors your story.
+              Loving Charmz creates symbolic jewelry that honours the bond between you and your pet. 
+              Each piece is designed to represent connection—whether it&apos;s with your pet, your story, 
+              or a moment you want to hold onto.
             </p>
             <div className="mt-8 flex flex-col gap-4 sm:flex-row">
               <Link
@@ -61,6 +62,9 @@ export default function HomePage() {
                 Create a custom keepsake
               </Link>
             </div>
+            <p className="mt-4 text-xs text-brand-600/70">
+              4 pieces · Each designed to represent connection · Starting at $55
+            </p>
           </div>
 
           <Card padding="md" className="grid gap-4">
