@@ -12,14 +12,14 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
         <Container size="xl">
           <div className="mb-8 flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <h1 className="font-display text-2xl font-semibold text-brand-800">Admin</h1>
-              <span className="rounded-pill bg-brand-700 px-2.5 py-0.5 text-xs font-medium text-white">
+              <h1 className="font-display text-2xl font-semibold text-obsidian-50">Admin</h1>
+              <span className="rounded-pill bg-gold-600 px-2.5 py-0.5 text-xs font-medium text-obsidian-950">
                 Admin
               </span>
             </div>
             <Link
               href="/logout"
-              className="text-sm font-medium text-brand-600 hover:text-brand-500 transition"
+              className="text-sm font-medium text-obsidian-400 hover:text-gold-400 transition"
             >
               Sign out
             </Link>

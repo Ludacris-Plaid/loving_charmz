@@ -14,6 +14,7 @@ export async function AdminGuard({ children }: AdminGuardProps) {
     data: { user },
   } = await supabase.auth.getUser();
 
+  // If no user, redirect to login
   if (!user) {
     redirect('/login');
   }
@@ -24,14 +25,18 @@ export async function AdminGuard({ children }: AdminGuardProps) {
     .from('user_roles')
     .select('role')
     .eq('user_id', user.id)
-    .single();
+    .maybeSingle();
 
+  // If not admin role, show access denied
   if (roles?.role !== 'admin') {
     return (
-      <div className="flex min-h-[50vh] flex-col items-center justify-center text-center">
-        <h1 className="font-display text-2xl font-semibold text-brand-800">Access Denied</h1>
-        <p className="mt-2 text-sm text-brand-600">
+      <div className="flex min-h-[50vh] flex-col items-center justify-center text-center p-8">
+        <h1 className="font-display text-2xl font-semibold text-obsidian-50">Access Denied</h1>
+        <p className="mt-2 text-sm text-obsidian-400">
           You do not have permission to access the admin area.
+        </p>
+        <p className="mt-4 text-xs text-obsidian-500">
+          User ID: {user.id}
         </p>
       </div>
     );
