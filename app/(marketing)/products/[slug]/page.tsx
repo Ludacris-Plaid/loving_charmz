@@ -2,7 +2,9 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { Container } from '@/components/ui/Container';
 import { getProductBySlug } from '@/lib/supabase/queries/products';
+import { getProducts } from '@/lib/supabase/queries/products';
 import ProductDetailClient from '@/components/shop/ProductDetailClient';
+import { images } from '@/lib/images';
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -37,5 +39,10 @@ export default async function ProductPage({ params }: Props) {
   );
   const variants = await response.json();
 
-  return <ProductDetailClient product={product} variants={variants} />;
+  // Get all products to find the index for image assignment
+  const allProducts = await getProducts();
+  const productIndex = allProducts.findIndex(p => p.id === product.id);
+  const imageUrl = images.shop[productIndex % images.shop.length];
+
+  return <ProductDetailClient product={product} variants={variants} imageUrl={imageUrl} />;
 }

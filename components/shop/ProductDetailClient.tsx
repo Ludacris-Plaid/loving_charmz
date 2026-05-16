@@ -2,13 +2,16 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Container } from '@/components/ui/Container';
 import { addToCart } from '@/lib/supabase/queries/cart';
+import { images } from '@/lib/images';
 import type { Product, ProductVariant } from '@/lib/supabase/types';
 
 interface Props {
   product: Product;
   variants: ProductVariant[];
+  imageUrl?: string;
 }
 
 function VariantSelector({ variants, basePrice, onSelect }: { variants: ProductVariant[]; basePrice: number; onSelect: (v: ProductVariant) => void }) {
@@ -72,9 +75,11 @@ function AddToCartBtn({ product, selectedVariant }: { product: Product; selected
   );
 }
 
-export default function ProductDetailClient({ product, variants }: Props) {
+export default function ProductDetailClient({ product, variants, imageUrl }: Props) {
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(variants[0] || null);
   const totalPrice = product.base_price + (selectedVariant?.price_adjustment || 0);
+  
+  const productImage = imageUrl || images.shop[0];
 
   return (
     <Container className="py-12">
@@ -86,8 +91,13 @@ export default function ProductDetailClient({ product, variants }: Props) {
 
       <div className="grid lg:grid-cols-2 gap-12">
         <div className="surface-premium rounded-card overflow-hidden border border-obsidian-700/50">
-          <div className="aspect-square bg-gradient-to-br from-obsidian-800 to-obsidian-900 flex items-center justify-center relative">
-            <div className="text-8xl">{product.images[0]}</div>
+          <div className="aspect-square relative overflow-hidden">
+            <Image
+              src={productImage}
+              alt={product.name}
+              fill
+              className="object-cover"
+            />
             <div className="absolute inset-0 bg-gradient-to-t from-obsidian-900/50 to-transparent" />
           </div>
         </div>
