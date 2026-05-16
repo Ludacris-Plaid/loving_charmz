@@ -1,7 +1,24 @@
+'use client';
+
+import { useState } from 'react';
 import { signup } from '@/lib/auth/actions';
 import Link from 'next/link';
 
 export default function SignupPage() {
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
+
+  const handleSubmit = async (formData: FormData) => {
+    try {
+      setError(null);
+      setSuccess(false);
+      await signup(formData);
+      setSuccess(true);
+    } catch (e: any) {
+      setError(e.message || 'Signup failed. Please try again.');
+    }
+  };
+
   return (
     <form className="space-y-6">
       <div>
@@ -10,6 +27,18 @@ export default function SignupPage() {
           Join us and start your keepsake journey.
         </p>
       </div>
+
+      {error && (
+        <div className="p-3 rounded-card bg-rose-500/10 border border-rose-500/30 text-rose-400 text-sm">
+          {error}
+        </div>
+      )}
+
+      {success && (
+        <div className="p-3 rounded-card bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-sm">
+          Account created! Redirecting to your account...
+        </div>
+      )}
 
       <div className="space-y-4">
         <div>
@@ -58,7 +87,11 @@ export default function SignupPage() {
 
       <button
         type="submit"
-        formAction={signup}
+        onClick={(e) => {
+          e.preventDefault();
+          const form = e.currentTarget.form;
+          if (form) handleSubmit(new FormData(form));
+        }}
         className="btn-gold w-full py-3 px-6 rounded-pill text-sm font-semibold uppercase"
       >
         Create Account

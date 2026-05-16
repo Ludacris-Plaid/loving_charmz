@@ -1,13 +1,33 @@
+'use client';
+
+import { useState } from 'react';
 import { login } from '@/lib/auth/actions';
 import Link from 'next/link';
 
 export default function LoginPage() {
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSubmit = async (formData: FormData) => {
+    try {
+      setError(null);
+      await login(formData);
+    } catch (e: any) {
+      setError(e.message || 'Login failed. Please try again.');
+    }
+  };
+
   return (
     <form className="space-y-6">
       <div>
         <h1 className="font-display text-2xl font-semibold text-obsidian-50">Welcome back</h1>
         <p className="mt-2 text-sm text-obsidian-400">Sign in to your account.</p>
       </div>
+
+      {error && (
+        <div className="p-3 rounded-card bg-rose-500/10 border border-rose-500/30 text-rose-400 text-sm">
+          {error}
+        </div>
+      )}
 
       <div className="space-y-4">
         <div>
@@ -42,7 +62,11 @@ export default function LoginPage() {
 
       <button
         type="submit"
-        formAction={login}
+        onClick={(e) => {
+          e.preventDefault();
+          const form = e.currentTarget.form;
+          if (form) handleSubmit(new FormData(form));
+        }}
         className="btn-gold w-full py-3 px-6 rounded-pill text-sm font-semibold uppercase"
       >
         Sign In
