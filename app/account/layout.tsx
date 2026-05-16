@@ -9,10 +9,10 @@ export default function AccountLayout({ children }: { children: ReactNode }) {
     <Section>
       <Container>
         <div className="mb-8 flex items-center justify-between">
-          <h1 className="font-display text-2xl font-semibold text-brand-800">My Account</h1>
+          <h1 className="font-display text-2xl font-semibold text-obsidian-50">My Account</h1>
           <Link
             href="/logout"
-            className="text-sm font-medium text-brand-600 hover:text-brand-500 transition"
+            className="text-sm font-medium text-obsidian-400 hover:text-gold-400 transition"
           >
             Sign out
           </Link>

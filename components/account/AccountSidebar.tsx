@@ -7,6 +7,7 @@ const navItems = [
   { href: '/account/orders', label: 'Orders' },
   { href: '/account/custom-orders', label: 'Custom Orders' },
   { href: '/account/settings', label: 'Settings' },
+  { href: '/shop', label: '← Back to Shop' },
 ];
 
 export function AccountSidebar() {
@@ -17,7 +18,7 @@ export function AccountSidebar() {
           <Link
             key={item.href}
             href={item.href}
-            className="rounded-card px-4 py-2.5 text-sm font-medium text-brand-700 hover:bg-brand-100 transition"
+            className="rounded-card px-4 py-2.5 text-sm font-medium text-obsidian-300 hover:bg-obsidian-800 hover:text-gold-400 transition"
           >
             {item.label}
           </Link>
