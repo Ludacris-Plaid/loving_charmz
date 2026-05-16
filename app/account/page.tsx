@@ -53,6 +53,17 @@ export default function AccountPage() {
             </p>
           </article>
         </Link>
+        <Link href="/shop" className="block group">
+          <article className="surface-premium rounded-card p-6 border border-obsidian-700/50 hover-lift">
+            <div className="text-3xl mb-3">🏠</div>
+            <h3 className="font-display text-lg font-semibold text-obsidian-50 group-hover:text-gold-400 transition-colors">
+              Back to Shop
+            </h3>
+            <p className="text-sm text-obsidian-400 mt-2">
+              Browse our full collection and find your perfect piece.
+            </p>
+          </article>
+        </Link>
       </div>
     </div>
   );
