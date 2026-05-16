@@ -1,6 +1,8 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { Container } from '@/components/ui/Container';
 import { getCollections } from '@/lib/supabase/queries/collections';
+import { images } from '@/lib/images';
 
 export const metadata = {
   title: 'Collections - Loving Charmz',
@@ -23,26 +25,35 @@ export default async function CollectionsPage() {
       </div>
 
       <div className="grid md:grid-cols-2 gap-6">
-        {collections.map((collection) => (
-          <Link
-            key={collection.id}
-            href={`/collections/${collection.slug}`}
-            className="group"
-          >
-            <article className="surface-premium rounded-card overflow-hidden border border-obsidian-700/50 hover-lift">
-              <div className="aspect-[2/1] bg-gradient-to-br from-obsidian-800 to-obsidian-900 flex items-center justify-center relative">
-                <div className="text-6xl">✨</div>
-                <div className="absolute inset-0 bg-gradient-to-t from-obsidian-900/60 to-transparent" />
-              </div>
-              <div className="p-6">
-                <h2 className="font-display text-2xl font-semibold text-obsidian-50 group-hover:text-gold-400 transition-colors">
-                  {collection.name}
-                </h2>
-                <p className="text-obsidian-400 mt-2">{collection.description}</p>
-              </div>
-            </article>
-          </Link>
-        ))}
+        {collections.map((collection, index) => {
+          const imageIndex = index % images.shop.length;
+          const collectionImage = images.shop[imageIndex];
+          return (
+            <Link
+              key={collection.id}
+              href={`/collections/${collection.slug}`}
+              className="group"
+            >
+              <article className="surface-premium rounded-card overflow-hidden border border-obsidian-700/50 hover-lift">
+                <div className="aspect-[2/1] relative overflow-hidden">
+                  <Image
+                    src={collectionImage}
+                    alt={collection.name}
+                    fill
+                    className="object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-obsidian-900/60 via-obsidian-900/30 to-transparent" />
+                </div>
+                <div className="p-6">
+                  <h2 className="font-display text-2xl font-semibold text-obsidian-50 group-hover:text-gold-400 transition-colors">
+                    {collection.name}
+                  </h2>
+                  <p className="text-obsidian-400 mt-2">{collection.description}</p>
+                </div>
+              </article>
+            </Link>
+          );
+        })}
       </div>
 
       {collections.length === 0 && (

@@ -1,7 +1,9 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { Container } from '@/components/ui/Container';
 import { getProducts } from '@/lib/supabase/queries/products';
 import { getCollections } from '@/lib/supabase/queries/collections';
+import { images } from '@/lib/images';
 
 export const metadata = {
   title: 'Shop - Loving Charmz',
@@ -48,37 +50,46 @@ export default async function ShopPage() {
       )}
 
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {products.map((product, index) => (
-          <Link
-            key={product.id}
-            href={`/products/${product.slug}`}
-            className="group"
-            style={{ animationDelay: `${index * 100}ms` }}
-          >
-            <article className="surface-premium rounded-card overflow-hidden border border-obsidian-700/50 hover-lift">
-              <div className="aspect-square bg-gradient-to-br from-obsidian-800 to-obsidian-900 flex items-center justify-center relative">
-                <div className="text-6xl">{product.images[0]}</div>
-                <div className="absolute inset-0 bg-gradient-to-t from-obsidian-900/60 to-transparent" />
-                {product.is_personalizable && (
-                  <span className="absolute top-3 right-3 badge-gold text-xs">
-                    Personalizable
-                  </span>
-                )}
-              </div>
-              <div className="p-5">
-                <p className="text-xs font-medium uppercase tracking-wider text-gold-500 mb-1">
-                  {product.tagline}
-                </p>
-                <h3 className="font-display text-lg font-semibold text-obsidian-50 mb-2 group-hover:text-gold-400 transition-colors">
-                  {product.name}
-                </h3>
-                <p className="text-obsidian-400 text-sm">
-                  From <span className="text-gold-400 font-medium">${product.base_price}</span>
-                </p>
-              </div>
-            </article>
-          </Link>
-        ))}
+        {products.map((product, index) => {
+          const imageIndex = index % images.shop.length;
+          const productImage = images.shop[imageIndex];
+          return (
+            <Link
+              key={product.id}
+              href={`/products/${product.slug}`}
+              className="group"
+              style={{ animationDelay: `${index * 100}ms` }}
+            >
+              <article className="surface-premium rounded-card overflow-hidden border border-obsidian-700/50 hover-lift">
+                <div className="aspect-square relative overflow-hidden">
+                  <Image
+                    src={productImage}
+                    alt={product.name}
+                    fill
+                    className="object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-obsidian-900/60 to-transparent" />
+                  {product.is_personalizable && (
+                    <span className="absolute top-3 right-3 badge-gold text-xs">
+                      Personalizable
+                    </span>
+                  )}
+                </div>
+                <div className="p-5">
+                  <p className="text-xs font-medium uppercase tracking-wider text-gold-500 mb-1">
+                    {product.tagline}
+                  </p>
+                  <h3 className="font-display text-lg font-semibold text-obsidian-50 mb-2 group-hover:text-gold-400 transition-colors">
+                    {product.name}
+                  </h3>
+                  <p className="text-obsidian-400 text-sm">
+                    From <span className="text-gold-400 font-medium">${product.base_price}</span>
+                  </p>
+                </div>
+              </article>
+            </Link>
+          );
+        })}
       </div>
 
       {products.length === 0 && (

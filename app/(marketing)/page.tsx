@@ -1,5 +1,7 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { Container } from '@/components/ui/Container';
+import { images } from '@/lib/images';
 
 const highlights = [
   {
@@ -92,12 +94,16 @@ export default function HomePage() {
                 </div>
               </div>
               <div className="relative">
-                <div className="aspect-square rounded-card bg-gradient-to-br from-obsidian-800 to-obsidian-900 flex items-center justify-center border border-obsidian-700/50">
-                  <div className="text-center">
-                    <div className="w-32 h-32 mx-auto mb-4 rounded-full bg-gradient-to-br from-gold-500/20 to-rose-gold-500/20 border border-gold-500/30 flex items-center justify-center">
-                      <span className="text-4xl">🐕</span>
-                    </div>
-                    <p className="text-gold-500 text-sm uppercase tracking-wider">The Loyal Companion</p>
+                <div className="aspect-square rounded-card overflow-hidden border border-obsidian-700/50">
+                  <Image
+                    src={images.pets.goldenRetriever}
+                    alt="Golden Retriever - Loyal Companion"
+                    fill
+                    className="object-cover"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-obsidian-900/70 via-transparent to-transparent" />
+                  <div className="absolute bottom-6 left-6 right-6">
+                    <p className="text-gold-400 text-sm uppercase tracking-wider font-medium">The Loyal Companion</p>
                   </div>
                 </div>
                 <div className="absolute -inset-4 bg-gradient-to-r from-gold-500/10 via-transparent to-rose-gold-500/10 rounded-card blur-xl" />
