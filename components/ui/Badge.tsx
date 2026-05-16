@@ -17,7 +17,7 @@ export function Badge({ children, variant = 'default', className, ...rest }: Bad
   return (
     <span
       className={[
-        'inline-flex items-center rounded-pill px-3 py-1 text-xs font-medium',
+        'motion-transition inline-flex items-center gap-2 rounded-pill border border-white/40 px-3 py-1 text-xs font-medium shadow-[0_10px_30px_rgba(92,57,47,0.08)]',
         variantClasses[variant],
         className,
       ].join(' ')}

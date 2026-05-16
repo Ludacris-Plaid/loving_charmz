@@ -17,7 +17,7 @@ export function Card({ children, className, padding = 'md', ...rest }: CardProps
   return (
     <div
       className={[
-        'rounded-card border border-brand-400/12 bg-surface shadow-card backdrop-blur',
+        'motion-transition surface-premium rounded-card border border-brand-400/12 bg-surface shadow-card backdrop-blur',
         paddingClasses[padding],
         className,
       ]
