@@ -100,6 +100,7 @@ The charm has become a conversation starter among her friends. Some have lost pe
     image: images.pets.beagle,
     title: 'The Forever Puppy',
     subtitle: 'After 17 years, Daisy taught Linda that some bonds never break',
+    excerpt: 'When Linda brought Daisy home as a young divorcee, the beagle puppy helped her learn to love again. Seventeen years later, the bond still holds.',
     content: `When Linda brought Daisy home—a floppy-eared beagle puppy—she was thirty-two, recently divorced, and convinced she would never love anything again. The world had taught her that people left. They promised forever and then they left.
 
 Daisy had other ideas about whose favorite she was.

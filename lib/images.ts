@@ -7,7 +7,7 @@ export const images = {
     'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=600&q=80',
     'https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=600&q=80',
     'https://images.unsplash.com/photo-1611591437281-460bfbe1220a?w=600&q=80',
-    'https://images.unsplash.com/photo-1603561596112-0a132908c5a3?w=600&q=80',
+    'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=600&q=80',
   ],
   collections: {
     bond: 'https://images.unsplash.com/photo-1589128777073-263566ae5e4d?w=800&q=80',
