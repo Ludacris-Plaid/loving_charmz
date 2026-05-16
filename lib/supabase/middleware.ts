@@ -35,10 +35,11 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // Protect account routes - let admin routes be handled by AdminGuard
+  // Only protect account routes - admin routes are handled by AdminGuard
   if (!user && request.nextUrl.pathname.startsWith('/account')) {
     return NextResponse.redirect(new URL('/login', request.url));
   }
 
+  // Allow all other routes through - they'll be handled by their own guards
   return supabaseResponse;
 }
