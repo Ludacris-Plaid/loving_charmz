@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Container } from '@/components/ui/Container';
 import { stories } from '../page';
 
@@ -38,7 +39,15 @@ export default async function StoryPage({ params }: Props) {
       </nav>
 
       <article className="max-w-2xl mx-auto">
-        <div className="text-6xl mb-6">{story.emoji}</div>
+        <div className="aspect-video relative rounded-card overflow-hidden mb-8">
+          <Image
+            src={story.image}
+            alt={story.title}
+            fill
+            className="object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-obsidian-900/50 to-transparent" />
+        </div>
         
         <span className="text-sm text-obsidian-500">{story.date}</span>
         

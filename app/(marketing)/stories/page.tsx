@@ -1,5 +1,7 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { Container } from '@/components/ui/Container';
+import { images } from '@/lib/images';
 
 export const metadata = {
   title: 'Stories - Loving Charmz',
@@ -9,7 +11,7 @@ export const metadata = {
 const stories = [
   {
     slug: 'a-mothers-tribute',
-    emoji: '💝',
+    image: images.pets.dogPortrait,
     title: "A Mother's Tribute",
     subtitle: 'How a simple pendant helped Sarah keep her beloved Luna close every day',
     excerpt: 'The bond between a mother and her dog transcends words. When Luna passed, Sarah found an unexpected way to keep her companion forever close.',
@@ -35,7 +37,7 @@ Luna had been more than a pet. She'd been Sarah's rock through her divorce, her 
   },
   {
     slug: 'rainbow-bridge',
-    emoji: '🌈',
+    image: images.pets.goldenRetriever,
     title: 'Rainbow Bridge',
     subtitle: "Mark found comfort in a custom piece honoring his faithful companion of 15 years",
     excerpt: 'Max had been with Mark since before his wedding, before his children, before everything. Losing him left a hole that no amount of time seemed to fill.',
@@ -61,7 +63,7 @@ The pendant sits on Mark's desk now, visible during every video call, visible to
   },
   {
     slug: 'new-beginnings',
-    emoji: '✨',
+    image: images.pets.sleepingCat,
     title: 'New Beginnings',
     subtitle: "A young girl's first pet inspired a gift that now symbolizes unconditional love",
     excerpt: 'For Emma, getting a kitten named Coco was the beginning of learning what it means to love something more than yourself.',
@@ -95,12 +97,12 @@ The charm has become a conversation starter among her friends. Some have lost pe
   },
   {
     slug: 'forever-puppy',
-    emoji: '🐕',
+    image: images.pets.beagle,
     title: 'The Forever Puppy',
     subtitle: 'After 17 years, Daisy taught Linda that some bonds never break',
     content: `When Linda brought Daisy home—a floppy-eared beagle puppy—she was thirty-two, recently divorced, and convinced she would never love anything again. The world had taught her that people left. They promised forever and then they left.
 
-Daisy had other plans.
+Daisy had other ideas about whose favorite she was.
 
 For seventeen years, Daisy made it her mission to prove Linda wrong. She greeted her every evening like she'd been waiting for hours (she probably had). She slept on Linda's feet, a warm weight that said "I'm here, I'm staying." She waited by the door when Linda came home from work, her entire body wagging with joy that never dimmed—not after a year, not after ten, not after seventeen.
 
@@ -114,19 +116,16 @@ Linda found Loving Charmz on what would have been Daisy's fifteenth "gotcha day.
 
 That next weekend, Linda adopted a three-month-old beagle mix. She named her Daisy Jr.—though they called her DJ. The pendant now sits alongside a new charm, a tiny silver bone that DJ earned by being exactly what Linda needed: a reason to get up, a reason to walk, a reason to love again.
 
-"Seventeen years," Linda says, touching the pendant. "That's more than some marriages. More than some friendships. Daisy was my person. She still is. The pendant reminds me that some bonds don't end. They just change form."
-
-DJ bounces around her feet now, a ball of puppy energy that sometimes knocks over the furniture and always, always brings joy. She has Daisy's floppy ears. Maybe her heart too.
-
 "Some people say it's weird to get a new dog so soon," Linda reflects. "But Daisy would have wanted this. She would have loved DJ. And honestly? I think she's glad I'm not alone anymore."`,
     date: 'April 2024',
     author: 'Linda K.',
   },
   {
     slug: 'two-hearts-one-bond',
-    emoji: '💕',
+    image: images.pets.puppy,
     title: 'Two Hearts, One Bond',
     subtitle: 'A twinset became the symbol of a connection that transcends words',
+    excerpt: 'Identical twins Maya and Leah had always done everything together. When their golden doodle Biscuit became part of the family, the bond only grew stronger.',
     content: `Identical twins Maya and Leah had always done everything together. Same schools, same friends, same hair clips. When their parents brought home a golden doodle they'd named Biscuit, the girls thought he was the best surprise ever.
 
 Biscuit had other ideas about whose favorite he was.
@@ -161,9 +160,10 @@ The hearts sit on both their dresser tables now, side by side even when the sist
   },
   {
     slug: 'beyond-the-fur',
-    emoji: '🌟',
+    image: images.pets.cat,
     title: 'Beyond the Fur',
     subtitle: 'For David, his cat Oliver became an unlikely anchor during the darkest chapter of his life',
+    excerpt: 'A cat no one wanted became the one thing that kept David going when everything else fell apart.',
     content: `David didn't want a cat. His ex-girlfriend's cat, actually—Oliver had been hers, and when they broke up, David figured the cat would stay with her. But Oliver had other plans.
 
 "She's not the one I want," Oliver seemed to say, curling up on David's lap that first night. "You're the one I want."
@@ -217,16 +217,26 @@ export default function StoriesPage() {
           <Link
             key={story.slug}
             href={`/stories/${story.slug}`}
-            className="surface-premium rounded-card p-6 border border-obsidian-700/50 hover-lift block"
+            className="surface-premium rounded-card overflow-hidden border border-obsidian-700/50 hover-lift block"
             style={{ animationDelay: `${i * 100}ms` }}
           >
-            <div className="text-4xl mb-4">{story.emoji}</div>
-            <span className="text-xs text-obsidian-500">{story.date}</span>
-            <h2 className="font-display text-xl font-semibold text-obsidian-50 mb-2 mt-1">
-              {story.title}
-            </h2>
-            <p className="text-obsidian-400 text-sm mb-3">{story.excerpt}</p>
-            <span className="text-gold-500 text-sm font-medium">Read more →</span>
+            <div className="aspect-[4/3] relative overflow-hidden">
+              <Image
+                src={story.image}
+                alt={story.title}
+                fill
+                className="object-cover group-hover:scale-105 transition-transform duration-500"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-obsidian-900/70 via-obsidian-900/30 to-transparent" />
+            </div>
+            <div className="p-6">
+              <span className="text-xs text-obsidian-500">{story.date}</span>
+              <h2 className="font-display text-xl font-semibold text-obsidian-50 mb-2 mt-1">
+                {story.title}
+              </h2>
+              <p className="text-obsidian-400 text-sm mb-3">{story.excerpt}</p>
+              <span className="text-gold-500 text-sm font-medium">Read more</span>
+            </div>
           </Link>
         ))}
       </div>
