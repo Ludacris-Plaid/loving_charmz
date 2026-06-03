@@ -57,7 +57,6 @@ export default async function ShopPage() {
               </Link>
             ))}
           </div>
-        </div>
       )}
 
       {products.length > 0 ? (
