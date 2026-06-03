@@ -196,11 +196,11 @@ a {
 @keyframes badge-dot {
   0%, 100% {
     transform: scale(1);
-    box-shadow: 0 0 4px 1px color-mix(in srgb, var(--color-plum-500) 30%, transparent);
+    box-shadow: 0 0 4px 1px color-mix(in srgb, var(--color-mint-500) 30%, transparent);
   }
   50% {
     transform: scale(1.15);
-    box-shadow: 0 0 8px 3px color-mix(in srgb, var(--color-plum-500) 50%, transparent);
+    box-shadow: 0 0 8px 3px color-mix(in srgb, var(--color-mint-500) 50%, transparent);
   }
 }
 
@@ -408,9 +408,9 @@ a {
   display: inline-block;
   width: 6px;
   height: 6px;
-  background: var(--color-plum-700);
+  background: var(--color-mint-700);
   border-radius: 9999px;
-  box-shadow: 0 0 4px 1px color-mix(in srgb, var(--color-plum-500) 40%, transparent);
+  box-shadow: 0 0 4px 1px color-mix(in srgb, var(--color-mint-500) 40%, transparent);
   animation: badge-dot 2.4s ease-in-out infinite;
 }
 
@@ -433,9 +433,9 @@ a {
   display: inline-block;
   width: 6px;
   height: 6px;
-  background: var(--color-plum-700);
+  background: var(--color-mint-700);
   border-radius: 9999px;
-  box-shadow: 0 0 4px 1px color-mix(in srgb, var(--color-plum-500) 40%, transparent);
+  box-shadow: 0 0 4px 1px color-mix(in srgb, var(--color-mint-500) 40%, transparent);
   animation: badge-dot 2.4s ease-in-out infinite;
 }
 
