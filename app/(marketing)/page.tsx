@@ -136,16 +136,25 @@ export default async function HomePage() {
           {products.length > 0 && (
             <section>
               <ScrollReveal>
-                <div className="mb-8 flex items-end justify-between gap-4">
-                  <div>
-                    <span className="badge-mint">The Collection</span>
-                    <h2 className="section-title font-display text-3xl sm:text-4xl font-semibold text-plum-900 mt-3">
-                      Pieces to carry it with you
-                    </h2>
+                <div className="mb-8">
+                  <span className="badge-mint">The Collection</span>
+                  <h2 className="font-display text-3xl sm:text-4xl font-semibold leading-[1.1] tracking-tight mt-4">
+                    <span className="block">
+                      <span className="hero-word hero-word-1 text-plum-900">Pieces</span>{' '}
+                      <span className="hero-word hero-word-2 text-plum-900">to</span>{' '}
+                      <span className="hero-word hero-word-3 text-plum-900">carry</span>{' '}
+                      <span className="hero-word hero-word-4 text-plum-900">it</span>
+                    </span>
+                    <span className="block mt-1">
+                      <span className="hero-word hero-word-5 text-plum-900">with</span>{' '}
+                      <span className="hero-word hero-word-6 text-plum-900">you</span>
+                    </span>
+                  </h2>
+                  <div className="hero-content mt-4">
+                    <Link href="/shop" className="text-sm font-medium text-plum-700 hover:text-plum-900 motion-base">
+                      See all →
+                    </Link>
                   </div>
-                  <Link href="/shop" className="hidden text-sm font-medium text-plum-700 hover:text-plum-900 sm:inline-flex motion-base">
-                    See all →
-                  </Link>
                 </div>
               </ScrollReveal>
               <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
