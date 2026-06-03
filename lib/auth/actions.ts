@@ -68,7 +68,7 @@ export async function login(formData: FormData): Promise<void> {
   const { data: signInData, error } = await supabase.auth.signInWithPassword(data);
 
   if (error) {
-    throw new Error(error.message);
+    redirect(`/login?error=${encodeURIComponent(error.message)}${formData.get('next') ? `&next=${encodeURIComponent(formData.get('next') as string)}` : ''}`);
   }
 
   revalidatePath('/', 'layout');
