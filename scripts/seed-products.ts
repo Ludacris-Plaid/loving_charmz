@@ -12,7 +12,7 @@ config({ path: '.env.local' });
 
 import { createClient } from '@supabase/supabase-js';
 
-const SEED_URL = 'https://picsum.photos';
+const SEED_URL = 'https://images.unsplash.com';
 
 async function main() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -33,7 +33,7 @@ async function main() {
       slug: 'ethereal-essentials',
       description:
         'Clean lines and quiet refinement — these everyday essentials are designed to move with you, from morning meetings to moonlit dinners.',
-      image_url: `${SEED_URL}/seed/ethereal-hero/1200/800`,
+      image_url: `${SEED_URL}/photo-1589128777073-263566ae5e4d?w=1200&q=80`,
       sort_order: 10,
     },
     {
@@ -41,7 +41,7 @@ async function main() {
       slug: 'moonlit-garden',
       description:
         'Wander through a garden kissed by moonlight — where twisted vines, unfurling leaves, and celestial curves bloom in precious metal.',
-      image_url: `${SEED_URL}/seed/moonlit-hero/1200/800`,
+      image_url: `${SEED_URL}/photo-1573408301185-9146fe634ad0?w=1200&q=80`,
       sort_order: 20,
     },
     {
@@ -49,7 +49,7 @@ async function main() {
       slug: 'resonance',
       description:
         'Architecture for the body — bold geometric forms, sharp angles, and sculptural volumes that command attention.',
-      image_url: `${SEED_URL}/seed/resonance-hero/1200/800`,
+      image_url: `${SEED_URL}/photo-1599643478518-a784e5dc4c8f?w=1200&q=80`,
       sort_order: 30,
     },
   ] as const;
@@ -78,9 +78,7 @@ async function main() {
         base_price: 185,
         is_personalizable: false,
         images: [
-          `${SEED_URL}/seed/lumina-cuff-1/600/600`,
-          `${SEED_URL}/seed/lumina-cuff-2/600/600`,
-          `${SEED_URL}/seed/lumina-cuff-3/600/600`,
+          `${SEED_URL}/photo-1599643478518-a784e5dc4c8f?w=600&q=80`,
         ],
       },
       {
@@ -92,8 +90,7 @@ async function main() {
         base_price: 220,
         is_personalizable: false,
         images: [
-          `${SEED_URL}/seed/drift-drop-1/600/600`,
-          `${SEED_URL}/seed/drift-drop-2/600/600`,
+          `${SEED_URL}/photo-1605100804763-247f67b3557e?w=600&q=80`,
         ],
       },
       {
@@ -105,8 +102,7 @@ async function main() {
         base_price: 165,
         is_personalizable: true,
         images: [
-          `${SEED_URL}/seed/solstice-pendant-1/600/600`,
-          `${SEED_URL}/seed/solstice-pendant-2/600/600`,
+          `${SEED_URL}/photo-1611591437281-460bfbe1220a?w=600&q=80`,
         ],
       },
     ],
@@ -120,8 +116,7 @@ async function main() {
         base_price: 275,
         is_personalizable: false,
         images: [
-          `${SEED_URL}/seed/thornvine-ring-1/600/600`,
-          `${SEED_URL}/seed/thornvine-ring-2/600/600`,
+          `${SEED_URL}/photo-1515562141207-7a88fb7ce338?w=600&q=80`,
         ],
       },
       {
@@ -133,8 +128,7 @@ async function main() {
         base_price: 245,
         is_personalizable: false,
         images: [
-          `${SEED_URL}/seed/nocturne-leaf-1/600/600`,
-          `${SEED_URL}/seed/nocturne-leaf-2/600/600`,
+          `${SEED_URL}/photo-1611652022419-a9419f74343d?w=600&q=80`,
         ],
       },
       {
@@ -146,9 +140,7 @@ async function main() {
         base_price: 310,
         is_personalizable: true,
         images: [
-          `${SEED_URL}/seed/crescent-locket-1/600/600`,
-          `${SEED_URL}/seed/crescent-locket-2/600/600`,
-          `${SEED_URL}/seed/crescent-locket-3/600/600`,
+          `${SEED_URL}/photo-1589128777073-263566ae5e4d?w=600&q=80`,
         ],
       },
     ],
@@ -162,8 +154,7 @@ async function main() {
         base_price: 420,
         is_personalizable: false,
         images: [
-          `${SEED_URL}/seed/prism-collar-1/600/600`,
-          `${SEED_URL}/seed/prism-collar-2/600/600`,
+          `${SEED_URL}/photo-1573408301185-9146fe634ad0?w=600&q=80`,
         ],
       },
       {
@@ -175,9 +166,7 @@ async function main() {
         base_price: 380,
         is_personalizable: false,
         images: [
-          `${SEED_URL}/seed/apex-cuff-1/600/600`,
-          `${SEED_URL}/seed/apex-cuff-2/600/600`,
-          `${SEED_URL}/seed/apex-cuff-3/600/600`,
+          `${SEED_URL}/photo-1599643477877-530eb83abc8e?w=600&q=80`,
         ],
       },
     ],
