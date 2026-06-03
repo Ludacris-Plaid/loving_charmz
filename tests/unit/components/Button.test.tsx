@@ -3,6 +3,10 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { Button } from '@/components/ui/Button';
 
+vi.mock('@/lib/supabase/queries/products', () => ({
+  getProducts: vi.fn().mockResolvedValue([]),
+}));
+
 describe('Button', () => {
   it('renders as a button with text', () => {
     render(<Button>Click me</Button>);
@@ -23,23 +27,23 @@ describe('Button', () => {
     expect(link).toHaveAttribute('href', '/shop');
   });
 
-  it('applies primary variant classes', () => {
-    render(<Button variant="primary">Primary</Button>);
-    const btn = screen.getByRole('button', { name: 'Primary' });
-    expect(btn.className).toContain('bg-brand-700');
-    expect(btn.className).toContain('text-white');
+  it('applies plum variant classes', () => {
+    render(<Button variant="plum">Plum</Button>);
+    const btn = screen.getByRole('button', { name: 'Plum' });
+    expect(btn.className).toContain('btn-plum');
   });
 
   it('applies outline variant classes', () => {
     render(<Button variant="outline">Outline</Button>);
     const btn = screen.getByRole('button', { name: 'Outline' });
+    expect(btn.className).toContain('btn-outline');
     expect(btn.className).toContain('border');
   });
 
   it('applies size classes', () => {
     render(<Button size="lg">Large</Button>);
     const btn = screen.getByRole('button', { name: 'Large' });
-    expect(btn.className).toContain('px-6');
+    expect(btn.className).toContain('px-7');
     expect(btn.className).toContain('py-3');
   });
 
@@ -47,6 +51,6 @@ describe('Button', () => {
     render(<Button disabled>Disabled</Button>);
     const btn = screen.getByRole('button', { name: 'Disabled' });
     expect(btn).toBeDisabled();
-    expect(btn.className).toContain('disabled:cursor-not-allowed');
+    expect(btn.className).toContain('disabled:opacity-50');
   });
 });

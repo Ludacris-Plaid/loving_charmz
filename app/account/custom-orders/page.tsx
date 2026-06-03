@@ -1,101 +1,93 @@
-'use client';
-
-import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { redirect } from 'next/navigation';
+import { getSession } from '@/components/admin/AdminGuard';
+import { getMyPersonalizationRequestsServer } from '@/lib/orders/server';
 
-async function fetchCustomOrders() {
-  try {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-    const res = await fetch(`${supabaseUrl}/rest/v1/personalization_requests?select=*,product:products(*)&order=created_at.desc`, {
-      headers: { apikey: supabaseKey! }
-    });
-    return await res.json();
-  } catch { return []; }
-}
+export const metadata = {
+  title: 'Custom orders — Loving Charmz',
+};
 
-export default function CustomOrdersPage() {
-  const [requests, setRequests] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+const statusLabel: Record<string, string> = {
+  pending: 'Pending',
+  reviewing: 'Reviewing',
+  quoted: 'Quoted',
+  in_progress: 'In progress',
+  completed: 'Completed',
+  cancelled: 'Cancelled',
+};
 
-  useEffect(() => {
-    fetchCustomOrders().then(r => { setRequests(r); setLoading(false); });
-  }, []);
+const statusStyle: Record<string, string> = {
+  pending: 'badge-soft',
+  reviewing: 'badge-mint',
+  quoted: 'badge-mint',
+  in_progress: 'badge-mint',
+  completed: 'badge-mint',
+  cancelled: 'inline-flex items-center gap-1.5 bg-red-50 text-red-700 border border-red-200 px-2.5 py-1 rounded-pill text-xs font-medium',
+};
 
-  const statusColors: Record<string, string> = {
-    pending: 'bg-yellow-500/20 text-yellow-400',
-    reviewing: 'bg-blue-500/20 text-blue-400',
-    quoted: 'bg-purple-500/20 text-purple-400',
-    in_progress: 'bg-orange-500/20 text-orange-400',
-    completed: 'bg-green-500/20 text-green-400',
-  };
+export default async function CustomOrdersPage() {
+  const session = await getSession();
+  if (!session) redirect('/login?next=/account/custom-orders');
 
-  if (loading) {
-    return (
-      <div className="flex justify-center py-12">
-        <div className="spinner-dots"><span></span><span></span><span></span></div>
-      </div>
-    );
-  }
-
-  if (requests.length === 0) {
-    return (
-      <div className="text-center py-16">
-        <div className="text-6xl mb-4">✨</div>
-        <h2 className="font-display text-2xl text-obsidian-50 mb-2">No custom orders</h2>
-        <p className="text-obsidian-400 mb-6">Create a personalized keepsake that tells your unique story.</p>
-        <Link href="/custom-orders" className="btn-gold px-8 py-3 rounded-pill text-sm font-semibold uppercase">
-          Start Custom Order
-        </Link>
-      </div>
-    );
-  }
+  const requests = await getMyPersonalizationRequestsServer();
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="font-display text-2xl font-semibold text-obsidian-50">Custom Orders</h1>
-        <Link href="/custom-orders" className="btn-outline-gold px-6 py-2 rounded-pill text-sm font-semibold uppercase">
-          New Request
+      <div className="flex items-end justify-between">
+        <div>
+          <h1 className="font-display text-2xl font-semibold text-plum-900">My custom orders</h1>
+          <p className="text-sm text-ink-600 mt-1">Personalized keepsake requests and their status.</p>
+        </div>
+        <Link href="/custom-orders" className="btn-outline px-4 py-1.5 text-xs">
+          New request
         </Link>
       </div>
 
-      <div className="space-y-4">
-        {requests.map(req => (
-          <article key={req.id} className="surface-premium rounded-card p-6 border border-obsidian-700/50">
-            <div className="flex flex-wrap items-start justify-between gap-4 mb-4">
-              <div>
-                <p className="text-obsidian-200 font-medium">
-                  {req.product?.name || 'Custom Order'}
+      {requests.length === 0 ? (
+        <div className="text-center py-16 surface-card">
+          <span className="badge-mint mb-3">No requests yet</span>
+          <h2 className="font-display text-xl text-plum-900 mt-2 mb-2">No custom orders yet</h2>
+          <p className="text-ink-600 mb-6">Start a personalized keepsake — we will follow up with a design proposal.</p>
+          <Link href="/custom-orders" className="btn-plum px-6 py-2.5 text-sm">Start a custom order</Link>
+        </div>
+      ) : (
+        <ul className="space-y-4">
+          {requests.map((req: any) => (
+            <li key={req.id} className="surface-card p-6">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <p className="font-medium text-ink-800">
+                    {req.product?.name || 'Custom keepsake'}
+                  </p>
+                  <p className="text-xs text-ink-500 mt-0.5">
+                    Submitted {new Date(req.created_at).toLocaleDateString()}
+                  </p>
+                </div>
+                <span className={statusStyle[req.status] || 'badge-soft'}>
+                  {statusLabel[req.status] || req.status}
+                </span>
+              </div>
+
+              {req.pet_name && (
+                <p className="text-sm text-ink-600 mt-3">
+                  <span className="text-ink-500">Pet name:</span> {req.pet_name}
                 </p>
-                <p className="text-sm text-obsidian-500">
-                  {new Date(req.created_at).toLocaleDateString()}
-                </p>
-              </div>
-              <span className={`px-3 py-1 rounded-pill text-xs ${statusColors[req.status] || 'bg-gray-500/20 text-gray-400'}`}>
-                {req.status}
-              </span>
-            </div>
+              )}
 
-            {req.pet_name && (
-              <div className="text-sm text-obsidian-400 mb-2">
-                <span className="text-obsidian-300">Pet Name:</span> {req.pet_name}
-              </div>
-            )}
+              {req.freeform_text && (
+                <p className="text-sm text-ink-700 mt-2 line-clamp-3">{req.freeform_text}</p>
+              )}
 
-            {req.freeform_text && (
-              <p className="text-sm text-obsidian-400 line-clamp-2">{req.freeform_text}</p>
-            )}
-
-            {req.admin_notes && (
-              <div className="mt-3 pt-3 border-t border-obsidian-700">
-                <p className="text-xs text-obsidian-500">Admin Notes:</p>
-                <p className="text-sm text-obsidian-300">{req.admin_notes}</p>
-              </div>
-            )}
-          </article>
-        ))}
-      </div>
+              {req.admin_notes && (
+                <div className="mt-3 pt-3 border-t border-cream-300">
+                  <p className="text-xs text-ink-500">Notes from the team</p>
+                  <p className="text-sm text-ink-700">{req.admin_notes}</p>
+                </div>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }

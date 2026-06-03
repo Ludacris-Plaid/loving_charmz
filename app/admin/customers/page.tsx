@@ -1,53 +1,57 @@
-'use client';
+import { getAdminCustomers } from '@/lib/admin/data';
 
-import { useState, useEffect } from 'react';
+export const metadata = {
+  title: 'Admin · Customers — Loving Charmz',
+};
 
-async function fetchCustomers() {
-  try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/profiles?select=*&order=created_at.desc`, {
-      headers: { apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY! }
-    });
-    return await res.json();
-  } catch { return []; }
-}
+export const dynamic = 'force-dynamic';
 
-export default function AdminCustomers() {
-  const [customers, setCustomers] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetchCustomers().then(c => { setCustomers(c); setLoading(false); });
-  }, []);
+export default async function AdminCustomersPage() {
+  const customers = await getAdminCustomers();
 
   return (
     <div className="space-y-6">
-      <h1 className="font-display text-3xl font-semibold text-obsidian-50">Customers</h1>
+      <div>
+        <span className="badge-plum">People</span>
+        <h1 className="font-display text-3xl font-semibold text-plum-900 mt-3">Customers</h1>
+        <p className="text-sm text-ink-600 mt-1">
+          {customers.length} customer{customers.length === 1 ? '' : 's'} total.
+        </p>
+      </div>
 
-      {loading ? (
-        <div className="flex justify-center py-12"><div className="spinner-dots"><span></span><span></span><span></span></div></div>
-      ) : customers.length === 0 ? (
-        <div className="text-center py-12 text-obsidian-400">No customers yet</div>
+      {customers.length === 0 ? (
+        <div className="text-center py-12 surface-card text-sm text-ink-500">
+          No customers yet.
+        </div>
       ) : (
-        <div className="surface-premium rounded-card border border-obsidian-700/50 overflow-hidden">
+        <div className="surface-card overflow-hidden">
           <table className="w-full">
-            <thead className="border-b border-obsidian-700">
-              <tr>
-                <th className="text-left p-4 text-sm font-medium text-obsidian-400">Username</th>
-                <th className="text-left p-4 text-sm font-medium text-obsidian-400">Display Name</th>
-                <th className="text-left p-4 text-sm font-medium text-obsidian-400">Public</th>
-                <th className="text-left p-4 text-sm font-medium text-obsidian-400">Joined</th>
+            <thead>
+              <tr className="bg-cream-100 text-left text-xs uppercase tracking-wider text-ink-500">
+                <th className="px-4 py-3">Username</th>
+                <th className="px-4 py-3">Display name</th>
+                <th className="px-4 py-3">Email</th>
+                <th className="px-4 py-3">Public</th>
+                <th className="px-4 py-3">Orders</th>
+                <th className="px-4 py-3">Joined</th>
               </tr>
             </thead>
             <tbody>
-              {customers.map(customer => (
-                <tr key={customer.id} className="border-b border-obsidian-800">
-                  <td className="p-4 text-obsidian-200">{customer.username}</td>
-                  <td className="p-4 text-obsidian-300">{customer.display_name || '—'}</td>
-                  <td className="p-4 text-obsidian-400">
-                    {customer.is_public ? '✓' : '—'}
+              {customers.map((c) => (
+                <tr key={c.id} className="border-t border-cream-200 text-sm">
+                  <td className="px-4 py-3 font-medium text-ink-800">@{c.username}</td>
+                  <td className="px-4 py-3 text-ink-700">{c.display_name || '—'}</td>
+                  <td className="px-4 py-3 text-ink-700">{c.email || '—'}</td>
+                  <td className="px-4 py-3">
+                    {c.is_public ? (
+                      <span className="badge-mint">Public</span>
+                    ) : (
+                      <span className="badge-soft">Private</span>
+                    )}
                   </td>
-                  <td className="p-4 text-obsidian-400 text-sm">
-                    {new Date(customer.created_at).toLocaleDateString()}
+                  <td className="px-4 py-3 text-ink-700">{c.order_count}</td>
+                  <td className="px-4 py-3 text-ink-500">
+                    {new Date(c.created_at).toLocaleDateString()}
                   </td>
                 </tr>
               ))}

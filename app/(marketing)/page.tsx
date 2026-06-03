@@ -1,177 +1,217 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { Container } from '@/components/ui/Container';
+import { MagneticWrap } from '@/components/ui/MagneticWrap';
+import { ScrollReveal } from '@/components/ui/ScrollReveal';
+import { getProducts } from '@/lib/supabase/queries/products';
 import { images } from '@/lib/images';
 
 const highlights = [
   {
     title: 'Connection',
-    description: 'Because they are not just pets. Every piece is made to hold the bond close.',
-    icon: '✦',
+    description: 'Because they are not just pets. Each piece is made to hold the bond close.',
   },
   {
     title: 'Meaning',
     description: 'Symbols, names, and keepsakes that turn memories into something you can wear every day.',
-    icon: '✦',
   },
   {
     title: 'Permanence',
     description: 'Modern keepsake jewelry designed to stay with you through ordinary and milestone moments.',
-    icon: '✦',
   },
 ];
 
-export default function HomePage() {
+export const metadata = {
+  title: 'Loving Charmz — Symbolic keepsake jewelry for the bond that lasts',
+  description:
+    'Handcrafted symbolic jewelry for women who carry what matters — love, memory, and the bond with the pets who shaped us.',
+};
+
+export default async function HomePage() {
+  const products = await getProducts(8).catch(() => []);
+  const featuredImage = images.pets.goldenRetriever;
+
   return (
     <div className="relative overflow-hidden">
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-20 left-10 w-96 h-96 bg-gold-500/5 rounded-full blur-3xl" />
-        <div className="absolute bottom-20 right-10 w-80 h-80 bg-rose-gold-500/5 rounded-full blur-3xl" />
-      </div>
+      <div className="aurora" aria-hidden />
+      <div className="blob-mint -top-40 -left-32 h-[28rem] w-[28rem]" aria-hidden />
+      <div className="blob-plum top-60 -right-32 h-[24rem] w-[24rem]" aria-hidden />
 
-      <Container className="py-12 sm:py-16 relative">
-        <div className="space-y-16 sm:space-y-20">
-          <section className="relative">
-            <div className="text-center mb-12">
-              <span className="badge-gold inline-flex items-center">Bond Collection — 4 pieces</span>
+      <Container className="relative py-20 sm:py-28 lg:py-32">
+        <div className="space-y-24 sm:space-y-32">
+          <section className="text-center relative">
+            <span className="badge-mint mx-auto">
+              <span className="inline-block h-1.5 w-1.5 rounded-full bg-plum-700 animate-pulse" aria-hidden />
+              Bond Collection · 4 pieces
+            </span>
+
+            <h1 className="font-display text-5xl sm:text-6xl lg:text-7xl font-semibold leading-[1.05] tracking-tight mt-8">
+              <span className="block">
+                <span className="hero-word hero-word-1 text-plum-900">Modern</span>{' '}
+                <span className="hero-word hero-word-2 plum-gradient-text">keepsake</span>
+              </span>
+              <span className="block mt-2">
+                <span className="hero-word hero-word-3 text-plum-900">jewelry</span>
+              </span>
+              <span className="block mt-2">
+                <span className="hero-word hero-word-4 text-ink-700">for the women who</span>{' '}
+                <span className="hero-word hero-word-5 plum-gradient-text">carry</span>
+              </span>
+              <span className="block">
+                <span className="hero-word hero-word-6">
+                  <span className="text-shimmer">what matters.</span>
+                </span>
+              </span>
+            </h1>
+
+            <div className="hero-content mt-10 flex flex-col sm:flex-row items-center justify-center gap-3">
+              <MagneticWrap strength={6}>
+                <Link href="/shop" className="btn-plum px-8 py-3.5 text-sm">
+                  Shop the Bond Collection
+                </Link>
+              </MagneticWrap>
+              <MagneticWrap strength={4}>
+                <Link href="/custom-orders" className="btn-outline px-8 py-3.5 text-sm">
+                  Create a custom keepsake
+                </Link>
+              </MagneticWrap>
             </div>
 
-            <div className="text-center max-w-4xl mx-auto">
-              <h1 className="font-display text-5xl sm:text-6xl lg:text-7xl font-semibold leading-tight">
-                <span className="block mb-2">
-                  <span className="hero-word hero-word-delay-1 text-obsidian-100">Modern</span>{' '}
-                  <span className="hero-word hero-word-delay-2 gold-gradient-text">keepsake</span>
-                </span>
-                <span className="block mb-2">
-                  <span className="hero-word hero-word-delay-3 text-obsidian-100">jewelry</span>
-                </span>
-                <span className="block">
-                  <span className="hero-word hero-word-delay-4 text-obsidian-300">for women who</span>{' '}
-                  <span className="hero-word hero-word-delay-5 gold-gradient-text">carry</span>
-                </span>
-                <span className="hero-word hero-word-delay-5 gold-gradient-text">what matters.</span>
-              </h1>
-            </div>
-
-            <div className="hero-content mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Link
-                href="/shop"
-                className="btn-gold px-8 py-4 rounded-pill text-sm font-semibold tracking-wide uppercase"
-              >
-                Shop the Bond Collection
-              </Link>
-              <Link
-                href="/custom-orders"
-                className="btn-outline-gold px-8 py-4 rounded-pill text-sm font-semibold tracking-wide uppercase"
-              >
-                Create a custom keepsake
-              </Link>
-            </div>
-
-            <p className="hero-content mt-8 text-center text-obsidian-400 text-sm tracking-[0.2em] uppercase">
+            <p className="hero-content mt-8 text-center text-xs uppercase tracking-[0.3em] text-ink-500">
               4 pieces · Each designed to represent connection · Starting at $55
             </p>
           </section>
 
-          <section className="featured-card surface-premium rounded-card p-6 sm:p-8 lg:p-10 max-w-5xl mx-auto">
-            <div className="grid lg:grid-cols-2 gap-8 items-center">
-              <div>
-                <p className="text-xs font-medium uppercase tracking-[0.3em] text-gold-500 mb-4">Featured keepsake</p>
-                <h2 className="font-display text-3xl sm:text-4xl font-semibold text-obsidian-50 mb-4">
-                  The Loyal Companion
-                </h2>
-                <p className="text-obsidian-300 leading-relaxed mb-6">
-                  Always by your side. Always in your heart. Designed for women who want something personal, subtle,
-                  and emotionally lasting — a tangible reminder of the bond you share.
-                </p>
-                <div className="flex flex-wrap gap-3">
-                  <span className="px-4 py-2 rounded-pill border border-gold-500/20 text-gold-400 text-xs uppercase tracking-wider">
-                    Warm bronze finish
-                  </span>
-                  <span className="px-4 py-2 rounded-pill border border-gold-500/20 text-gold-400 text-xs uppercase tracking-wider">
-                    Made to stay with you
-                  </span>
-                </div>
-              </div>
-              <div className="relative">
-                <div className="aspect-square rounded-card overflow-hidden border border-obsidian-700/50">
-                  <Image
-                    src={images.pets.goldenRetriever}
-                    alt="Golden Retriever - Loyal Companion"
-                    fill
-                    className="object-cover"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-obsidian-900/70 via-transparent to-transparent" />
-                  <div className="absolute bottom-6 left-6 right-6">
-                    <p className="text-gold-400 text-sm uppercase tracking-wider font-medium">The Loyal Companion</p>
+          <section className="featured-card relative max-w-5xl mx-auto">
+            <div className="surface-card inner-highlight p-6 sm:p-10 lg:p-12 relative overflow-hidden">
+              <div className="grid lg:grid-cols-2 gap-10 items-center relative z-10">
+                <div className="space-y-4">
+                  <span className="badge-plum">Featured keepsake</span>
+                  <h2 className="section-title font-display text-3xl sm:text-4xl font-semibold text-plum-900">
+                    The Loyal Companion
+                  </h2>
+                  <p className="text-ink-700 leading-relaxed">
+                    Always by your side. Always in your heart. Designed for women who want something personal, subtle, and emotionally lasting — a tangible reminder of the bond you share.
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    <span className="badge-soft">Warm bronze finish</span>
+                    <span className="badge-soft">Made to stay with you</span>
                   </div>
+                  <MagneticWrap strength={6}>
+                    <Link href="/shop" className="inline-flex items-center gap-2 text-sm font-medium text-plum-700 hover:text-plum-900 motion-base">
+                      See the full collection
+                      <span aria-hidden>→</span>
+                    </Link>
+                  </MagneticWrap>
                 </div>
-                <div className="absolute -inset-4 bg-gradient-to-r from-gold-500/10 via-transparent to-rose-gold-500/10 rounded-card blur-xl" />
+                <div className="relative">
+                  <div className="conic-ring" aria-hidden />
+                  <div className="relative aspect-square overflow-hidden rounded-card border border-cream-300 clip-reveal-up">
+                    <Image
+                      src={featuredImage}
+                      alt="A golden retriever, the inspiration for The Loyal Companion"
+                      fill
+                      sizes="(max-width: 1024px) 100vw, 50vw"
+                      className="object-cover ken-burns"
+                      priority
+                    />
+                  </div>
+                  <div className="absolute -bottom-3 -right-3 badge-mint float-anim shadow-pop">Bond Collection</div>
+                </div>
               </div>
             </div>
           </section>
 
-          <section className="grid sm:grid-cols-3 gap-6">
-            {highlights.map((highlight, index) => (
-              <article
-                key={highlight.title}
-                className="highlight-card hover-lift surface-premium rounded-card p-6 border border-obsidian-700/50"
-              >
-                <div className="text-gold-500 text-lg mb-4">{highlight.icon}</div>
-                <p className="text-xs font-medium uppercase tracking-[0.2em] text-gold-600 mb-3">0{index + 1}</p>
-                <h3 className="font-display text-xl font-semibold text-obsidian-50 mb-3">{highlight.title}</h3>
-                <p className="text-obsidian-400 text-sm leading-relaxed">{highlight.description}</p>
-              </article>
-            ))}
+          <section>
+            <div className="grid sm:grid-cols-3 gap-6">
+              {highlights.map((h, i) => (
+                <ScrollReveal key={h.title} delay={i * 120}>
+                  <article className="surface-card p-6 hover-lift h-full">
+                    <span className="badge-plum mb-4">0{i + 1}</span>
+                    <h3 className="font-display text-xl font-semibold text-plum-900 mb-2">{h.title}</h3>
+                    <p className="text-sm text-ink-600 leading-relaxed">{h.description}</p>
+                  </article>
+                </ScrollReveal>
+              ))}
+            </div>
           </section>
 
-          <section className="reveal-scroll surface-premium rounded-card p-8 sm:p-10 text-center">
-            <p className="text-xs font-medium uppercase tracking-[0.25em] text-gold-500 mb-4">
-              Connection, meaning, permanence
-            </p>
-            <h2 className="font-display text-3xl sm:text-4xl font-semibold text-obsidian-50 mb-6 max-w-2xl mx-auto">
-              Emotional warmth with{' '}
-              <span className="gold-gradient-text">editorial precision</span>.
-            </h2>
-            <p className="text-obsidian-400 max-w-xl mx-auto leading-relaxed">
-              The Bond Collection is designed to feel intimate and modern at once — soft enough for memory,
-              refined enough for everyday wear, and calm in the way it moves.
-            </p>
-          </section>
-
-          <section className="grid sm:grid-cols-2 gap-6">
-            <article className="reveal-scroll hover-lift surface-premium rounded-card p-6 border border-obsidian-700/50">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 rounded-full bg-gold-500/10 border border-gold-500/20 flex items-center justify-center">
-                  <span className="text-gold-500">✦</span>
+          {products.length > 0 && (
+            <section>
+              <ScrollReveal>
+                <div className="mb-8 flex items-end justify-between gap-4">
+                  <div>
+                    <span className="badge-mint">The Collection</span>
+                    <h2 className="section-title font-display text-3xl sm:text-4xl font-semibold text-plum-900 mt-3">
+                      Pieces to carry it with you
+                    </h2>
+                  </div>
+                  <Link href="/shop" className="hidden text-sm font-medium text-plum-700 hover:text-plum-900 sm:inline-flex motion-base">
+                    See all →
+                  </Link>
                 </div>
-                <p className="text-xs font-medium uppercase tracking-[0.2em] text-gold-600">Micro-interaction</p>
+              </ScrollReveal>
+              <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                {products.slice(0, 4).map((product, i) => (
+                  <ScrollReveal key={product.id} delay={i * 80}>
+                    <Link
+                      href={`/products/${product.slug}`}
+                      className="group block surface-card overflow-hidden hover-lift h-full"
+                    >
+                      <div className="relative aspect-square overflow-hidden">
+                        <Image
+                          src={images.shop[i % images.shop.length]}
+                          alt={product.name}
+                          fill
+                          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                          className="object-cover motion-base group-hover:scale-105"
+                        />
+                        {product.is_personalizable && (
+                          <span className="absolute right-3 top-3 badge-mint">Personalizable</span>
+                        )}
+                      </div>
+                      <div className="p-5">
+                        {product.tagline && (
+                          <p className="text-xs font-medium uppercase tracking-wider text-plum-600 mb-1">{product.tagline}</p>
+                        )}
+                        <h3 className="font-display text-lg font-semibold text-plum-900 group-hover:text-plum-700 motion-base">
+                          {product.name}
+                        </h3>
+                        <p className="mt-2 text-sm text-ink-600">From <span className="font-medium text-plum-700">${product.base_price}</span></p>
+                      </div>
+                    </Link>
+                  </ScrollReveal>
+                ))}
               </div>
-              <h3 className="font-display text-xl font-semibold text-obsidian-50 mb-3">Tactile, never flashy</h3>
-              <p className="text-obsidian-400 text-sm leading-relaxed">
-                Buttons respond with subtle lift, cards settle into view, and every transition stays calm, warm,
-                and deliberate.
+            </section>
+          )}
+
+          <section className="surface-card p-8 sm:p-12 text-center max-w-3xl mx-auto relative overflow-hidden">
+            <div className="absolute -top-20 -right-20 h-60 w-60 blob-mint opacity-30" aria-hidden />
+            <div className="absolute -bottom-20 -left-20 h-60 w-60 blob-plum opacity-30" aria-hidden />
+            <div className="relative z-10">
+              <span className="badge-mint">Connection · Meaning · Permanence</span>
+              <h2 className="section-title font-display text-3xl sm:text-4xl font-semibold text-plum-900 mt-4">
+                Emotional warmth with <span className="plum-gradient-text">editorial precision</span>.
+              </h2>
+              <p className="mt-4 text-ink-600 max-w-xl mx-auto leading-relaxed">
+                The Bond Collection is designed to feel intimate and modern at once — soft enough for memory, refined enough for everyday wear, and calm in the way it moves.
               </p>
-            </article>
-            <article className="reveal-scroll hover-lift surface-premium rounded-card p-6 border border-obsidian-700/50">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 rounded-full bg-gold-500/10 border border-gold-500/20 flex items-center justify-center">
-                  <span className="text-gold-500">✦</span>
-                </div>
-                <p className="text-xs font-medium uppercase tracking-[0.2em] text-gold-600">Reduced motion</p>
+              <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
+                <MagneticWrap strength={6}>
+                  <Link href="/stories" className="btn-outline px-6 py-2.5 text-sm">Read the stories</Link>
+                </MagneticWrap>
+                <MagneticWrap strength={4}>
+                  <Link href="/about" className="btn-ghost px-6 py-2.5 text-sm">About Loving Charmz</Link>
+                </MagneticWrap>
               </div>
-              <h3 className="font-display text-xl font-semibold text-obsidian-50 mb-3">Accessible by default</h3>
-              <p className="text-obsidian-400 text-sm leading-relaxed">
-                Every non-essential animation yields to user preference so the experience stays readable,
-                intentional, and comfortable.
-              </p>
-            </article>
+            </div>
           </section>
 
-          <section className="text-center py-8">
-            <p className="text-obsidian-500 text-sm tracking-wider">
+          <section className="text-center">
+            <p className="text-sm text-ink-600">
               Ready to carry what matters?{' '}
-              <Link href="/shop" className="text-gold-500 hover:text-gold-400 transition-colors">
+              <Link href="/shop" className="font-medium text-plum-700 hover:text-plum-900 motion-base">
                 Explore the collection →
               </Link>
             </p>

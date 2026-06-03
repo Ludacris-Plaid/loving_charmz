@@ -1,27 +1,25 @@
-import type { ReactNode } from 'react';
+import type { HTMLAttributes, ReactNode } from 'react';
 
 type BadgeProps = {
   children: ReactNode;
-  variant?: 'default' | 'brand' | 'success' | 'warning';
+  variant?: 'mint' | 'plum' | 'soft' | 'success' | 'warning' | 'danger';
   className?: string;
-};
+} & HTMLAttributes<HTMLSpanElement>;
 
 const variantClasses: Record<string, string> = {
-  default: 'bg-brand-300 text-brand-700',
-  brand: 'bg-brand-500 text-white',
-  success: 'bg-green-100 text-green-800',
-  warning: 'bg-amber-100 text-amber-800',
+  mint: 'badge-mint',
+  plum: 'badge-plum',
+  soft: 'badge-soft',
+  success: 'inline-flex items-center gap-1.5 bg-mint-200 text-plum-900 border border-mint-300 px-2.5 py-1 rounded-pill text-xs font-medium',
+  warning: 'inline-flex items-center gap-1.5 bg-amber-50 text-amber-800 border border-amber-200 px-2.5 py-1 rounded-pill text-xs font-medium',
+  danger: 'inline-flex items-center gap-1.5 bg-red-50 text-red-700 border border-red-200 px-2.5 py-1 rounded-pill text-xs font-medium',
 };
 
-export function Badge({ children, variant = 'default', className, ...rest }: BadgeProps & Record<string, unknown>) {
+export function Badge({ children, variant = 'soft', className, ...props }: BadgeProps) {
   return (
     <span
-      className={[
-        'motion-transition inline-flex items-center gap-2 rounded-pill border border-white/40 px-3 py-1 text-xs font-medium shadow-[0_10px_30px_rgba(92,57,47,0.08)]',
-        variantClasses[variant],
-        className,
-      ].join(' ')}
-      {...rest}
+      className={['inline-flex items-center gap-1.5', variantClasses[variant], className].filter(Boolean).join(' ')}
+      {...props}
     >
       {children}
     </span>

@@ -4,96 +4,77 @@ import Image from 'next/image';
 import { Container } from '@/components/ui/Container';
 import { stories } from '../page';
 
-interface Props {
+type Props = {
   params: Promise<{ slug: string }>;
-}
+};
 
 export async function generateMetadata({ params }: Props) {
   const { slug } = await params;
-  const story = stories.find(s => s.slug === slug);
+  const story = stories.find((s) => s.slug === slug);
   if (!story) return { title: 'Story Not Found' };
   return {
-    title: `${story.title} - Loving Charmz Stories`,
+    title: `${story.title} — Loving Charmz Stories`,
     description: story.excerpt,
   };
 }
 
 export default async function StoryPage({ params }: Props) {
   const { slug } = await params;
-  const story = stories.find(s => s.slug === slug);
-  
-  if (!story) {
-    notFound();
-  }
+  const story = stories.find((s) => s.slug === slug);
+  if (!story) notFound();
 
-  const currentIndex = stories.findIndex(s => s.slug === slug);
+  const currentIndex = stories.findIndex((s) => s.slug === slug);
   const prevStory = currentIndex > 0 ? stories[currentIndex - 1] : null;
   const nextStory = currentIndex < stories.length - 1 ? stories[currentIndex + 1] : null;
 
   return (
-    <Container className="py-12">
-      <nav className="text-sm text-obsidian-500 mb-8">
-        <Link href="/stories" className="hover:text-gold-500 transition-colors">Stories</Link>
-        <span className="mx-2">/</span>
-        <span className="text-obsidian-300">{story.title}</span>
+    <Container className="py-12 sm:py-16">
+      <nav className="mb-8 text-sm text-ink-500">
+        <Link href="/stories" className="hover:text-plum-700 motion-base">Stories</Link>
+        <span className="mx-2 text-ink-400">/</span>
+        <span className="text-ink-700">{story.title}</span>
       </nav>
 
       <article className="max-w-2xl mx-auto">
-        <div className="aspect-video relative rounded-card overflow-hidden mb-8">
-          <Image
-            src={story.image}
-            alt={story.title}
-            fill
-            className="object-cover"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-obsidian-900/50 to-transparent" />
+        <div className="relative aspect-video overflow-hidden rounded-card border border-cream-300 mb-8">
+          <Image src={story.image} alt={story.title} fill className="object-cover" />
         </div>
-        
-        <span className="text-sm text-obsidian-500">{story.date}</span>
-        
-        <h1 className="font-display text-4xl sm:text-5xl font-semibold text-obsidian-50 mt-2 mb-4">
+
+        <span className="text-sm text-ink-500">{story.date}</span>
+        <h1 className="font-display text-4xl sm:text-5xl font-semibold text-plum-900 mt-2 mb-3">
           {story.title}
         </h1>
-        
-        <p className="text-xl text-gold-400 mb-8">{story.subtitle}</p>
-        
-        <div className="prose prose-invert prose-lg text-obsidian-300 leading-relaxed space-y-6">
+        <p className="text-xl text-plum-700 mb-8">{story.subtitle}</p>
+
+        <div className="space-y-5 text-lg text-ink-700 leading-relaxed">
           {story.content.split('\n\n').map((paragraph, i) => (
             <p key={i}>{paragraph}</p>
           ))}
         </div>
 
-        <div className="mt-12 pt-8 border-t border-obsidian-700">
-          <p className="text-obsidian-500 italic">
-            — {story.author}
-          </p>
+        <div className="mt-10 pt-6 border-t border-cream-300">
+          <p className="text-sm text-ink-500 italic">{story.attribution}</p>
         </div>
 
-        <div className="mt-12 flex flex-col sm:flex-row justify-between gap-4">
+        <div className="mt-10 flex flex-col sm:flex-row justify-between gap-4 text-sm">
           {prevStory ? (
-            <Link href={`/stories/${prevStory.slug}`} className="flex items-center gap-2 text-obsidian-400 hover:text-gold-500 transition-colors">
-              <span>←</span>
-              <span>Previous</span>
+            <Link href={`/stories/${prevStory.slug}`} className="nav-link inline-flex items-center gap-2">
+              <span aria-hidden>←</span> Previous
             </Link>
-          ) : <div />}
+          ) : <span />}
           {nextStory ? (
-            <Link href={`/stories/${nextStory.slug}`} className="flex items-center gap-2 text-obsidian-400 hover:text-gold-500 transition-colors">
-              <span>Next</span>
-              <span>→</span>
+            <Link href={`/stories/${nextStory.slug}`} className="nav-link inline-flex items-center gap-2">
+              Next <span aria-hidden>→</span>
             </Link>
-          ) : <div />}
+          ) : <span />}
         </div>
       </article>
 
-      <div className="text-center mt-16 surface-premium rounded-card p-8 border border-obsidian-700/50 max-w-2xl mx-auto">
-        <h2 className="font-display text-2xl font-semibold text-obsidian-50 mb-3">
-          Have a story to share?
-        </h2>
-        <p className="text-obsidian-400 mb-4">
-          We&apos;d love to hear how your keepsake carries your memories.
-        </p>
-        <a href="mailto:hello@lovingcharmz.com" className="btn-outline-gold px-6 py-2 rounded-pill text-sm font-semibold uppercase">
-          Get in Touch
+      <div className="mt-16 surface-card p-8 text-center max-w-2xl mx-auto">
+        <h2 className="font-display text-2xl font-semibold text-plum-900">Have a story to share?</h2>
+        <p className="mt-2 text-ink-600">We would love to hear how your keepsake carries your memories.</p>
+        <a href="mailto:hello@lovingcharmz.com" className="btn-outline mt-6 px-6 py-2.5 text-sm">
+          Get in touch
         </a>
       </div>
     </Container>

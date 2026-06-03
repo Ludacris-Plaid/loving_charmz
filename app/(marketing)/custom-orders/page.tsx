@@ -1,91 +1,124 @@
 import Link from 'next/link';
 import { Container } from '@/components/ui/Container';
+import { Input } from '@/components/ui/Input';
+import { ScrollReveal } from '@/components/ui/ScrollReveal';
+import { CustomOrderForm } from '@/components/shop/CustomOrderForm';
+import { getSession } from '@/components/admin/AdminGuard';
+import { getProducts } from '@/lib/supabase/queries/products';
+import { images } from '@/lib/images';
 
 export const metadata = {
-  title: 'Custom Orders - Loving Charmz',
+  title: 'Custom Orders — Loving Charmz',
   description: 'Create a personalized keepsake that tells your unique story.',
 };
 
-export default function CustomOrdersPage() {
+const options = [
+  {
+    title: 'Name Engraving',
+    body: 'Add your pet’s name, a meaningful date, or a short phrase — engraved on the piece you choose.',
+  },
+  {
+    title: 'Charm Selection',
+    body: 'Choose from our curated charm library to layer symbols of your bond onto a bracelet or necklace.',
+  },
+  {
+    title: 'Reference Inspiration',
+    body: 'Share a photo, a sketch, or a feeling. We will translate it into a design proposal for you to approve.',
+  },
+];
+
+export default async function CustomOrdersPage() {
+  const [session, products] = await Promise.all([
+    getSession(),
+    getProducts(20).catch(() => []),
+  ]);
+
   return (
     <div className="relative overflow-hidden">
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-40 left-20 w-[500px] h-[500px] bg-gold-500/5 rounded-full blur-3xl" />
-        <div className="absolute bottom-40 right-20 w-[400px] h-[400px] bg-rose-gold-500/5 rounded-full blur-3xl" />
-      </div>
+      <div className="blob-mint -top-32 -left-32 h-96 w-96" aria-hidden />
+      <div className="blob-plum bottom-32 -right-32 h-96 w-96" aria-hidden />
 
-      <Container className="py-12 relative">
-        <div className="text-center max-w-3xl mx-auto">
-          <span className="badge-gold inline-flex items-center">Custom Creations</span>
-          <h1 className="font-display text-4xl sm:text-5xl font-semibold text-obsidian-50 mt-6 mb-6">
-            Your story, crafted into something lasting
-          </h1>
-          <p className="text-obsidian-400 text-lg leading-relaxed mb-10">
-            Every pet bond is unique. Our custom order process allows you to create a piece that 
-            carries your story — whether it&apos;s a name engraving, a specific charm, or a 
-            design inspired by your pet.
-          </p>
-
-          <div className="grid sm:grid-cols-3 gap-6 mb-12">
-            <div className="surface-premium rounded-card p-6 border border-obsidian-700/50">
-              <div className="text-3xl mb-3">🏷️</div>
-              <h3 className="font-display text-lg font-semibold text-obsidian-50 mb-2">Name Engraving</h3>
-              <p className="text-obsidian-400 text-sm">
-                Add your pet&apos;s name to keep them close every day
-              </p>
-            </div>
-            <div className="surface-premium rounded-card p-6 border border-obsidian-700/50">
-              <div className="text-3xl mb-3">💎</div>
-              <h3 className="font-display text-lg font-semibold text-obsidian-50 mb-2">Charm Selection</h3>
-              <p className="text-obsidian-400 text-sm">
-                Choose charms that represent your bond
-              </p>
-            </div>
-            <div className="surface-premium rounded-card p-6 border border-obsidian-700/50">
-              <div className="text-3xl mb-3">📸</div>
-              <h3 className="font-display text-lg font-semibold text-obsidian-50 mb-2">Reference Photo</h3>
-              <p className="text-obsidian-400 text-sm">
-                Share a photo for inspiration
-              </p>
-            </div>
-          </div>
-
-          <div className="surface-premium rounded-card p-8 border border-obsidian-700/50 max-w-xl mx-auto">
-            <h2 className="font-display text-2xl font-semibold text-obsidian-50 mb-4">
-              Start Your Custom Order
-            </h2>
-            <p className="text-obsidian-400 mb-6">
-              Tell us about your vision. We&apos;ll work with you to bring it to life.
+      <Container className="relative py-12 sm:py-16">
+        <ScrollReveal>
+          <div className="text-center max-w-3xl mx-auto">
+            <span className="badge-mint">Custom Creations</span>
+            <h1 className="section-title font-display text-4xl sm:text-5xl font-semibold text-plum-900 mt-4">
+              Your story, crafted into something lasting
+            </h1>
+            <p className="mt-4 text-ink-600 text-lg leading-relaxed">
+              Every pet bond is unique. Our custom order process lets you create a piece that carries your story — a name engraving, a specific charm, or a design inspired by your pet.
             </p>
-            <form className="space-y-4 text-left">
-              <input
-                type="text"
-                placeholder="Your name"
-                className="input-gold w-full px-4 py-3 rounded-card"
-              />
-              <input
-                type="email"
-                placeholder="Email address"
-                className="input-gold w-full px-4 py-3 rounded-card"
-              />
-              <textarea
-                placeholder="Tell us about your vision... What would you like to create?"
-                rows={4}
-                className="input-gold w-full px-4 py-3 rounded-card resize-none"
-              />
-              <button
-                type="submit"
-                className="btn-gold w-full py-3 px-6 rounded-pill text-sm font-semibold uppercase"
-              >
-                Submit Request
-              </button>
-            </form>
           </div>
+        </ScrollReveal>
 
-          <div className="mt-12 text-obsidian-500 text-sm">
-            <p>Questions? <Link href="/contact" className="text-gold-500 hover:text-gold-400">Contact us</Link></p>
+        <ScrollReveal delay={150}>
+          <div className="mt-12 grid sm:grid-cols-3 gap-6">
+            {options.map((o) => (
+              <div key={o.title} className="surface-card inner-highlight p-6 hover-lift">
+                <span className="badge-plum mb-3">Step</span>
+                <h3 className="font-display text-lg font-semibold text-plum-900 mt-2 mb-2">{o.title}</h3>
+                <p className="text-sm text-ink-600 leading-relaxed">{o.body}</p>
+              </div>
+            ))}
           </div>
-        </div>
+        </ScrollReveal>
+
+        <ScrollReveal delay={220}>
+          <div className="mt-12 surface-card inner-highlight p-8 sm:p-10 max-w-2xl mx-auto">
+            <h2 className="font-display text-2xl font-semibold text-plum-900 mb-2">
+              Start your custom order
+            </h2>
+            <p className="text-sm text-ink-600 mb-6">
+              Tell us about your keepsake — the more detail you share, the more personal the result.
+            </p>
+
+            {session ? (
+              <CustomOrderForm products={products.map((p) => ({ id: p.id, name: p.name }))} />
+            ) : (
+              <div className="space-y-4 text-center">
+                <p className="text-ink-700">
+                  Sign in to submit a custom order request. We will keep you updated on the status from your account.
+                </p>
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+                  <Link href="/login?next=/custom-orders" className="btn-plum px-6 py-2.5 text-sm">
+                    Sign in
+                  </Link>
+                  <Link href="/signup?next=/custom-orders" className="btn-outline px-6 py-2.5 text-sm">
+                    Create an account
+                  </Link>
+                </div>
+              </div>
+            )}
+
+            <div className="mt-8 pt-6 border-t border-cream-300 text-center text-sm text-ink-500">
+              Prefer email? Write to{' '}
+              <a href="mailto:hello@lovingcharmz.com" className="font-medium text-plum-700 hover:text-plum-900 motion-base">
+                hello@lovingcharmz.com
+              </a>
+              .
+            </div>
+          </div>
+        </ScrollReveal>
+
+        <ScrollReveal delay={280}>
+          <div className="mt-16 max-w-3xl mx-auto">
+            <h2 className="font-display text-2xl font-semibold text-plum-900 text-center mb-8">
+              Inspiration from the Bond Collection
+            </h2>
+            <div className="grid grid-cols-3 gap-4">
+              {images.shop.slice(0, 3).map((src, i) => (
+                <div
+                  key={i}
+                  className="aspect-square overflow-hidden rounded-card border border-cream-300"
+                  aria-hidden
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={src} alt="" className="h-full w-full object-cover" />
+                </div>
+              ))}
+            </div>
+          </div>
+        </ScrollReveal>
       </Container>
     </div>
   );

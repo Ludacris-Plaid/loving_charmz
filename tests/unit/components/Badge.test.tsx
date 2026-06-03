@@ -8,29 +8,33 @@ describe('Badge', () => {
     expect(screen.getByText('Featured')).toBeInTheDocument();
   });
 
-  it('applies default variant', () => {
+  it('applies default soft variant', () => {
     render(<Badge data-testid="badge">Default</Badge>);
     const badge = screen.getByTestId('badge');
-    expect(badge.className).toContain('bg-brand-300');
-    expect(badge.className).toContain('text-brand-700');
+    expect(badge.className).toContain('badge-soft');
   });
 
-  it('applies brand variant', () => {
-    render(<Badge variant="brand" data-testid="badge">Brand</Badge>);
+  it('applies mint variant', () => {
+    render(<Badge variant="mint" data-testid="badge">Mint</Badge>);
     const badge = screen.getByTestId('badge');
-    expect(badge.className).toContain('bg-brand-500');
-    expect(badge.className).toContain('text-white');
+    expect(badge.className).toContain('badge-mint');
   });
 
   it('applies success variant', () => {
     render(<Badge variant="success" data-testid="badge">Success</Badge>);
     const badge = screen.getByTestId('badge');
-    expect(badge.className).toContain('bg-green-100');
+    expect(badge.className).toContain('bg-mint-200');
   });
 
   it('applies warning variant', () => {
     render(<Badge variant="warning" data-testid="badge">Warning</Badge>);
     const badge = screen.getByTestId('badge');
-    expect(badge.className).toContain('bg-amber-100');
+    expect(badge.className).toContain('bg-amber-50');
+  });
+
+  it('applies danger variant', () => {
+    render(<Badge variant="danger" data-testid="badge">Danger</Badge>);
+    const badge = screen.getByTestId('badge');
+    expect(badge.className).toContain('bg-red-50');
   });
 });

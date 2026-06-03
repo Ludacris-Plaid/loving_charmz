@@ -1,7 +1,7 @@
 import Link from 'next/link';
 
 const adminNavItems = [
-  { href: '/admin', label: 'Dashboard' },
+  { href: '/admin', label: 'Overview' },
   { href: '/admin/products', label: 'Products' },
   { href: '/admin/collections', label: 'Collections' },
   { href: '/admin/inventory', label: 'Inventory' },
@@ -15,23 +15,29 @@ const adminNavItems = [
 
 export function AdminSidebar() {
   return (
-    <aside className="hidden w-56 shrink-0 lg:block">
-      <nav className="sticky top-24 flex flex-col gap-1">
+    <aside className="hidden w-60 shrink-0 lg:block">
+      <nav className="glass sticky top-24 flex flex-col gap-1 rounded-md p-2">
         {adminNavItems.map((item) => (
           <Link
             key={item.href}
             href={item.href}
-            className="rounded-card px-4 py-2.5 text-sm font-medium text-brand-700 hover:bg-brand-100 transition"
+            className="motion-base rounded-md px-4 py-2.5 text-sm font-medium text-ink-700 hover:bg-cream-100 hover:text-plum-700"
           >
             {item.label}
           </Link>
         ))}
-        <hr className="my-2 border-brand-400/12" />
+        <hr className="my-3 border-cream-300" />
         <Link
           href="/shop"
-          className="rounded-card px-4 py-2.5 text-sm font-medium text-brand-500 hover:bg-brand-100 transition"
+          className="motion-base rounded-md px-4 py-2.5 text-xs font-medium uppercase tracking-wider text-plum-600 hover:bg-plum-50"
         >
-          View Storefront
+          ← View Storefront
+        </Link>
+        <Link
+          href="/account"
+          className="motion-base rounded-md px-4 py-2.5 text-xs font-medium uppercase tracking-wider text-plum-600 hover:bg-plum-50"
+        >
+          ← My Account
         </Link>
       </nav>
     </aside>

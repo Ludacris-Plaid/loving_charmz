@@ -33,3 +33,9 @@ Object.defineProperty(global, 'IntersectionObserver', {
   writable: true,
   value: IntersectionObserverMock,
 });
+
+if (typeof URL.createObjectURL !== 'function') {
+  let counter = 0;
+  URL.createObjectURL = () => `blob:mock-${++counter}`;
+  URL.revokeObjectURL = () => undefined;
+}

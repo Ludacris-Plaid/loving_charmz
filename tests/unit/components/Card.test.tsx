@@ -8,16 +8,22 @@ describe('Card', () => {
     expect(screen.getByText('Card content')).toBeInTheDocument();
   });
 
-  it('applies default padding', () => {
+  it('applies default padding (md = p-6)', () => {
     render(<Card data-testid="card">Content</Card>);
     const card = screen.getByTestId('card');
-    expect(card.className).toContain('p-5');
+    expect(card.className).toContain('p-6');
   });
 
   it('applies custom padding size', () => {
     render(<Card padding="sm" data-testid="card">Content</Card>);
     const card = screen.getByTestId('card');
     expect(card.className).toContain('p-4');
+  });
+
+  it('applies card elevation by default', () => {
+    render(<Card data-testid="card">Content</Card>);
+    const card = screen.getByTestId('card');
+    expect(card.className).toContain('surface-card');
   });
 
   it('accepts additional className', () => {

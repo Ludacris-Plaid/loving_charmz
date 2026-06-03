@@ -1,31 +1,40 @@
-import type { ReactNode } from 'react';
+import type { HTMLAttributes, ReactNode } from 'react';
 
 type CardProps = {
   children: ReactNode;
   className?: string;
   padding?: 'none' | 'sm' | 'md' | 'lg';
-};
+  elevation?: 'flat' | 'card' | 'pop';
+  as?: 'div' | 'article' | 'section';
+} & HTMLAttributes<HTMLElement>;
 
 const paddingClasses: Record<string, string> = {
   none: '',
   sm: 'p-4',
-  md: 'p-5',
-  lg: 'p-6 sm:p-8',
+  md: 'p-6',
+  lg: 'p-8 sm:p-10',
 };
 
-export function Card({ children, className, padding = 'md', ...rest }: CardProps & Record<string, unknown>) {
+const elevationClasses: Record<string, string> = {
+  flat: 'border border-cream-300 bg-surface',
+  card: 'surface-card',
+  pop: 'bg-surface border border-cream-300 rounded-card shadow-[0_20px_50px_rgba(93,51,115,0.12)]',
+};
+
+export function Card({
+  children,
+  className,
+  padding = 'md',
+  elevation = 'card',
+  as: Tag = 'div',
+  ...props
+}: CardProps) {
   return (
-    <div
-      className={[
-        'motion-transition surface-premium rounded-card border border-brand-400/12 bg-surface shadow-card backdrop-blur',
-        paddingClasses[padding],
-        className,
-      ]
-        .filter(Boolean)
-        .join(' ')}
-      {...rest}
+    <Tag
+      className={[elevationClasses[elevation], paddingClasses[padding], 'motion-base', className].filter(Boolean).join(' ')}
+      {...props}
     >
       {children}
-    </div>
+    </Tag>
   );
 }

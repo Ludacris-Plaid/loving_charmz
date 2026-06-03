@@ -1,59 +1,51 @@
-'use client';
+import { redirect } from 'next/navigation';
+import Link from 'next/link';
+import { getSession } from '@/components/admin/AdminGuard';
+import { createClient } from '@/lib/supabase/server';
+import { SettingsForm } from '@/components/account/SettingsForm';
 
-import { useState } from 'react';
+export const metadata = {
+  title: 'Settings — Loving Charmz',
+};
 
-export default function SettingsPage() {
-  const [emailNotifications, setEmailNotifications] = useState(true);
-  const [orderUpdates, setOrderUpdates] = useState(true);
-  const [marketingEmails, setMarketingEmails] = useState(false);
+export default async function SettingsPage() {
+  const session = await getSession();
+  if (!session) redirect('/login?next=/account/settings');
+
+  const supabase = await createClient();
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('order_updates, marketing_emails, is_public')
+    .eq('id', session.userId)
+    .maybeSingle();
 
   return (
     <div className="space-y-8 max-w-2xl">
-      <h1 className="font-display text-2xl font-semibold text-obsidian-50">Settings</h1>
+      <h1 className="font-display text-2xl font-semibold text-plum-900">Settings</h1>
 
-      <section className="surface-premium rounded-card p-6 border border-obsidian-700/50">
-        <h2 className="font-display text-lg font-semibold text-obsidian-50 mb-4">Email Preferences</h2>
-        <div className="space-y-4">
-          <label className="flex items-center justify-between cursor-pointer">
-            <span className="text-obsidian-300">Order updates</span>
-            <input
-              type="checkbox"
-              checked={orderUpdates}
-              onChange={e => setOrderUpdates(e.target.checked)}
-              className="w-5 h-5 accent-gold-500"
-            />
-          </label>
-          <label className="flex items-center justify-between cursor-pointer">
-            <span className="text-obsidian-300">Marketing emails</span>
-            <input
-              type="checkbox"
-              checked={marketingEmails}
-              onChange={e => setMarketingEmails(e.target.checked)}
-              className="w-5 h-5 accent-gold-500"
-            />
-          </label>
-        </div>
+      <SettingsForm
+        defaultOrderUpdates={Boolean((profile as any)?.order_updates ?? true)}
+        defaultMarketingEmails={Boolean((profile as any)?.marketing_emails ?? false)}
+      />
+
+      <section className="surface-card p-6">
+        <h2 className="font-display text-lg font-semibold text-plum-900 mb-4">Security</h2>
+        <p className="text-sm text-ink-600 mb-4">
+          To change your password, use the password reset link from the sign-in page.
+        </p>
+        <Link href="/login" className="btn-outline px-5 py-2 text-xs">
+          Reset password
+        </Link>
       </section>
 
-      <section className="surface-premium rounded-card p-6 border border-obsidian-700/50">
-        <h2 className="font-display text-lg font-semibold text-obsidian-50 mb-4">Security</h2>
-        <div className="space-y-4">
-          <button className="btn-outline-gold w-full py-3 rounded-pill text-sm font-semibold uppercase">
-            Change Password
-          </button>
-          <button className="w-full py-3 text-sm text-rose-400 hover:text-rose-300">
-            Delete Account
-          </button>
-        </div>
-      </section>
-
-      <section className="surface-premium rounded-card p-6 border border-obsidian-700/50">
-        <h2 className="font-display text-lg font-semibold text-obsidian-50 mb-4">Sign Out</h2>
-        <form action="/logout" method="POST">
-          <button type="submit" className="text-obsidian-400 hover:text-rose-400 text-sm">
-            Sign out of your account →
-          </button>
-        </form>
+      <section className="surface-card p-6">
+        <h2 className="font-display text-lg font-semibold text-plum-900 mb-2">Sign out</h2>
+        <p className="text-sm text-ink-600 mb-4">
+          You can sign out of your account at any time.
+        </p>
+        <Link href="/logout" className="text-sm text-ink-600 hover:text-plum-700 motion-base">
+          Sign out of your account →
+        </Link>
       </section>
     </div>
   );

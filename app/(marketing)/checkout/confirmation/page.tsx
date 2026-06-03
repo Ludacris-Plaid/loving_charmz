@@ -1,56 +1,63 @@
 import Link from 'next/link';
 import { Container } from '@/components/ui/Container';
 
-export default function CheckoutConfirmationPage() {
-  const orderNumber = 'LC-ORDER';
+type Props = {
+  searchParams: Promise<{ id?: string }>;
+};
+
+export const metadata = {
+  title: 'Order confirmed — Loving Charmz',
+};
+
+export default async function ConfirmationPage({ searchParams }: Props) {
+  const { id } = await searchParams;
+  const display = id ? id.slice(0, 8).toUpperCase() : 'NEW';
 
   return (
-    <Container className="py-12">
+    <Container className="py-16">
       <div className="max-w-lg mx-auto text-center">
-        <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-gold-500/20 flex items-center justify-center">
-          <span className="text-4xl text-gold-500">✓</span>
+        <div className="mx-auto mb-6 h-20 w-20 rounded-full bg-mint-200 flex items-center justify-center">
+          <svg width="34" height="34" viewBox="0 0 24 24" fill="none" aria-hidden>
+            <path d="M5 12L10 17L19 7" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-plum-700" />
+          </svg>
         </div>
-        
-        <h1 className="font-display text-3xl font-semibold text-obsidian-50 mb-4">
-          Thank You
+        <span className="badge-mint">Thank you</span>
+        <h1 className="font-display text-3xl sm:text-4xl font-semibold text-plum-900 mt-3 mb-3">
+          Your order is placed
         </h1>
-        <p className="text-obsidian-400 mb-2">
-          Your order has been placed successfully.
+        <p className="text-ink-600">
+          We have received your keepsake order. A confirmation email is on its way.
         </p>
-        <p className="text-obsidian-500 text-sm mb-8">
-          Order #{orderNumber}
-        </p>
+        {id && (
+          <p className="mt-2 text-xs uppercase tracking-[0.18em] text-ink-500">
+            Order #{display}
+          </p>
+        )}
 
-        <div className="surface-premium rounded-card p-6 border border-obsidian-700/50 mb-8 text-left">
-          <h2 className="font-display text-lg font-semibold text-obsidian-50 mb-4">What happens next?</h2>
-          <ul className="space-y-3 text-sm text-obsidian-400">
-            <li className="flex items-start gap-2">
-              <span className="text-gold-500">1.</span>
-              You&apos;ll receive a confirmation email shortly
+        <div className="surface-card p-6 mt-8 text-left">
+          <h2 className="font-display text-lg font-semibold text-plum-900 mb-4">What happens next</h2>
+          <ol className="space-y-3 text-sm text-ink-700">
+            <li className="flex items-start gap-3">
+              <span className="badge-mint shrink-0">1</span>
+              <span>You will receive a confirmation email with the details of your order.</span>
             </li>
-            <li className="flex items-start gap-2">
-              <span className="text-gold-500">2.</span>
-              Your order will be handcrafted with care
+            <li className="flex items-start gap-3">
+              <span className="badge-mint shrink-0">2</span>
+              <span>Your piece will be handcrafted with care, just for you.</span>
             </li>
-            <li className="flex items-start gap-2">
-              <span className="text-gold-500">3.</span>
-              We&apos;ll notify you when it ships
+            <li className="flex items-start gap-3">
+              <span className="badge-mint shrink-0">3</span>
+              <span>We will email tracking information once your order ships.</span>
             </li>
-          </ul>
+          </ol>
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <Link
-            href="/account/orders"
-            className="btn-gold px-8 py-3 rounded-pill text-sm font-semibold uppercase"
-          >
-            View Orders
+        <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
+          <Link href="/account/orders" className="btn-plum px-6 py-2.5 text-sm">
+            View my orders
           </Link>
-          <Link
-            href="/shop"
-            className="btn-outline-gold px-8 py-3 rounded-pill text-sm font-semibold uppercase"
-          >
-            Continue Shopping
+          <Link href="/shop" className="btn-outline px-6 py-2.5 text-sm">
+            Continue browsing
           </Link>
         </div>
       </div>

@@ -5,17 +5,25 @@ import './globals.css';
 const inter = Inter({
   subsets: ['latin'],
   variable: '--font-sans',
+  display: 'swap',
 });
 
 const playfairDisplay = Playfair_Display({
   subsets: ['latin'],
   variable: '--font-display',
+  display: 'swap',
 });
 
 export const metadata: Metadata = {
-  title: 'Loving Charmz',
+  title: 'Loving Charmz — Symbolic jewelry for the bond that lasts',
   description:
-    'Symbolic jewelry for women who want to carry meaning, memories, and connection—especially with their pets.',
+    'Handcrafted symbolic jewelry for women who want to carry meaning, memories, and connection — especially with their pets.',
+  metadataBase: new URL('https://loving-charmz.vercel.app'),
+  openGraph: {
+    title: 'Loving Charmz',
+    description: 'Handcrafted symbolic jewelry for the bond that lasts.',
+    type: 'website',
+  },
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

@@ -1,177 +1,113 @@
-'use client';
-
-import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Container } from '@/components/ui/Container';
-import { getCartWithItems, updateCartItemQuantity, removeFromCart, clearCart } from '@/lib/supabase/queries/cart';
+import { getCartWithItemsServer } from '@/lib/cart/server';
+import { getSession } from '@/components/admin/AdminGuard';
+import { CartLineItems } from '@/components/shop/CartLineItems';
+import { images } from '@/lib/images';
 import type { CartItem } from '@/lib/supabase/types';
 
-export default function CartPage() {
-  const [items, setItems] = useState<CartItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [clearing, setClearing] = useState(false);
+export const metadata = {
+  title: 'Your cart — Loving Charmz',
+};
 
-  useEffect(() => {
-    let mounted = true;
-    async function load() {
-      try {
-        const cart = await getCartWithItems();
-        if (mounted) setItems(cart?.items || []);
-      } catch { /* ignore */ } 
-      if (mounted) setLoading(false);
-    }
-    load();
-    return () => { mounted = false; };
-  }, []);
+export default async function CartPage() {
+  const [session, cart] = await Promise.all([getSession(), getCartWithItemsServer()]);
+  const items: CartItem[] = cart?.items || [];
 
-  const handleUpdateQuantity = async (itemId: string, quantity: number) => {
-    await updateCartItemQuantity(itemId, quantity);
-    const cart = await getCartWithItems();
-    setItems(cart?.items || []);
-  };
-
-  const handleRemove = async (itemId: string) => {
-    await removeFromCart(itemId);
-    const cart = await getCartWithItems();
-    setItems(cart?.items || []);
-  };
-
-  const handleClear = async () => {
-    setClearing(true);
-    await clearCart();
-    setItems([]);
-    setClearing(false);
-  };
-
-  const subtotal = items.reduce((sum, item) => {
-    const price = (item.product?.base_price || 0) + (item.variant?.price_adjustment || 0);
-    return sum + (price * item.quantity);
-  }, 0);
-
-  const shipping = subtotal > 100 ? 0 : 9.99;
-  const tax = subtotal * 0.08;
-  const total = subtotal + shipping + tax;
-
-  if (loading) {
+  if (!session) {
     return (
-      <Container className="py-12">
-        <div className="flex items-center justify-center py-20">
-          <div className="spinner-dots">
-            <span></span><span></span><span></span>
+      <Container className="py-16">
+        <div className="max-w-md mx-auto text-center surface-card p-10">
+          <span className="badge-mint mb-3">Sign in to continue</span>
+          <h1 className="font-display text-2xl text-plum-900 mt-2 mb-2">Your cart is waiting</h1>
+          <p className="text-ink-600 mb-6">Sign in to view your saved cart and continue your keepsake journey.</p>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+            <Link href="/login?next=/cart" className="btn-plum px-6 py-2.5 text-sm">Sign in</Link>
+            <Link href="/shop" className="btn-outline px-6 py-2.5 text-sm">Keep browsing</Link>
           </div>
         </div>
       </Container>
     );
   }
 
+  const subtotal = items.reduce<number>((sum, item) => {
+    const price = Number(item.product?.base_price || 0) + Number(item.variant?.price_adjustment || 0);
+    return sum + price * Number(item.quantity || 0);
+  }, 0);
+  const shipping = subtotal > 100 ? 0 : 9.99;
+  const tax = +(subtotal * 0.08).toFixed(2);
+  const total = +(subtotal + shipping + tax).toFixed(2);
+
   return (
-    <Container className="py-12">
-      <div className="flex items-center justify-between mb-8">
-        <h1 className="font-display text-3xl font-semibold text-obsidian-50">Your Cart</h1>
-        {items.length > 0 && (
-          <button
-            onClick={handleClear}
-            disabled={clearing}
-            className="text-sm text-obsidian-500 hover:text-rose-400 transition-colors"
-          >
-            {clearing ? 'Clearing...' : 'Clear cart'}
-          </button>
-        )}
+    <Container className="py-12 sm:py-16">
+      <div className="mb-8 flex items-end justify-between">
+        <div>
+          <span className="badge-mint">Your cart</span>
+          <h1 className="font-display text-3xl sm:text-4xl font-semibold text-plum-900 mt-3">
+            Pieces you’re bringing home
+          </h1>
+        </div>
       </div>
 
       {items.length === 0 ? (
-        <div className="text-center py-20">
-          <div className="text-6xl mb-4">🛒</div>
-          <h2 className="font-display text-2xl text-obsidian-50 mb-2">Your cart is empty</h2>
-          <p className="text-obsidian-400 mb-6">Start adding pieces that speak to your heart.</p>
-          <Link href="/shop" className="btn-gold px-8 py-3 rounded-pill text-sm font-semibold uppercase">
-            Browse Collection
-          </Link>
+        <div className="text-center py-20 surface-card">
+          <span className="badge-mint mb-3">Empty</span>
+          <h2 className="font-display text-2xl text-plum-900 mt-2 mb-2">Your cart is empty</h2>
+          <p className="text-ink-600 mb-6">Start adding pieces that speak to your heart.</p>
+          <Link href="/shop" className="btn-plum px-8 py-3 text-sm">Browse the collection</Link>
         </div>
       ) : (
-        <div className="grid lg:grid-cols-3 gap-12">
-          <div className="lg:col-span-2 space-y-4">
-            {items.map((item) => {
-              const price = (item.product?.base_price || 0) + (item.variant?.price_adjustment || 0);
-              return (
-                <article
-                  key={item.id}
-                  className="surface-premium rounded-card p-4 flex gap-4 border border-obsidian-700/50"
-                >
-                  <div className="w-24 h-24 rounded-card bg-obsidian-800 flex items-center justify-center text-3xl">
-                    {item.product?.images?.[0] || '✨'}
-                  </div>
-                  <div className="flex-1">
-                    <Link href={`/products/${item.product?.slug}`} className="hover:text-gold-400 transition-colors">
-                      <h3 className="font-display text-lg font-semibold text-obsidian-50">
-                        {item.product?.name}
-                      </h3>
-                    </Link>
-                    {item.variant && (
-                      <p className="text-sm text-obsidian-500">{item.variant.name}</p>
-                    )}
-                    <p className="text-gold-400 font-medium mt-1">${price.toFixed(2)}</p>
-                  </div>
-                  <div className="flex flex-col items-end justify-between">
-                    <button
-                      onClick={() => handleRemove(item.id)}
-                      className="text-obsidian-500 hover:text-rose-400 text-sm transition-colors"
-                    >
-                      Remove
-                    </button>
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => handleUpdateQuantity(item.id, item.quantity - 1)}
-                        className="w-8 h-8 rounded-full border border-obsidian-700 text-obsidian-300 hover:border-gold-500"
-                      >
-                        −
-                      </button>
-                      <span className="text-obsidian-200 w-8 text-center">{item.quantity}</span>
-                      <button
-                        onClick={() => handleUpdateQuantity(item.id, item.quantity + 1)}
-                        className="w-8 h-8 rounded-full border border-obsidian-700 text-obsidian-300 hover:border-gold-500"
-                      >
-                        +
-                      </button>
-                    </div>
-                  </div>
-                </article>
-              );
-            })}
+        <div className="grid lg:grid-cols-3 gap-10">
+          <div className="lg:col-span-2">
+            <CartLineItems
+              items={items.map((item, index) => ({
+                id: item.id,
+                quantity: item.quantity,
+                product: {
+                  id: item.product?.id,
+                  name: item.product?.name,
+                  slug: item.product?.slug,
+                  base_price: item.product?.base_price,
+                },
+                variant: item.variant ? {
+                  id: item.variant.id,
+                  name: item.variant.name,
+                  price_adjustment: item.variant.price_adjustment,
+                } : null,
+                image: images.shop[index % images.shop.length],
+              }))}
+            />
           </div>
 
-          <div className="surface-premium rounded-card p-6 border border-obsidian-700/50 h-fit">
-            <h2 className="font-display text-xl font-semibold text-obsidian-50 mb-4">Order Summary</h2>
-            <div className="space-y-3 text-sm">
+          <aside className="surface-card p-6 h-fit lg:sticky lg:top-24">
+            <h2 className="font-display text-lg font-semibold text-plum-900 mb-4">Order summary</h2>
+            <dl className="space-y-3 text-sm">
               <div className="flex justify-between">
-                <span className="text-obsidian-400">Subtotal</span>
-                <span className="text-obsidian-200">${subtotal.toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-obsidian-400">Shipping</span>
-                <span className="text-obsidian-200">
-                  {shipping === 0 ? 'FREE' : `$${shipping.toFixed(2)}`}
-                </span>
+                <dt className="text-ink-600">Subtotal</dt>
+                <dd className="text-ink-800">${subtotal.toFixed(2)}</dd>
               </div>
               <div className="flex justify-between">
-                <span className="text-obsidian-400">Tax</span>
-                <span className="text-obsidian-200">${tax.toFixed(2)}</span>
+                <dt className="text-ink-600">Shipping</dt>
+                <dd className="text-ink-800">{shipping === 0 ? 'FREE' : `$${shipping.toFixed(2)}`}</dd>
               </div>
-              <div className="border-t border-obsidian-700 pt-3 flex justify-between">
-                <span className="text-obsidian-50 font-medium">Total</span>
-                <span className="text-gold-400 font-semibold text-lg">${total.toFixed(2)}</span>
+              <div className="flex justify-between">
+                <dt className="text-ink-600">Tax (8%)</dt>
+                <dd className="text-ink-800">${tax.toFixed(2)}</dd>
               </div>
-            </div>
-            <Link
-              href="/checkout"
-              className="btn-gold w-full mt-6 py-3 px-6 rounded-pill text-sm font-semibold uppercase text-center block"
-            >
-              Proceed to Checkout
+              <div className="pt-3 border-t border-cream-300 flex justify-between">
+                <dt className="font-medium text-plum-900">Total</dt>
+                <dd className="font-semibold plum-gradient-text text-lg">${total.toFixed(2)}</dd>
+              </div>
+            </dl>
+            <Link href="/checkout" className="btn-plum mt-6 w-full py-3 text-sm">
+              Proceed to checkout
             </Link>
-            <p className="text-xs text-obsidian-500 text-center mt-3">
-              {shipping === 0 ? 'You qualify for free shipping!' : `Add ${(100 - subtotal).toFixed(2)} more for free shipping`}
+            <p className="mt-3 text-center text-xs text-ink-500">
+              {shipping === 0
+                ? 'You qualify for free shipping.'
+                : `Add $${(100 - subtotal).toFixed(2)} more for free shipping.`}
             </p>
-          </div>
+          </aside>
         </div>
       )}
     </Container>

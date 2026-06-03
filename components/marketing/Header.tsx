@@ -1,44 +1,54 @@
 import Link from 'next/link';
+import { Logo } from '@/components/marketing/Logo';
 import { MobileMenu } from '@/components/marketing/MobileMenu';
+import { getCartCount } from '@/lib/cart/server';
+import { getSession } from '@/components/admin/AdminGuard';
 
-export function Header() {
+export async function Header() {
+  const cartCount = await getCartCount();
+  const session = await getSession();
+  const isAdmin = session?.isAdmin ?? false;
+
   return (
-    <header className="sticky top-0 z-50 border-b border-obsidian-800 bg-obsidian-950/90 backdrop-blur-xl">
+    <header
+      data-site-header
+      className="sticky top-0 z-50 border-b border-cream-300 glass"
+    >
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-6 py-3 sm:px-10 lg:px-16">
-        <Link
-          href="/"
-          className="flex items-center gap-2 rounded-pill px-2 py-1 transition-all duration-300 hover:bg-obsidian-800/50"
-        >
-          <span className="font-display text-xl font-semibold gold-gradient-text">Loving Charmz</span>
-        </Link>
+        <Logo size="md" className="motion-base" />
 
         <nav className="hidden items-center gap-8 md:flex">
-          <Link href="/shop" className="nav-link text-sm font-medium text-obsidian-300 hover:text-gold-500 transition-colors">
-            Shop
-          </Link>
-          <Link href="/stories" className="nav-link text-sm font-medium text-obsidian-300 hover:text-gold-500 transition-colors">
-            Stories
-          </Link>
-          <Link href="/about" className="nav-link text-sm font-medium text-obsidian-300 hover:text-gold-500 transition-colors">
-            About
-          </Link>
-          <Link href="/custom-orders" className="nav-link text-sm font-medium text-obsidian-300 hover:text-gold-500 transition-colors">
-            Custom Orders
-          </Link>
+          <Link href="/shop" className="nav-underline text-sm font-medium text-ink-700 hover:text-plum-700 motion-base">Shop</Link>
+          <Link href="/stories" className="nav-underline text-sm font-medium text-ink-700 hover:text-plum-700 motion-base">Stories</Link>
+          <Link href="/about" className="nav-underline text-sm font-medium text-ink-700 hover:text-plum-700 motion-base">About</Link>
+          <Link href="/custom-orders" className="nav-underline text-sm font-medium text-ink-700 hover:text-plum-700 motion-base">Custom Orders</Link>
         </nav>
 
         <div className="flex items-center gap-2 sm:gap-3">
-          <MobileMenu />
+          <MobileMenu cartCount={cartCount} isAdmin={isAdmin} />
           <Link
             href="/cart"
-            className="hidden rounded-pill border border-obsidian-700 px-3 py-1.5 text-xs font-medium text-obsidian-300 hover:border-gold-500/50 hover:text-gold-500 transition-all sm:inline-flex"
-            aria-label="View cart"
+            className="hidden items-center gap-2 rounded-pill border border-cream-300 bg-surface px-3.5 py-1.5 text-xs font-medium text-ink-700 hover:border-plum-500 hover:text-plum-700 motion-base sm:inline-flex"
+            aria-label={`View cart, ${cartCount} item${cartCount === 1 ? '' : 's'}`}
           >
-            Cart (0)
+            <span aria-hidden>Cart</span>
+            <span className="inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded-pill bg-plum-700 px-1.5 text-[10px] font-semibold text-cream-50">
+              {cartCount}
+            </span>
           </Link>
+          {isAdmin && (
+            <Link
+              href="/admin"
+              className="hidden items-center gap-1.5 rounded-pill border border-plum-300 bg-plum-50 px-3.5 py-1.5 text-xs font-medium text-plum-800 hover:border-plum-500 hover:bg-plum-100 motion-base sm:inline-flex"
+              aria-label="Open admin dashboard"
+            >
+              <span aria-hidden className="text-[10px]">▸</span>
+              Admin
+            </Link>
+          )}
           <Link
             href="/account"
-            className="btn-outline-gold hidden px-4 py-2 text-xs font-medium uppercase tracking-wider sm:inline-flex"
+            className="btn-outline hidden px-4 py-1.5 text-xs sm:inline-flex"
           >
             Account
           </Link>

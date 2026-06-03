@@ -1,24 +1,24 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 
 type RevealProps = {
-  children: React.ReactNode;
+  children: ReactNode;
   className?: string;
-  delayClassName?: string;
-  as?: 'div' | 'section';
+  as?: 'div' | 'section' | 'article';
 };
 
-export function Reveal({ children, className, delayClassName, as = 'div' }: RevealProps) {
-  const [visible, setVisible] = useState(() => {
-    if (typeof window === 'undefined') return false;
-    return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  });
+function prefersReducedMotion() {
+  if (typeof window === 'undefined') return false;
+  return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
+
+export function Reveal({ children, className, as = 'div' }: RevealProps) {
+  const [visible, setVisible] = useState<boolean>(() => prefersReducedMotion());
   const ref = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
     if (visible) return;
-
     const node = ref.current;
     if (!node) return;
 
@@ -29,28 +29,20 @@ export function Reveal({ children, className, delayClassName, as = 'div' }: Reve
           observer.disconnect();
         }
       },
-      {
-        threshold: 0.16,
-        rootMargin: '0px 0px -10% 0px',
-      },
+      { threshold: 0.15, rootMargin: '0px 0px -8% 0px' }
     );
-
     observer.observe(node);
-
-    return () => {
-      observer.disconnect();
-    };
+    return () => observer.disconnect();
   }, [visible]);
 
-  const Component = as;
-
+  const Tag = as;
   return (
-    <Component
+    <Tag
       ref={ref as never}
       data-visible={visible}
-      className={['reveal', delayClassName, className].filter(Boolean).join(' ')}
+      className={['reveal-scroll', visible ? 'visible' : '', className].filter(Boolean).join(' ')}
     >
       {children}
-    </Component>
+    </Tag>
   );
 }

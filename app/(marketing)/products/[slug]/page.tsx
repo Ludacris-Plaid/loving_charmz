@@ -1,22 +1,22 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { Container } from '@/components/ui/Container';
+import { createClient } from '@/lib/supabase/server';
 import { getProductBySlug } from '@/lib/supabase/queries/products';
-import { getProducts } from '@/lib/supabase/queries/products';
+import { getCartCount } from '@/lib/cart/server';
 import ProductDetailClient from '@/components/shop/ProductDetailClient';
 import { images } from '@/lib/images';
 
-interface Props {
+type Props = {
   params: Promise<{ slug: string }>;
-}
+};
 
 export async function generateMetadata({ params }: Props) {
   const { slug } = await params;
   const product = await getProductBySlug(slug);
   if (!product) return { title: 'Product Not Found' };
-  
   return {
-    title: `${product.name} - Loving Charmz`,
+    title: `${product.name} — Loving Charmz`,
     description: product.description || product.tagline || '',
   };
 }
@@ -24,25 +24,30 @@ export async function generateMetadata({ params }: Props) {
 export default async function ProductPage({ params }: Props) {
   const { slug } = await params;
   const product = await getProductBySlug(slug);
+  if (!product) notFound();
 
-  if (!product) {
-    notFound();
-  }
+  const supabase = await createClient();
+  const [{ data: variantsData }, { data: { user } }, cartCount] = await Promise.all([
+    supabase
+      .from('product_variants')
+      .select('*')
+      .eq('product_id', product.id)
+      .eq('is_active', true)
+      .order('created_at'),
+    supabase.auth.getUser(),
+    getCartCount(),
+  ]);
 
-  const response = await fetch(
-    `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/product_variants?product_id=eq.${product.id}&is_active=eq.true&order=created_at`,
-    {
-      headers: {
-        apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      },
-    }
+  const allImages = images.shop;
+  const imageUrl = allImages[(product.name.length + product.id.length) % allImages.length];
+
+  return (
+    <ProductDetailClient
+      product={product}
+      variants={variantsData || []}
+      imageUrl={imageUrl}
+      initialCartCount={cartCount}
+      isLoggedIn={Boolean(user)}
+    />
   );
-  const variants = await response.json();
-
-  // Get all products to find the index for image assignment
-  const allProducts = await getProducts();
-  const productIndex = allProducts.findIndex(p => p.id === product.id);
-  const imageUrl = images.shop[productIndex % images.shop.length];
-
-  return <ProductDetailClient product={product} variants={variants} imageUrl={imageUrl} />;
 }

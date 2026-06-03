@@ -1,86 +1,85 @@
-'use client';
-
-import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { redirect } from 'next/navigation';
+import { getSession } from '@/components/admin/AdminGuard';
+import { getMyOrdersServer } from '@/lib/orders/server';
 
-async function fetchOrders() {
-  try {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-    const res = await fetch(`${supabaseUrl}/rest/v1/orders?select=*&order=created_at.desc`, {
-      headers: { apikey: supabaseKey! }
-    });
-    return await res.json();
-  } catch { return []; }
-}
+export const metadata = {
+  title: 'Orders — Loving Charmz',
+};
 
-export default function OrdersPage() {
-  const [orders, setOrders] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+const statusLabel: Record<string, string> = {
+  pending: 'Pending',
+  processing: 'Processing',
+  shipped: 'Shipped',
+  delivered: 'Delivered',
+  cancelled: 'Cancelled',
+};
 
-  useEffect(() => {
-    fetchOrders().then(o => { setOrders(o); setLoading(false); });
-  }, []);
+const statusStyle: Record<string, string> = {
+  pending: 'badge-soft',
+  processing: 'badge-mint',
+  shipped: 'badge-mint',
+  delivered: 'badge-mint',
+  cancelled: 'inline-flex items-center gap-1.5 bg-red-50 text-red-700 border border-red-200 px-2.5 py-1 rounded-pill text-xs font-medium',
+};
 
-  const statusColors: Record<string, string> = {
-    pending: 'bg-yellow-500/20 text-yellow-400',
-    processing: 'bg-blue-500/20 text-blue-400',
-    shipped: 'bg-purple-500/20 text-purple-400',
-    delivered: 'bg-green-500/20 text-green-400',
-    cancelled: 'bg-red-500/20 text-red-400',
-  };
+export default async function OrdersPage() {
+  const session = await getSession();
+  if (!session) redirect('/login?next=/account/orders');
 
-  if (loading) {
-    return (
-      <div className="flex justify-center py-12">
-        <div className="spinner-dots"><span></span><span></span><span></span></div>
-      </div>
-    );
-  }
-
-  if (orders.length === 0) {
-    return (
-      <div className="text-center py-16">
-        <div className="text-6xl mb-4">📦</div>
-        <h2 className="font-display text-2xl text-obsidian-50 mb-2">No orders yet</h2>
-        <p className="text-obsidian-400 mb-6">When you place an order, it will appear here.</p>
-        <Link href="/shop" className="btn-gold px-8 py-3 rounded-pill text-sm font-semibold uppercase">
-          Browse Collection
-        </Link>
-      </div>
-    );
-  }
+  const orders = await getMyOrdersServer();
 
   return (
     <div className="space-y-6">
-      <h1 className="font-display text-2xl font-semibold text-obsidian-50">My Orders</h1>
-
-      <div className="space-y-4">
-        {orders.map(order => (
-          <article key={order.id} className="surface-premium rounded-card p-6 border border-obsidian-700/50">
-            <div className="flex flex-wrap items-start justify-between gap-4 mb-4">
-              <div>
-                <p className="text-obsidian-200 font-medium">Order #{order.id.slice(0, 8).toUpperCase()}</p>
-                <p className="text-sm text-obsidian-500">
-                  {new Date(order.created_at).toLocaleDateString('en-US', { 
-                    year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
-                  })}
-                </p>
-              </div>
-              <span className={`px-3 py-1 rounded-pill text-xs ${statusColors[order.status] || 'bg-gray-500/20 text-gray-400'}`}>
-                {order.status}
-              </span>
-            </div>
-            
-            <div className="flex flex-wrap items-center justify-between gap-4">
-              <div className="text-sm text-obsidian-400">
-                {order.items?.length || 0} item{(order.items?.length || 0) !== 1 ? 's' : ''}
-              </div>
-              <div className="text-gold-400 font-semibold">${order.total?.toFixed(2)}</div>
-            </div>
-          </article>
-        ))}
+      <div>
+        <h1 className="font-display text-2xl font-semibold text-plum-900">My orders</h1>
+        <p className="text-sm text-ink-600 mt-1">Your keepsake order history.</p>
       </div>
+
+      {orders.length === 0 ? (
+        <div className="text-center py-16 surface-card">
+          <span className="badge-mint mb-3">No orders yet</span>
+          <h2 className="font-display text-xl text-plum-900 mt-2 mb-2">You haven’t placed an order yet</h2>
+          <p className="text-ink-600 mb-6">When you place an order, it will appear here.</p>
+          <Link href="/shop" className="btn-plum px-6 py-2.5 text-sm">Browse the collection</Link>
+        </div>
+      ) : (
+        <ul className="space-y-4">
+          {orders.map((order: any) => {
+            const itemCount = (order.order_items || []).reduce(
+              (sum: number, item: any) => sum + Number(item.quantity || 0),
+              0
+            );
+            return (
+              <li key={order.id} className="surface-card p-6">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <p className="font-medium text-ink-800">
+                      Order #{order.id.slice(0, 8).toUpperCase()}
+                    </p>
+                    <p className="text-xs text-ink-500 mt-0.5">
+                      {new Date(order.created_at).toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric',
+                      })}
+                    </p>
+                  </div>
+                  <span className={statusStyle[order.status] || 'badge-soft'}>
+                    {statusLabel[order.status] || order.status}
+                  </span>
+                </div>
+                <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-sm">
+                  <p className="text-ink-600">
+                    {itemCount} item{itemCount === 1 ? '' : 's'}
+                  </p>
+                  <p className="font-semibold text-plum-700">${Number(order.total).toFixed(2)}</p>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      )}
     </div>
   );
 }

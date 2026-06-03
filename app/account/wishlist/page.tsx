@@ -1,70 +1,66 @@
-'use client';
-
-import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { redirect } from 'next/navigation';
+import Image from 'next/image';
+import { getSession } from '@/components/admin/AdminGuard';
+import { getWishlistItemsServer } from '@/lib/wishlist/server';
+import { WishlistRemoveButton } from '@/components/account/WishlistRemoveButton';
+import { images } from '@/lib/images';
 
-async function fetchWishlist() {
-  try {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-    const res = await fetch(`${supabaseUrl}/rest/v1/wishlists?select=*,product:products(*)&order=created_at.desc`, {
-      headers: { apikey: supabaseKey! }
-    });
-    return await res.json();
-  } catch { return []; }
-}
+export const metadata = {
+  title: 'Wishlist — Loving Charmz',
+};
 
-export default function WishlistPage() {
-  const [items, setItems] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+export default async function WishlistPage() {
+  const session = await getSession();
+  if (!session) redirect('/login?next=/account/wishlist');
 
-  useEffect(() => {
-    fetchWishlist().then(w => { setItems(w); setLoading(false); });
-  }, []);
-
-  if (loading) {
-    return (
-      <div className="flex justify-center py-12">
-        <div className="spinner-dots"><span></span><span></span><span></span></div>
-      </div>
-    );
-  }
-
-  if (items.length === 0) {
-    return (
-      <div className="text-center py-16">
-        <div className="text-6xl mb-4">💛</div>
-        <h2 className="font-display text-2xl text-obsidian-50 mb-2">Your wishlist is empty</h2>
-        <p className="text-obsidian-400 mb-6">Save pieces you love to revisit later.</p>
-        <Link href="/shop" className="btn-gold px-8 py-3 rounded-pill text-sm font-semibold uppercase">
-          Browse Collection
-        </Link>
-      </div>
-    );
-  }
+  const items = await getWishlistItemsServer();
 
   return (
     <div className="space-y-6">
-      <h1 className="font-display text-2xl font-semibold text-obsidian-50">My Wishlist</h1>
-
-      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {items.map((item) => (
-          <Link key={item.id} href={`/products/${item.product?.slug}`} className="group">
-            <article className="surface-premium rounded-card overflow-hidden border border-obsidian-700/50 hover-lift">
-              <div className="aspect-square bg-obsidian-800 flex items-center justify-center text-5xl">
-                {item.product?.images?.[0] || '💎'}
-              </div>
-              <div className="p-4">
-                <h3 className="font-display text-lg font-semibold text-obsidian-50 group-hover:text-gold-400">
-                  {item.product?.name}
-                </h3>
-                <p className="text-gold-400 mt-1">${item.product?.base_price}</p>
-                <button className="text-rose-400 text-sm mt-2 hover:text-rose-300">Remove</button>
-              </div>
-            </article>
-          </Link>
-        ))}
+      <div>
+        <h1 className="font-display text-2xl font-semibold text-plum-900">My wishlist</h1>
+        <p className="text-sm text-ink-600 mt-1">Pieces you have saved to revisit later.</p>
       </div>
+
+      {items.length === 0 ? (
+        <div className="text-center py-16 surface-card">
+          <span className="badge-mint mb-3">Nothing saved yet</span>
+          <h2 className="font-display text-xl text-plum-900 mt-2 mb-2">Your wishlist is empty</h2>
+          <p className="text-ink-600 mb-6">Tap the heart on any piece to save it here.</p>
+          <Link href="/shop" className="btn-plum px-6 py-2.5 text-sm">Browse the collection</Link>
+        </div>
+      ) : (
+        <ul className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {items.map((item, index) => {
+            const product = (item as any).product;
+            const image = product?.images?.[0] || images.shop[index % images.shop.length];
+            return (
+              <li key={item.id} className="surface-card overflow-hidden hover-lift">
+                <Link
+                  href={`/products/${product?.slug || ''}`}
+                  className="block relative aspect-square overflow-hidden"
+                >
+                  <Image src={image} alt={product?.name || ''} fill className="object-cover motion-base" />
+                </Link>
+                <div className="p-5">
+                  <h3 className="font-display text-lg font-semibold text-plum-900">
+                    <Link href={`/products/${product?.slug || ''}`} className="hover:text-plum-700 motion-base">
+                      {product?.name || 'Saved piece'}
+                    </Link>
+                  </h3>
+                  {product?.base_price != null && (
+                    <p className="mt-1 text-sm font-medium text-plum-700">
+                      ${Number(product.base_price).toFixed(2)}
+                    </p>
+                  )}
+                  <WishlistRemoveButton wishlistId={item.id} />
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      )}
     </div>
   );
 }

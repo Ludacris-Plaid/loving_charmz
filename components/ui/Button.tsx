@@ -2,9 +2,10 @@ import Link from 'next/link';
 import type { AnchorHTMLAttributes, ButtonHTMLAttributes, ReactNode } from 'react';
 
 type ButtonBaseProps = {
-  variant?: 'primary' | 'secondary' | 'outline' | 'ghost';
+  variant?: 'plum' | 'outline' | 'mint' | 'ghost' | 'danger';
   size?: 'sm' | 'md' | 'lg';
   children: ReactNode;
+  fullWidth?: boolean;
 };
 
 type ButtonAsButton = ButtonBaseProps &
@@ -15,31 +16,33 @@ type ButtonAsLink = ButtonBaseProps &
 export type ButtonProps = ButtonAsButton | ButtonAsLink;
 
 const variantClasses: Record<string, string> = {
-  primary:
-    'bg-brand-700 text-white shadow-[0_16px_40px_rgba(92,57,47,0.2)] hover:-translate-y-0.5 hover:bg-brand-500 hover:shadow-[0_22px_50px_rgba(92,57,47,0.24)] active:translate-y-0',
-  secondary:
-    'bg-brand-300 text-brand-700 hover:-translate-y-0.5 hover:bg-brand-400 active:translate-y-0',
-  outline:
-    'border border-brand-500 text-brand-700 hover:-translate-y-0.5 hover:bg-white hover:shadow-[0_16px_35px_rgba(92,57,47,0.1)] active:translate-y-0',
-  ghost: 'text-brand-700 hover:-translate-y-0.5 hover:bg-brand-100 active:translate-y-0',
+  plum: 'btn-plum border border-plum-700 disabled:opacity-50',
+  outline: 'btn-outline border border-plum-700 disabled:opacity-50',
+  mint: 'btn-mint border border-mint-300 disabled:opacity-50',
+  ghost: 'btn-ghost border border-transparent disabled:opacity-50',
+  danger: 'inline-flex items-center justify-center bg-red-50 text-red-700 border border-red-200 hover:bg-red-100 font-semibold rounded-pill transition motion-base disabled:opacity-50',
 };
 
 const sizeClasses: Record<string, string> = {
-  sm: 'px-3 py-1.5 text-xs',
+  sm: 'px-3.5 py-1.5 text-xs',
   md: 'px-5 py-2.5 text-sm',
-  lg: 'px-6 py-3 text-sm',
+  lg: 'px-7 py-3 text-sm',
 };
 
 export function Button({
-  variant = 'primary',
+  variant = 'plum',
   size = 'md',
+  fullWidth = false,
   children,
   className,
   ...props
 }: ButtonProps) {
-  const base =
-    'motion-transition inline-flex items-center justify-center rounded-full font-semibold will-change-transform focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500 disabled:cursor-not-allowed disabled:opacity-50';
-  const classes = [base, variantClasses[variant], sizeClasses[size], className]
+  const classes = [
+    variantClasses[variant],
+    sizeClasses[size],
+    fullWidth ? 'w-full' : '',
+    className,
+  ]
     .filter(Boolean)
     .join(' ');
 
@@ -52,7 +55,7 @@ export function Button({
     );
   }
 
-  const { ...buttonProps } = props as ButtonAsButton;
+  const buttonProps = props as ButtonAsButton;
   return (
     <button className={classes} {...buttonProps}>
       {children}

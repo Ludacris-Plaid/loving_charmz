@@ -1,10 +1,10 @@
-import type { ReactNode } from 'react';
+import type { HTMLAttributes, ReactNode } from 'react';
 
 type ContainerProps = {
   children: ReactNode;
   className?: string;
   size?: 'sm' | 'md' | 'lg' | 'xl';
-};
+} & HTMLAttributes<HTMLDivElement>;
 
 const sizeClasses: Record<string, string> = {
   sm: 'max-w-2xl',
@@ -13,11 +13,11 @@ const sizeClasses: Record<string, string> = {
   xl: 'max-w-7xl',
 };
 
-export function Container({ children, className, size = 'lg', ...rest }: ContainerProps & Record<string, unknown>) {
+export function Container({ children, className, size = 'lg', ...props }: ContainerProps) {
   return (
     <div
-      className={['mx-auto w-full', sizeClasses[size], className].filter(Boolean).join(' ')}
-      {...rest}
+      className={['mx-auto w-full px-6 sm:px-10 lg:px-16', sizeClasses[size], className].filter(Boolean).join(' ')}
+      {...props}
     >
       {children}
     </div>

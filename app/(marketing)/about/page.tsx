@@ -1,69 +1,65 @@
 import { Container } from '@/components/ui/Container';
+import { ScrollReveal } from '@/components/ui/ScrollReveal';
 
 export const metadata = {
-  title: 'About - Loving Charmz',
-  description: 'Learn about our story and mission.',
+  title: 'About — Loving Charmz',
+  description: 'Learn about Loving Charmz and the meaning behind the Bond Collection.',
 };
 
 export default function AboutPage() {
   return (
-    <div className="relative overflow-hidden">
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-40 right-20 w-[400px] h-[400px] bg-gold-500/5 rounded-full blur-3xl" />
-      </div>
-
-      <Container className="py-12 relative">
-        <div className="max-w-3xl mx-auto">
-          <span className="badge-gold inline-flex items-center">Our Story</span>
-          <h1 className="font-display text-4xl sm:text-5xl font-semibold text-obsidian-50 mt-6 mb-6">
+    <Container className="py-12 sm:py-16">
+      <div className="max-w-3xl mx-auto">
+        <ScrollReveal>
+          <span className="badge-mint">Our story</span>
+          <h1 className="section-title font-display text-4xl sm:text-5xl font-semibold text-plum-900 mt-4">
             Crafting meaningful connections
           </h1>
-          
-          <div className="space-y-6 text-obsidian-300 leading-relaxed">
+        </ScrollReveal>
+
+        <ScrollReveal delay={120}>
+          <div className="mt-8 space-y-6 text-ink-700 leading-relaxed">
             <p>
-              Loving Charmz was born from a simple truth: the bond between a person and their pet 
-              is one of the purest forms of love. It&apos;s a connection that transcends words, 
-              transcending time, and lasting forever.
+              Loving Charmz was born from a simple truth: the bond between a person and their pet is one of the purest forms of love. It is a connection that transcends words, transcends time, and lasts forever.
             </p>
             <p>
-              We believe that jewelry should be more than an accessory. It should be a vessel 
-              for memory, a tangible reminder of the bonds that shape our lives. Every piece we 
-              create is designed to carry your story — whether it honors a beloved companion who&apos;s 
-              with you now, or one who&apos;s forever in your heart.
+              We believe that jewelry should be more than an accessory. It should be a vessel for memory — a tangible reminder of the bonds that shape our lives. Every piece we create is designed to carry your story: whether it honors a beloved companion who is with you now, or one who is forever in your heart.
             </p>
           </div>
+        </ScrollReveal>
 
-          <div className="grid sm:grid-cols-3 gap-6 mt-12">
-            <div className="text-center p-6">
-              <div className="text-4xl mb-3">💎</div>
-              <h3 className="font-display text-lg font-semibold text-obsidian-50 mb-2">Handcrafted</h3>
-              <p className="text-obsidian-400 text-sm">Each piece is made with care by skilled artisans.</p>
+        <ScrollReveal delay={180}>
+          <div className="mt-12 grid sm:grid-cols-3 gap-6">
+            <div className="surface-card inner-highlight p-6 text-center hover-lift">
+              <span className="badge-mint mb-3">Handcrafted</span>
+              <h3 className="font-display text-lg font-semibold text-plum-900 mt-2">Made with care</h3>
+              <p className="text-sm text-ink-600 mt-2">Each piece is finished by hand, one at a time.</p>
             </div>
-            <div className="text-center p-6">
-              <div className="text-4xl mb-3">🌍</div>
-              <h3 className="font-display text-lg font-semibold text-obsidian-50 mb-2">Ethically Sourced</h3>
-              <p className="text-obsidian-400 text-sm">Materials come from responsible suppliers.</p>
+            <div className="surface-card inner-highlight p-6 text-center hover-lift">
+              <span className="badge-mint mb-3">Ethically sourced</span>
+              <h3 className="font-display text-lg font-semibold text-plum-900 mt-2">Responsibly made</h3>
+              <p className="text-sm text-ink-600 mt-2">Materials come from partners we trust and can name.</p>
             </div>
-            <div className="text-center p-6">
-              <div className="text-4xl mb-3">💝</div>
-              <h3 className="font-display text-lg font-semibold text-obsidian-50 mb-2">Made with Love</h3>
-              <p className="text-obsidian-400 text-sm">Every creation carries our passion for meaning.</p>
+            <div className="surface-card inner-highlight p-6 text-center hover-lift">
+              <span className="badge-mint mb-3">Made with love</span>
+              <h3 className="font-display text-lg font-semibold text-plum-900 mt-2">Carries meaning</h3>
+              <p className="text-sm text-ink-600 mt-2">Every creation carries our respect for what you love.</p>
             </div>
           </div>
+        </ScrollReveal>
 
-          <div className="mt-16 surface-premium rounded-card p-8 border border-obsidian-700/50">
-            <h2 className="font-display text-2xl font-semibold text-obsidian-50 mb-4">
-              Get in Touch
-            </h2>
-            <p className="text-obsidian-400 mb-6">
-              Questions? Custom order inquiries? We&apos;d love to hear from you.
+        <ScrollReveal delay={240}>
+          <div className="mt-16 surface-card inner-highlight p-8 text-center">
+            <h2 className="font-display text-2xl font-semibold text-plum-900">Get in touch</h2>
+            <p className="mt-2 text-ink-600">
+              Questions, custom order inquiries, or just want to say hello?
             </p>
-            <a href="mailto:hello@lovingcharmz.com" className="btn-gold px-8 py-3 rounded-pill text-sm font-semibold uppercase">
-              Contact Us
+            <a href="mailto:hello@lovingcharmz.com" className="btn-plum mt-6 px-8 py-3 text-sm">
+              Contact us
             </a>
           </div>
-        </div>
-      </Container>
-    </div>
+        </ScrollReveal>
+      </div>
+    </Container>
   );
 }

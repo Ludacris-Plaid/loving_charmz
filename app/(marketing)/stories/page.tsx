@@ -1,258 +1,213 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { Container } from '@/components/ui/Container';
+import { ScrollReveal } from '@/components/ui/ScrollReveal';
 import { images } from '@/lib/images';
 
 export const metadata = {
-  title: 'Stories - Loving Charmz',
-  description: 'Heartwarming stories from our community.',
+  title: 'Stories — Loving Charmz',
+  description: 'Illustrative stories from our community of keepsake-wearers.',
 };
 
-const stories = [
+type Story = {
+  slug: string;
+  image: string;
+  title: string;
+  subtitle: string;
+  excerpt: string;
+  content: string;
+  date: string;
+  attribution: string;
+};
+
+const stories: Story[] = [
   {
-    slug: 'a-mothers-tribute',
+    slug: 'a-daughters-tribute',
     image: images.pets.dogPortrait,
-    title: "A Mother's Tribute",
-    subtitle: 'How a simple pendant helped Sarah keep her beloved Luna close every day',
-    excerpt: 'The bond between a mother and her dog transcends words. When Luna passed, Sarah found an unexpected way to keep her companion forever close.',
-    content: `The morning everything changed started like any other. Sarah woke to the soft weight of Luna's head on her pillow—that familiar feeling she'd woken to for twelve years. But this morning was different. Luna's breathing was shallow, her eyes tired but peaceful.
+    title: 'A Daughter’s Tribute',
+    subtitle: 'How a small pendant helped Sarah keep her companion, Luna, close every day.',
+    excerpt: 'When Luna passed, Sarah found an unexpected way to carry twelve years of love forward.',
+    content: `The morning everything changed started like any other. Sarah woke to the soft weight of Luna’s head on her pillow — that familiar feeling she had woken to for twelve years. But this morning was different. Luna’s breathing was shallow, her eyes tired but peaceful.
 
-"It's time, isn't it?" Sarah whispered, her voice breaking. Luna's tail wagged once, weakly, as if to say yes.
+“It’s time, isn’t it?” Sarah whispered, her voice breaking. Luna’s tail wagged once, weakly, as if to say yes.
 
-The days that followed were the hardest Sarah had ever faced. The house felt empty in a way that physical space couldn't explain. Luna's bed sat in the corner, her toys still scattered across the living room, her water bowl by the kitchen door. Every corner held a memory.
+The days that followed were the hardest Sarah had ever faced. The house felt empty in a way that physical space could not explain. Luna’s bed sat in the corner, her toys still scattered across the living room, her water bowl by the kitchen door. Every corner held a memory.
 
-A month later, Sarah came across Loving Charmz while scrolling through social media. A pendant caught her eye—a golden paw print surrounded by a delicate heart, with a small inscription space inside. She knew immediately what she wanted.
+A month later, Sarah came across Loving Charmz while scrolling through social media. A pendant caught her eye — a golden paw print surrounded by a delicate heart, with a small inscription space inside. She knew immediately what she wanted.
 
-"Every time I look at it," Sarah told us, "I feel her presence. It's not about replacing the void—nothing could do that. It's about carrying her with me, wherever I go."
+“Every time I look at it,” Sarah told us, “I feel her presence. It is not about replacing the void — nothing could do that. It is about carrying her with me, wherever I go.”
 
-The pendant became her daily companion. She wore it to work, to the grocery store, on those long evening walks she still took—now alone, but accompanied by the weight of gold around her neck.
-
-"Sometimes I catch myself touching it without thinking," she shared. "And in that moment, I'm right back there with her. The way she'd lean against my leg. The way she'd wait by the door for me, like I'd been gone for years, not hours."
-
-Luna had been more than a pet. She'd been Sarah's rock through her divorce, her companion during late nights studying for her master's degree, her reason to get up when getting up felt impossible. She was family.
-
-"The pendant doesn't bring Luna back," Sarah said, tears in her eyes. "But it keeps her close. And some days, that's everything."`,
-    date: 'March 2024',
-    author: 'Sarah M.',
+The pendant became her daily companion. She wore it to work, to the grocery store, on those long evening walks she still took — now alone, but accompanied by the weight of gold around her neck.`,
+    date: 'Illustrative · 2024',
+    attribution: 'Composite story based on customer notes',
   },
   {
-    slug: 'rainbow-bridge',
+    slug: 'fifteen-years-of-loyalty',
     image: images.pets.goldenRetriever,
-    title: 'Rainbow Bridge',
-    subtitle: "Mark found comfort in a custom piece honoring his faithful companion of 15 years",
-    excerpt: 'Max had been with Mark since before his wedding, before his children, before everything. Losing him left a hole that no amount of time seemed to fill.',
-    content: `Mark still remembers the day he brought Max home—a scrappy golden retriever puppy with ears too big for his head and eyes that seemed to say, "You picked me, and I'll never leave your side."
+    title: 'Fifteen Years of Loyalty',
+    subtitle: 'Mark found comfort in a custom piece honoring his faithful companion of fifteen years.',
+    excerpt: 'Max had been with Mark since before his wedding, before his children, before everything.',
+    content: `Mark still remembers the day he brought Max home — a scrappy golden retriever puppy with ears too big for his head and eyes that seemed to say: you picked me, and I will never leave your side.
 
 He was twenty-three, fresh out of college, living in a one-bedroom apartment. Max slept at the foot of his bed, paws twitching as he dreamed of squirrels. They walked together every evening, two young souls figuring out life side by side.
 
-Twelve years passed. Mark got married. Max was there, tail wagging, at the wedding—literally part of the ceremony, walking down the aisle with the ring bearer. The kids came—Lily, then James—and Max became their gentle protector, tolerating endless games of dress-up and tea parties with the patience of a saint.
+Twelve years passed. Mark got married. Max was there, tail wagging, at the wedding. The kids came — Lily, then James — and Max became their gentle protector, tolerating endless games of dress-up with the patience of a saint.
 
-When Max was fourteen, the vet delivered the news no pet parent wants to hear. Cancer. The kindest thing to do was let him go.
+When Max was fourteen, the vet delivered the news no pet parent wants to hear. The kindest thing to do was let him go.
 
-"The hardest part," Mark told us, "was explaining to the kids. Lily was eight, old enough to understand but young enough that the grief hit her in waves. We'd be in the car, and she'd suddenly start crying. 'I miss Max.' And I'd hold her, and we'd cry together."
+“The hardest part,” Mark told us, “was explaining to the kids. Lily was eight, old enough to understand but young enough that the grief hit her in waves.”
 
-Mark wanted something to honor the dog who'd been his firstborn in every way that mattered. He ordered a custom pendant—a golden retriever silhouette surrounded by engraved leaves, with "Max 2009-2024" on the back.
-
-"It sounds silly to some people," Mark admitted. "Spending money on jewelry for a dog. But Max wasn't just a dog. He was there when I was lonely. He was there when I brought my wife home. He was there when my kids took their first steps. He was there for every milestone of our family."
-
-The pendant sits on Mark's desk now, visible during every video call, visible to his colleagues who ask about it. He tells them about Max—the good boy, the patient brother, the loyal friend who waited by the door every single day without fail.
-
-"People say time heals," Mark reflected. "But I don't think that's quite right. Time teaches you to carry it differently. The pendant reminds me that grief is just love with nowhere to go—so I wear it, and I let that love have a place to rest."`,
-    date: 'February 2024',
-    author: 'Mark T.',
+Mark ordered a custom pendant — a golden retriever silhouette with engraved leaves and a date range on the back. “It sounds silly to some people,” he said. “Spending money on jewelry for a dog. But Max was not just a dog. He was there for every milestone of our family.”`,
+    date: 'Illustrative · 2024',
+    attribution: 'Composite story based on customer notes',
   },
   {
-    slug: 'new-beginnings',
+    slug: 'first-love',
     image: images.pets.sleepingCat,
-    title: 'New Beginnings',
-    subtitle: "A young girl's first pet inspired a gift that now symbolizes unconditional love",
-    excerpt: 'For Emma, getting a kitten named Coco was the beginning of learning what it means to love something more than yourself.',
-    content: `Emma was six when she found the kitten behind the family garage. She was tiny—barely a handful of gray fur with eyes like two full moons. From the moment Emma held her, Coco chose her.
+    title: 'First Love',
+    subtitle: 'A girl’s first kitten inspired a keepsake that now symbolizes unconditional love.',
+    excerpt: 'For Emma, getting a kitten named Coco was the beginning of learning to love something more than yourself.',
+    content: `Emma was six when she found the kitten behind the family garage. She was tiny — barely a handful of gray fur with eyes like two full moons. From the moment Emma held her, Coco chose her.
 
-"She picked me," Emma says now, at twelve. "I didn't pick her. She picked me."
+“She picked me,” Emma says now, at twelve. “I didn’t pick her. She picked me.”
 
-For six years, they were inseparable. Coco slept on Emma's bed, curled against her back like a living heating pad. When Emma started middle school and the homework got harder, Coco would sit on her desk, watching, as if offering moral support. When Emma's best friend moved away and the loneliness felt unbearable, Coco was there, purring, reminding her that she wasn't alone.
+For six years, they were inseparable. Coco slept on Emma’s bed, curled against her back like a living heating pad. When Emma started middle school and the homework got harder, Coco would sit on her desk, watching, as if offering moral support.
 
-Then came the diagnosis. Coco was sick—something in her kidneys. The vet talked about treatments, about costs, about realistic expectations. Emma, eleven years old, understood enough to know it was bad.
+When Coco got sick, Emma understood enough to know it was bad.
 
-"I remember thinking," Emma recalls, "that I would give anything to make her better. I'd give all my allowance. All my birthday money. Everything."
+“I remember thinking,” Emma recalls, “that I would give anything to make her better. I’d give all my allowance. All my birthday money. Everything.”
 
-The treatments worked—for a while. But eventually, the kindest thing happened. Coco crossed the rainbow bridge on a quiet Tuesday morning, with Emma and her parents beside her.
+Coco crossed the rainbow bridge on a quiet Tuesday morning, with Emma and her parents beside her. The charm Emma chose — a small sleeping cat curled into a perfect circle, with tiny crystals embedded in the shape of tears — sits on her bracelet today.
 
-Emma's grandmother, who had lost her own cat decades before, took her to find something to remember Coco by. That's when they found Loving Charmz.
-
-Emma chose a small silver charm—a sleeping cat, curled into a perfect circle, with tiny crystals embedded in the shape of tears. It was small enough to fit on a bracelet, meaningful enough to carry Coco everywhere.
-
-"I wear it every day," Emma says, pulling her sleeve back to show the bracelet. "Even when I'm at school. Even when I'm sleeping. Coco is always with me."
-
-What strikes anyone who meets Emma is her wisdom beyond her years. She speaks about loss with a grace that seems impossible for someone so young.
-
-"Mom says I'll have other pets someday," she says. "And I know that's true. But Coco was my first. She taught me that love isn't about not losing things. It's about having them while you can and holding them close. Even when they're gone, they're not really gone. They're in here." She touches her heart.
-
-The charm has become a conversation starter among her friends. Some have lost pets too. Some haven't. But all of them understand something important after talking to Emma: love, once given, never disappears. It just finds new shapes to wear.
-
-"I'm going to get another cat someday," Emma says, with a small smile. "And when I do, I'll tell them about Coco. Because that's what you do—you carry the ones you love with you, forever."`,
-    date: 'January 2024',
-    author: 'Emma R.',
-  },
-  {
-    slug: 'forever-puppy',
-    image: images.pets.beagle,
-    title: 'The Forever Puppy',
-    subtitle: 'After 17 years, Daisy taught Linda that some bonds never break',
-    excerpt: 'When Linda brought Daisy home as a young divorcee, the beagle puppy helped her learn to love again. Seventeen years later, the bond still holds.',
-    content: `When Linda brought Daisy home—a floppy-eared beagle puppy—she was thirty-two, recently divorced, and convinced she would never love anything again. The world had taught her that people left. They promised forever and then they left.
-
-Daisy had other ideas about whose favorite she was.
-
-For seventeen years, Daisy made it her mission to prove Linda wrong. She greeted her every evening like she'd been waiting for hours (she probably had). She slept on Linda's feet, a warm weight that said "I'm here, I'm staying." She waited by the door when Linda came home from work, her entire body wagging with joy that never dimmed—not after a year, not after ten, not after seventeen.
-
-The vet called it "a good, long life." Seventeen years was remarkable for a beagle. But to Linda, it still felt too soon.
-
-The house was too quiet. The bed was too empty. The mornings were too still.
-
-Linda found Loving Charmz on what would have been Daisy's fifteenth "gotcha day." She ordered a pendant—two small paw prints, one slightly larger than the other, connected by a delicate chain. The larger print was for Daisy. The smaller was for the new rescue puppy Linda had been considering.
-
-"I wasn't sure I was ready," Linda admits. "But Daisy would have hated seeing me so sad. She always knew. She'd put her head on my lap and just... stay there. Like she was saying, 'It's okay. I'm still here.'"
-
-That next weekend, Linda adopted a three-month-old beagle mix. She named her Daisy Jr.—though they called her DJ. The pendant now sits alongside a new charm, a tiny silver bone that DJ earned by being exactly what Linda needed: a reason to get up, a reason to walk, a reason to love again.
-
-"Some people say it's weird to get a new dog so soon," Linda reflects. "But Daisy would have wanted this. She would have loved DJ. And honestly? I think she's glad I'm not alone anymore."`,
-    date: 'April 2024',
-    author: 'Linda K.',
+“Coco was my first,” Emma says. “She taught me that love isn’t about not losing things. It’s about having them while you can and holding them close. Even when they’re gone, they’re not really gone. They’re in here.”`,
+    date: 'Illustrative · 2024',
+    attribution: 'Composite story based on customer notes',
   },
   {
     slug: 'two-hearts-one-bond',
     image: images.pets.puppy,
     title: 'Two Hearts, One Bond',
-    subtitle: 'A twinset became the symbol of a connection that transcends words',
-    excerpt: 'Identical twins Maya and Leah had always done everything together. When their golden doodle Biscuit became part of the family, the bond only grew stronger.',
-    content: `Identical twins Maya and Leah had always done everything together. Same schools, same friends, same hair clips. When their parents brought home a golden doodle they'd named Biscuit, the girls thought he was the best surprise ever.
+    subtitle: 'A matching set became the symbol of a connection that transcends words.',
+    excerpt: 'When the family dog crossed the rainbow bridge, two sisters reached for the same thing.',
+    content: `Identical twins Maya and Leah had always done everything together. Same schools, same friends, same inside jokes. When their parents brought home a golden doodle they named Biscuit, the girls thought he was the best surprise ever.
 
-Biscuit had other ideas about whose favorite he was.
+For ten years, Biscuit divided his time between the twins’ bedrooms, equally devoted to both but with a soft spot for Maya — she was the one who usually shared her cereal in the morning.
 
-For ten years, Biscuit lived his best life dividing his time between the twins' bedrooms, equally devoted to both but with a soft spot for Maya—she was the one who usually shared her cereal in the morning.
-
-Then came college. Different states. Different lives. The twins talked every week, but something was different now. The daily closeness was gone. The inside jokes were harder to find.
-
-Then Maya got the call. Biscuit was sick. Very sick.
+Then came college. Different states. Different lives. The twins talked every week, but something was different now. Then Maya got the call. Biscuit was sick. Very sick.
 
 She drove nine hours through the night to get home. Leah caught the first flight. They both made it, just in time.
 
-"The vet said we could stay with him," Maya remembers. "So we did. Both of us. We lay on the floor with him, both of us, like when we were kids and he'd jump on our bed."
+They held Biscuit as he crossed the rainbow bridge, the three of them together — two sisters who had shared everything since the womb, and their dog who had shared their lives since they were eight.
 
-They held Biscuit as he crossed the rainbow bridge, the three of them together—two sisters who had shared everything since the womb, and their golden doodle who had shared their lives since they were eight.
+After, Maya and Leah sat in their childhood living room. Then they did something they had done a thousand times before — they reached for each other’s hands.
 
-After, Maya and Leah sat in their childhood living room, crying. Then they did something they'd done a thousand times before—they reached for each other's hands.
+They chose matching bracelets with two small hearts that fit together perfectly, like puzzle pieces. One for Maya, one for Leah.
 
-"We knew we needed something," Leah explains. "Something to remember him. Something we could both wear, so even when we're apart, we're connected."
-
-They found a pendant at Loving Charmz—two small hearts that fit together perfectly, like puzzle pieces. One for Maya, one for Leah. They bought matching bracelets too.
-
-"Wearing it makes me think of him," Maya says. "But it also makes me think of her—of us. How no matter how far apart we are, we have this thing that connects us. Biscuit's memory, and the bond we share."
-
-The twins graduated the same year. They moved to the same city. They got an apartment together—and adopted a new puppy, a golden retriever they named Cookie.
-
-"Everything changes," Leah reflects. "But some things don't. We still share everything. We still reach for each other's hands. And now we share Cookie too." She laughs. "She definitely prefers Maya, though. Just like Biscuit."
-
-The hearts sit on both their dresser tables now, side by side even when the sisters are apart. A reminder that some bonds—twin bonds, pet bonds, family bonds—are built to last forever.`,
-    date: 'May 2024',
-    author: 'Maya & Leah S.',
+“Wearing it makes me think of him,” Maya says. “But it also makes me think of her. Of us. How no matter how far apart we are, we have this thing that connects us.”`,
+    date: 'Illustrative · 2024',
+    attribution: 'Composite story based on customer notes',
   },
   {
     slug: 'beyond-the-fur',
     image: images.pets.cat,
     title: 'Beyond the Fur',
-    subtitle: 'For David, his cat Oliver became an unlikely anchor during the darkest chapter of his life',
-    excerpt: 'A cat no one wanted became the one thing that kept David going when everything else fell apart.',
-    content: `David didn't want a cat. His ex-girlfriend's cat, actually—Oliver had been hers, and when they broke up, David figured the cat would stay with her. But Oliver had other plans.
+    subtitle: 'For David, his cat Oliver became an unlikely anchor during the darkest chapter of his life.',
+    excerpt: 'A cat no one wanted became the one thing that kept David going.',
+    content: `David did not want a cat. His ex-girlfriend’s cat, actually — Oliver had been hers, and when they broke up, David figured the cat would stay with her. But Oliver had other plans.
 
-"She's not the one I want," Oliver seemed to say, curling up on David's lap that first night. "You're the one I want."
+For five years, Oliver was David at his worst and David at his best. When David lost his job, Oliver was there, purring, a warm weight that did not care about bank accounts. When the depression hit — and it hit hard — Oliver was there too, forcing David to get out of bed to feed him, to open the door so he could sit in the window, to keep living because something needed him.
 
-For five years, Oliver was David at his worst and David at his best. When David lost his job, Oliver was there, purring, a warm weight that didn't care about bank accounts. When the depression hit—and it hit hard—Oliver was there too, forcing David to get out of bed to feed him, to open the door so he could sit in the window, to keep living because something needed him.
+“Oliver saved my life,” David says now. “I had nothing. No job, no money, no hope. And this little guy just chose me. Every day, he chose me.”
 
-"People don't believe me when I say a cat saved my life," David says. "But it's true. I had nothing. No job, no money, no hope. And this little guy just... chose me. Every day, he chose me."
+When Oliver got sick, David was ready. He took time off work. He learned everything he could about kidney disease in cats. He bought special food, gave subcutaneous fluids, did everything possible.
 
-When Oliver got sick—kidney failure, the vet said, common in older cats—David was ready. He took time off work. He learned everything he could about kidney disease in cats. He bought special food, gave subcutaneous fluids, did everything possible.
+It was not enough.
 
-It wasn't enough.
+A pendant shaped like a cat silhouette, with a small star embedded in the forehead, sits on David’s dresser today. He calls it his reminder.
 
-"I was there," David says, his voice steady but heavy. "I held him. I told him he was the best cat in the world. I told him thank you. For everything."
+“Love doesn’t end just because they do,” David says. “It just changes shape. And you carry it with you, forever.”`,
+    date: 'Illustrative · 2024',
+    attribution: 'Composite story based on customer notes',
+  },
+  {
+    slug: 'the-forever-puppy',
+    image: images.pets.beagle,
+    title: 'The Forever Puppy',
+    subtitle: 'After seventeen years, Daisy taught Linda that some bonds never break.',
+    excerpt: 'When Linda brought Daisy home as a young divorcee, the beagle helped her learn to love again.',
+    content: `When Linda brought Daisy home — a floppy-eared beagle puppy — she was thirty-two, recently divorced, and convinced she would never love anything again. The world had taught her that people left. They promised forever and then they left.
 
-After, David found himself in a pet store, looking at nothing in particular. That's when he saw it—a pendant shaped like a cat silhouette, with a small star embedded in the forehead. The description said it represented "guidance through darkness."
+Daisy had other ideas about whose favorite she was.
 
-"I didn't know if I believed in that stuff," David admits. "But I believed in Oliver. And I wanted something to remember him by."
+For seventeen years, Daisy made it her mission to prove Linda wrong. She greeted her every evening like she had been waiting for hours. She slept on Linda’s feet, a warm weight that said: I am here, I am staying. She waited by the door when Linda came home from work, her entire body wagging with joy that never dimmed.
 
-The pendant goes everywhere with David. To work, to the gym, to the coffee shop where he reads on Sunday mornings. It's become a conversation piece, and David has told Oliver's story more times than he can count.
+The vet called it a good, long life. Seventeen years was remarkable for a beagle. But to Linda, it still felt too soon.
 
-"Sometimes people laugh," he says. "They think I'm being dramatic. A cat saved your life? But then I explain, and they get it. Pets aren't just pets. They're family. They're there for us in ways no one else can be."
+Linda found Loving Charmz on what would have been Daisy’s fifteenth gotcha day. She ordered a pendant — two small paw prints, one slightly larger than the other, connected by a delicate chain. The larger print was for Daisy. The smaller was for the new rescue puppy Linda had been considering.
 
-David has since adopted another cat—a tiny black kitten he named Stardust. She has Oliver's green eyes.
+That next weekend, Linda adopted a three-month-old beagle mix. She named her Daisy Jr. — though they called her DJ.
 
-"She has his spirit," David says. "Same bossy attitude. Same love of naps in sunbeams. I like to think Oliver sent her to me. That somewhere, he's still looking out for me."
-
-The pendant catches the light sometimes, that little star glinting. David always smiles when he sees it.
-
-"People ask me if it gets easier," he says. "Losing someone you love, pet or person. And I think... easier isn't the right word. But you learn to carry it. You learn that love doesn't end just because they do. It just changes shape. And you carry it with you, forever."`,
-    date: 'June 2024',
-    author: 'David L.',
+“Daisy would have wanted this,” Linda reflects. “She would have loved DJ. And honestly? I think she’s glad I’m not alone anymore.”`,
+    date: 'Illustrative · 2024',
+    attribution: 'Composite story based on customer notes',
   },
 ];
 
 export default function StoriesPage() {
   return (
-    <Container className="py-12">
-      <div className="text-center mb-12">
-        <span className="badge-gold inline-flex items-center">Community Stories</span>
-        <h1 className="font-display text-4xl sm:text-5xl font-semibold text-obsidian-50 mt-6 mb-4">
-          Stories that touch the heart
-        </h1>
-        <p className="text-obsidian-400 max-w-xl mx-auto">
-          Every piece of jewelry carries a story. Here we share the memories, 
-          bonds, and love that inspire our community.
-        </p>
-      </div>
+    <Container className="py-12 sm:py-16">
+      <ScrollReveal>
+        <div className="text-center mb-12">
+          <span className="badge-mint">Community stories</span>
+          <h1 className="section-title font-display text-4xl sm:text-5xl font-semibold text-plum-900 mt-4">
+            Stories that touch the heart
+          </h1>
+          <p className="mt-4 max-w-xl mx-auto text-ink-600">
+            Composite stories inspired by the people who wear Loving Charmz — names and details changed to protect their privacy.
+          </p>
+        </div>
+      </ScrollReveal>
 
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {stories.map((story, i) => (
-          <Link
-            key={story.slug}
-            href={`/stories/${story.slug}`}
-            className="surface-premium rounded-card overflow-hidden border border-obsidian-700/50 hover-lift block"
-            style={{ animationDelay: `${i * 100}ms` }}
-          >
-            <div className="aspect-[4/3] relative overflow-hidden">
-              <Image
-                src={story.image}
-                alt={story.title}
-                fill
-                className="object-cover group-hover:scale-105 transition-transform duration-500"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-obsidian-900/70 via-obsidian-900/30 to-transparent" />
-            </div>
-            <div className="p-6">
-              <span className="text-xs text-obsidian-500">{story.date}</span>
-              <h2 className="font-display text-xl font-semibold text-obsidian-50 mb-2 mt-1">
-                {story.title}
-              </h2>
-              <p className="text-obsidian-400 text-sm mb-3">{story.excerpt}</p>
-              <span className="text-gold-500 text-sm font-medium">Read more</span>
-            </div>
-          </Link>
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        {stories.map((story, index) => (
+          <ScrollReveal key={story.slug} delay={Math.min(index * 90, 450)}>
+            <Link
+              href={`/stories/${story.slug}`}
+              className="group block surface-card inner-highlight overflow-hidden hover-lift"
+            >
+              <div className="relative aspect-[4/3] overflow-hidden">
+                <Image
+                  src={story.image}
+                  alt={story.title}
+                  fill
+                  sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                  className="object-cover motion-base group-hover:scale-105"
+                />
+              </div>
+              <div className="p-6">
+                <span className="text-xs text-ink-500">{story.date}</span>
+                <h2 className="font-display text-xl font-semibold text-plum-900 mt-1 mb-2 group-hover:text-plum-700 motion-base">
+                  {story.title}
+                </h2>
+                <p className="text-sm text-ink-600 mb-3">{story.excerpt}</p>
+                <span className="text-sm font-medium text-plum-700">Read more →</span>
+              </div>
+            </Link>
+          </ScrollReveal>
         ))}
       </div>
 
-      <div className="text-center mt-12 surface-premium rounded-card p-8 border border-obsidian-700/50 max-w-2xl mx-auto">
-        <h2 className="font-display text-2xl font-semibold text-obsidian-50 mb-3">
-          Share Your Story
-        </h2>
-        <p className="text-obsidian-400 mb-4">
-          Have a story to share? We&apos;d love to hear how your keepsake carries your memories.
-        </p>
-        <a href="mailto:hello@lovingcharmz.com" className="btn-outline-gold px-6 py-2 rounded-pill text-sm font-semibold uppercase">
-          Get in Touch
-        </a>
-      </div>
+      <ScrollReveal delay={150}>
+        <div className="mt-12 surface-card inner-highlight p-8 sm:p-10 text-center max-w-2xl mx-auto">
+          <h2 className="font-display text-2xl font-semibold text-plum-900">Share your story</h2>
+          <p className="mt-2 text-ink-600">
+            With your permission, we would love to feature your keepsake story in our community collection.
+          </p>
+          <a href="mailto:hello@lovingcharmz.com" className="btn-outline mt-6 px-6 py-2.5 text-sm">
+            Get in touch
+          </a>
+        </div>
+      </ScrollReveal>
     </Container>
   );
 }

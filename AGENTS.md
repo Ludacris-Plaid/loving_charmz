@@ -2,11 +2,15 @@
 
 ## Project state
 
-Early build — **Phases 1–2 done** (design system + Supabase infra with auth), **Phases 3–8 not implemented**. Most routes, components, data layers, and admin features do not exist yet. See `PLAN.md` for the 8-phase roadmap.
+- **Phase 1 done**: design system (TailwindCSS 4, brand tokens, motion, glass, aurora, conic-ring, text-shimmer, ken-burns, etc. in `app/globals.css`)
+- **Phase 2 done**: Supabase auth + RLS + storage (migrations 00001, 00002, 00003 — 00002 and 00003 NOT applied to running DB, pending DB password)
+- **Phase 3 done**: storefront (home, shop, collections, products, custom-orders, cart, checkout, stories, about, login, signup, account)
+- **Phase 4 in progress**: admin dashboard, analytics, products, collections, inventory, orders, customers, personalization, discounts, content — all admin CRUD pages now exist
+- **Phase 4 — Analytics**: advanced adjustable analytics dashboard at `/admin/analytics` (8 tabs, drag-to-reorder widgets, date range + compare + granularity + filters + saved views + CSV export, inline status changes, inline stock adjust, inline discount toggle, chart annotations)
 
 ## Stack
 
-Next.js 16 App Router | React 19 | TypeScript 6 strict | TailwindCSS 4 | Supabase (auth, PostgreSQL, storage) | Vitest 4 + testing-library | Playwright | ESLint (core-web-vitals)
+Next.js 16 App Router | React 19 | TypeScript 6 strict | TailwindCSS 4 | Supabase (auth, PostgreSQL, storage) | Vitest 4 + testing-library | Playwright | ESLint (core-web-vitals) | dnd-kit | date-fns | @supabase/ssr | @supabase/supabase-js 2.x
 
 ## Key commands (run in order before committing)
 
@@ -23,6 +27,7 @@ npm run lint && npm run typecheck && npm run test
 | `npm run test` | Vitest unit/integration tests |
 | `npm run test:watch` | Vitest watch mode |
 | `npm run test:e2e` | Playwright E2E tests |
+| `npm run db:seed` | Idempotent seed of 120 orders + 12 customers + wishlist + custom + discount + annotation demo data |
 
 ## Path alias
 
@@ -78,16 +83,9 @@ Requires Docker. Local Supabase API runs on `http://127.0.0.1:54321`.
 
 ## What does NOT exist yet (agent must not assume)
 
-- Shop pages (`/shop`, `/products/[slug]`, `/collections/[slug]`)
-- Cart and checkout
-- Customer account pages (profile, orders, wishlist — only layout shells exist)
-- Public profile pages
-- Custom/personalization order flow
-- Admin CRUD pages (products, collections, inventory, orders, etc.)
 - API routes and webhooks
 - E2E tests
 - Integration tests (only unit tests exist)
-- `components/shop/` directory is empty
 
 ## Docs hierarchy
 
@@ -95,3 +93,19 @@ Requires Docker. Local Supabase API runs on `http://127.0.0.1:54321`.
 - `SPEC.md` — full specification (scope, code style, testing strategy, boundaries)
 - `design-brief.md` — visual direction, brand identity, animation specs
 - `init.md` — initial state overview (stale — prefer `PLAN.md` and `SPEC.md`)
+
+## Analytics dashboard (`/admin/analytics`)
+
+- **Entry point**: `app/admin/analytics/page.tsx` (server) → `components/admin/analytics/AnalyticsShell.tsx` (client) → tab content.
+- **8 tabs**: Overview, Revenue, Products, Inventory, Customers, Discounts, Operations, Custom orders. Tab list in `components/admin/analytics/tabs.ts` (server-importable).
+- **Server data**: `lib/admin/analytics/queries.ts::getAnalyticsSnapshot(filters)` — fetches 12 tables in parallel via admin client, applies filters, computes 25+ aggregations (KPIs, time series, top-N, cohort, heatmap, inventory, pipeline, action items).
+- **URL state**: `lib/admin/analytics/urlState.ts` — all filter state lives in `?p=…&g=…&c=…&col=…&prd=…&st=…&ps=…&w=…&tab=…`. Decoded/encoded on server, pushed via `router.replace` (no scroll).
+- **Manipulation controls**: `DateRangePicker` (7d/30d/90d/YTD/custom + day/week/month granularity), `CompareToggle` (previous-period line + delta%), `FilterChips` (collections, products, order status, payment status), `WidgetVisibilityMenu` (28 widgets across 8 tabs), `SavedViewsMenu` (localStorage), `ExportButton` (CSV per widget).
+- **Drag-to-reorder**: `dnd-kit/core` + `@dnd-kit/sortable` + `rectSortingStrategy`. `SortableWidget` wraps each card. Order persisted via `widgets=…` URL param. `PointerSensor` with 4px activation distance.
+- **Inline actions**: `InlineOrderStatusMenu`, `InlinePaymentStatusMenu` (via the same component), `InlineStockAdjust`, `InlineDiscountToggle`, `AnnotationDialog` — all server actions in `lib/admin/analytics/actions.ts`, admin-gated, revalidatePath on success.
+- **Hand-rolled SVG charts** in `components/admin/analytics/charts/`: `Sparkline` (for KPI cards), `AreaChart` (revenue/orders with previous-period dashed line + annotations), `BarChart` (vertical/horizontal, optional previous bar), `DonutChart` (clickable, hover-highlights), `Heatmap` (7×24 day×hour), `FunnelChart` (with step conversion %), `KpiCard` (with sparkline + delta%).
+- **Chart annotations** (notes pinned to specific dates on the revenue chart) require migration `00005_analytics_annotations.sql`. Apply with `supabase db push`.
+- **Demo data**: `npm run db:seed` populates 120 orders over 6 months, 12 customers, 10 wishlists, 6 custom requests, 3 discounts, 3 chart annotations. Idempotent (cleans prior seed by `metadata->>seed_tag = 'analytics-seed'` marker).
+- **Tests**: 75 unit tests in `tests/unit/admin/analytics/` for `aggregate`, `format`, `csv`, `urlState`. Total: 156/156 unit tests pass.
+- **CRITICAL — `'use client'` component gotcha**: A `'use client'` component's `children` prop MUST be rendered JSX, not a render-prop function. Server-to-client functions-as-children error: `Functions are not valid as a child of Client Components`. To pass dynamic data into a client component, render the content inside the client component and select via prop (e.g. `tab` id), not via a function-as-children pattern. Constants exported from `'use client'` files (e.g. `ANALYTICS_TABS`) become client-reference proxies when imported into server components — define them in a server-importable module instead.
+- **Turbopack stale-cache trap**: When server-component code that passes render-prop functions is edited, the dev server can serve stale compiled chunks. Symptoms: runtime error matches the OLD code. Fix: `pkill -9 -f "next dev" && rm -rf .next && npm run dev`. Hit repeatedly in this session — always do a hard restart when changing the analytics shell structure.

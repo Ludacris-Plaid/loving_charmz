@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { Input } from '@/components/ui/Input';
 
@@ -18,10 +19,10 @@ describe('Input', () => {
     expect(screen.getByText('Email is required')).toBeInTheDocument();
   });
 
-  it('applies error styling when error is present', () => {
+  it('marks the input as invalid when error is present', () => {
     render(<Input label="Email" error="Invalid email" />);
     const input = screen.getByLabelText('Email');
-    expect(input.className).toContain('border-red-400');
+    expect(input.getAttribute('aria-invalid')).toBe('true');
   });
 
   it('forwards additional props to the input', () => {

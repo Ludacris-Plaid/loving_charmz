@@ -7,37 +7,36 @@ type AdminGuardProps = {
   children: ReactNode;
 };
 
+export type AdminSession = {
+  userId: string;
+  email: string | null;
+  isAdmin: boolean;
+};
+
 export async function AdminGuard({ children }: AdminGuardProps) {
   const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  // If no user, redirect to login
   if (!user) {
-    redirect('/login');
+    redirect('/login?next=/admin');
   }
 
-  // Use admin client (service_role) to bypass RLS
-  const adminClient = createAdminClient();
-  const { data: roles } = await adminClient
+  const admin = createAdminClient();
+  const { data: roles } = await admin
     .from('user_roles')
     .select('role')
     .eq('user_id', user.id)
     .maybeSingle();
 
-  // If not admin role, show access denied
   if (roles?.role !== 'admin') {
     return (
-      <div className="flex min-h-[50vh] flex-col items-center justify-center text-center p-8">
-        <h1 className="font-display text-2xl font-semibold text-obsidian-50">Access Denied</h1>
-        <p className="mt-2 text-sm text-obsidian-400">
-          You do not have permission to access the admin area.
+      <div className="flex min-h-[50vh] flex-col items-center justify-center text-center px-6">
+        <span className="badge-mint mb-4">Access Denied</span>
+        <h1 className="font-display text-3xl font-semibold text-plum-900">Admin area only</h1>
+        <p className="mt-2 max-w-md text-sm text-ink-600">
+          You are signed in, but your account does not have admin permissions. If this is a mistake, run the admin promotion SQL in your Supabase dashboard.
         </p>
-        <p className="mt-4 text-xs text-obsidian-500">
-          User ID: {user.id}
-        </p>
+        <a href="/account" className="btn-outline mt-6 px-5 py-2 text-xs">Back to my account</a>
       </div>
     );
   }
@@ -45,24 +44,21 @@ export async function AdminGuard({ children }: AdminGuardProps) {
   return <>{children}</>;
 }
 
-export async function getSession() {
+export async function getSession(): Promise<AdminSession | null> {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
+  const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
 
-  const adminClient = createAdminClient();
-  const { data: roles } = await adminClient
+  const admin = createAdminClient();
+  const { data: roles } = await admin
     .from('user_roles')
     .select('role')
     .eq('user_id', user.id)
-    .single();
+    .maybeSingle();
 
   return {
     userId: user.id,
-    email: user.email,
+    email: user.email ?? null,
     isAdmin: roles?.role === 'admin',
   };
 }

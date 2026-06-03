@@ -1,58 +1,27 @@
 'use client';
 
-import { useState } from 'react';
-import { addToCart } from '@/lib/supabase/queries/cart';
+import { useTransition } from 'react';
+import { addToCartAction } from '@/lib/cart/actions';
 import type { Product, ProductVariant } from '@/lib/supabase/types';
 
-interface Props {
+type Props = {
   product: Product;
   selectedVariant?: ProductVariant;
-}
+  isLoggedIn: boolean;
+};
 
-export function AddToCartButton({ product, selectedVariant }: Props) {
-  const [loading, setLoading] = useState(false);
-  const [added, setAdded] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+export function AddToCartButton({ product, selectedVariant, isLoggedIn }: Props) {
+  const [pending, startTransition] = useTransition();
 
-  const handleAddToCart = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      await addToCart(product.id, selectedVariant?.id, 1);
-      setAdded(true);
-      setTimeout(() => setAdded(false), 2000);
-    } catch (err) {
-      setError('Please sign in to add items to cart');
-      console.error('Failed to add to cart:', err);
-    } finally {
-      setLoading(false);
-    }
+  const handleAdd = () => {
+    startTransition(async () => {
+      await addToCartAction(product.id, selectedVariant?.id || null, 1);
+    });
   };
 
   return (
-    <div className="space-y-3">
-      <button
-        onClick={handleAddToCart}
-        disabled={loading}
-        className="btn-gold w-full py-4 px-8 rounded-pill text-sm font-semibold uppercase tracking-wide disabled:opacity-50"
-      >
-        {loading ? (
-          <span className="flex items-center justify-center gap-2">
-            <span className="spinner-gold w-4 h-4" />
-            Adding...
-          </span>
-        ) : added ? (
-          <span className="flex items-center justify-center gap-2">
-            <span>✓</span>
-            Added to Cart
-          </span>
-        ) : (
-          'Add to Cart'
-        )}
-      </button>
-      {error && (
-        <p className="text-rose-400 text-sm text-center">{error}</p>
-      )}
-    </div>
+    <button onClick={handleAdd} disabled={pending} className="btn-plum px-6 py-3 text-sm">
+      {pending ? 'Adding…' : isLoggedIn ? 'Add to cart' : 'Sign in to add'}
+    </button>
   );
 }
