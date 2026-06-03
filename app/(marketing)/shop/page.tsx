@@ -21,10 +21,10 @@ export default async function ShopPage() {
     <Container className="py-12 sm:py-16">
       <ScrollReveal>
         <div className="text-center mb-12">
-          <span className="badge-mint">The Collection</span>
-          <h1 className="section-title font-display text-4xl sm:text-5xl font-semibold text-plum-900 mt-4">
+          <h1 className="section-title font-display text-4xl sm:text-5xl font-semibold text-plum-900">
             Every piece tells a story
           </h1>
+          <span className="badge-mint mt-4">The Collection</span>
           <p className="mt-4 max-w-xl mx-auto text-ink-600">
             Symbolic jewelry designed to honor the bond you share with your pet. Each piece is crafted with care, ready to carry your memories close.
           </p>
