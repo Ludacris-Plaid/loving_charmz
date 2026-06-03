@@ -49,6 +49,29 @@ export default async function AdminDashboardPage() {
         ))}
       </div>
 
+      {stats.actionItems.length > 0 && (
+        <section className="surface-card p-6">
+          <h2 className="font-display text-lg font-semibold text-plum-900 mb-4">Action items</h2>
+          <div className="analytics-action-list">
+            {stats.actionItems.map((a) => (
+              <a key={a.id} className="analytics-action" href={a.href}>
+                <span className={`analytics-action-severity ${a.severity}`}>
+                  {a.severity === 'critical' ? '!' : a.severity === 'warning' ? '⚠' : 'i'}
+                </span>
+                <div className="analytics-action-body">
+                  <div className="analytics-action-title">
+                    {a.title}
+                    {a.count !== undefined && <span className="analytics-action-count">{a.count}</span>}
+                  </div>
+                  <div className="analytics-action-desc">{a.description}</div>
+                </div>
+                <span className="analytics-action-arrow" aria-hidden>→</span>
+              </a>
+            ))}
+          </div>
+        </section>
+      )}
+
       <div className="grid lg:grid-cols-2 gap-6">
         <section className="surface-card p-6">
           <h2 className="font-display text-lg font-semibold text-plum-900 mb-4">Quick actions</h2>
