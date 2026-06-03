@@ -3,7 +3,7 @@ import { ScrollReveal } from '@/components/ui/ScrollReveal';
 
 export const metadata = {
   title: 'About — Loving Charmz',
-  description: 'Learn about Loving Charmz and the meaning behind the Bond Collection.',
+  description: 'Learn about Loving Charmz and the meaning behind our keepsake jewelry.',
 };
 
 export default function AboutPage() {

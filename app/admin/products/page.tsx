@@ -16,7 +16,7 @@ export default async function AdminProductsPage() {
         <div>
           <span className="badge-plum">Catalog</span>
           <h1 className="font-display text-3xl font-semibold text-plum-900 mt-3">Products</h1>
-          <p className="text-sm text-ink-600 mt-1">Add, edit, and curate the Bond Collection.</p>
+          <p className="text-sm text-ink-600 mt-1">Add, edit, and curate your collections.</p>
         </div>
       </div>
 

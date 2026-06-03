@@ -5,6 +5,8 @@ import { ScrollReveal } from '@/components/ui/ScrollReveal';
 import { getCollections } from '@/lib/supabase/queries/collections';
 import { images } from '@/lib/images';
 
+import { MagneticWrap } from '@/components/ui/MagneticWrap';
+
 export const metadata = {
   title: 'Collections — Loving Charmz',
   description: 'Browse our jewelry collections.',
@@ -38,7 +40,7 @@ export default async function CollectionsPage() {
                 <article className="surface-card inner-highlight overflow-hidden hover-lift">
                   <div className="relative aspect-[2/1] overflow-hidden">
                     <Image
-                      src={images.shop[index % images.shop.length]}
+                      src={collection.image_url || images.shop[index % images.shop.length]}
                       alt={collection.name}
                       fill
                       sizes="(max-width: 768px) 100vw, 50vw"
@@ -62,6 +64,18 @@ export default async function CollectionsPage() {
         <ScrollReveal delay={120}>
           <div className="text-center py-16 surface-soft">
             <span className="badge-mint mb-3">New collections on the way</span>
+          </div>
+        </ScrollReveal>
+      )}
+
+      {collections.length > 0 && (
+        <ScrollReveal delay={200}>
+          <div className="mt-12 text-center">
+            <MagneticWrap strength={6}>
+              <Link href="/shop" className="btn-plum px-8 py-3 text-sm">
+                Browse all pieces
+              </Link>
+            </MagneticWrap>
           </div>
         </ScrollReveal>
       )}

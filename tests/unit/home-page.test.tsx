@@ -15,13 +15,13 @@ describe('HomePage', () => {
     const jsx = await HomePage();
     render(jsx);
 
-    expect(screen.getByRole('heading', { name: /modern/i })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: /keepsake/i })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: /what matters/i })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /symbolic/i })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /jewelry/i })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /bond.*lasts/i })).toBeInTheDocument();
 
-    expect(screen.getByRole('link', { name: /shop the bond collection/i })).toHaveAttribute('href', '/shop');
+    expect(screen.getByRole('link', { name: /explore collections/i })).toHaveAttribute('href', '/collections');
 
-    expect(screen.getByRole('link', { name: /create a custom keepsake/i })).toHaveAttribute('href', '/custom-orders');
+    expect(screen.getByRole('link', { name: /browse all pieces/i })).toHaveAttribute('href', '/shop');
   });
 
   it('renders the three core brand themes', async () => {
@@ -46,7 +46,7 @@ describe('HomePage', () => {
     render(jsx);
 
     await waitFor(() => {
-      expect(screen.getByText('Bond Collection · 4 pieces')).toBeInTheDocument();
+      expect(screen.getByText('Three collections · Eight keepsake pieces')).toBeInTheDocument();
     });
   });
 });

@@ -13,7 +13,7 @@ const cards = [
   { href: '/account/wishlist', title: 'Wishlist', body: 'Pieces you have saved to revisit later.', badge: 'View saved' },
   { href: '/account/orders', title: 'Orders', body: 'Your order history and tracking information.', badge: 'See orders' },
   { href: '/account/custom-orders', title: 'Custom orders', body: 'Personalized keepsake requests and their status.', badge: 'View requests' },
-  { href: '/shop', title: 'Continue shopping', body: 'Browse the Bond Collection and new arrivals.', badge: 'Shop' },
+  { href: '/shop', title: 'Continue shopping', body: 'Browse all collections and new arrivals.', badge: 'Shop' },
   { href: '/account/settings', title: 'Settings', body: 'Email preferences, password, and account actions.', badge: 'Manage' },
 ];
 

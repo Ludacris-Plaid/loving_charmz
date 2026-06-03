@@ -24,6 +24,7 @@ export async function Header() {
 
         <nav className="hidden items-center gap-8 md:flex">
           <Link href="/shop" className="nav-underline text-sm font-medium text-ink-700 hover:text-plum-700 motion-base">Shop</Link>
+          <Link href="/collections" className="nav-underline text-sm font-medium text-ink-700 hover:text-plum-700 motion-base">Collections</Link>
           <Link href="/stories" className="nav-underline text-sm font-medium text-ink-700 hover:text-plum-700 motion-base">Stories</Link>
           <Link href="/about" className="nav-underline text-sm font-medium text-ink-700 hover:text-plum-700 motion-base">About</Link>
           <Link href="/custom-orders" className="nav-underline text-sm font-medium text-ink-700 hover:text-plum-700 motion-base">Custom Orders</Link>

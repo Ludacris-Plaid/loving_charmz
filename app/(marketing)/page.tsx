@@ -40,42 +40,38 @@ export default async function HomePage() {
       <Container className="relative py-20 sm:py-28 lg:py-32">
         <div className="space-y-24 sm:space-y-32">
           <section className="text-center relative">
-            <span className="badge-mint mx-auto">Bond Collection · 4 pieces</span>
+            <span className="badge-mint mx-auto">Three collections · Eight keepsake pieces</span>
 
             <h1 className="font-display text-5xl sm:text-6xl lg:text-7xl font-semibold leading-[1.05] tracking-tight mt-8">
               <span className="block">
-                <span className="hero-word hero-word-1 text-plum-900">Modern</span>{' '}
-                <span className="hero-word hero-word-2 plum-gradient-text">keepsake</span>
+                <span className="hero-word hero-word-1 text-plum-900">Symbolic</span>{' '}
+                <span className="hero-word hero-word-2 plum-gradient-text">jewelry</span>
               </span>
               <span className="block mt-2">
-                <span className="hero-word hero-word-3 text-plum-900">jewelry</span>
+                <span className="hero-word hero-word-3 text-plum-900">for the</span>{' '}
+                <span className="hero-word hero-word-4 text-plum-900">bond</span>
               </span>
               <span className="block mt-2">
-                <span className="hero-word hero-word-4 text-ink-700">for the women who</span>{' '}
-                <span className="hero-word hero-word-5 plum-gradient-text">carry</span>
-              </span>
-              <span className="block">
-                <span className="hero-word hero-word-6">
-                  <span className="text-shimmer">what matters.</span>
-                </span>
+                <span className="hero-word hero-word-5 text-ink-700">that</span>{' '}
+                <span className="hero-word hero-word-6 plum-gradient-text">lasts</span>
               </span>
             </h1>
 
             <div className="hero-content mt-10 flex flex-col sm:flex-row items-center justify-center gap-3">
               <MagneticWrap strength={6}>
-                <Link href="/shop" className="btn-plum px-8 py-3.5 text-sm">
-                  Shop the Bond Collection
+                <Link href="/collections" className="btn-plum px-8 py-3.5 text-sm">
+                  Explore collections
                 </Link>
               </MagneticWrap>
               <MagneticWrap strength={4}>
-                <Link href="/custom-orders" className="btn-outline px-8 py-3.5 text-sm">
-                  Create a custom keepsake
+                <Link href="/shop" className="btn-outline px-8 py-3.5 text-sm">
+                  Browse all pieces
                 </Link>
               </MagneticWrap>
             </div>
 
             <p className="hero-content mt-8 text-center text-xs uppercase tracking-[0.3em] text-ink-500">
-              4 pieces · Each designed to represent connection · Starting at $55
+              3 collections · 8 pieces · Starting at $165
             </p>
           </section>
 
@@ -96,7 +92,7 @@ export default async function HomePage() {
                   </div>
                   <MagneticWrap strength={6}>
                     <Link href="/shop" className="inline-flex items-center gap-2 text-sm font-medium text-plum-700 hover:text-plum-900 motion-base">
-                      See the full collection
+                      View all pieces
                       <span aria-hidden>→</span>
                     </Link>
                   </MagneticWrap>
@@ -113,7 +109,7 @@ export default async function HomePage() {
                       priority
                     />
                   </div>
-                  <div className="absolute -bottom-3 -right-3 badge-mint float-anim shadow-pop">Bond Collection</div>
+                  <div className="absolute -bottom-3 -right-3 badge-mint float-anim shadow-pop">Best seller</div>
                 </div>
               </div>
             </div>
@@ -166,7 +162,7 @@ export default async function HomePage() {
                     >
                       <div className="relative aspect-square overflow-hidden">
                         <Image
-                          src={images.shop[i % images.shop.length]}
+                          src={product.images?.[0] || images.shop[i % images.shop.length]}
                           alt={product.name}
                           fill
                           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
@@ -201,7 +197,7 @@ export default async function HomePage() {
                 Emotional warmth with <span className="plum-gradient-text">editorial precision</span>.
               </h2>
               <p className="mt-4 text-ink-600 max-w-xl mx-auto leading-relaxed">
-                The Bond Collection is designed to feel intimate and modern at once — soft enough for memory, refined enough for everyday wear, and calm in the way it moves.
+                Every piece is designed to feel intimate and modern at once — soft enough for memory, refined enough for everyday wear, and calm in the way it moves.
               </p>
               <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
                 <MagneticWrap strength={6}>
@@ -218,7 +214,7 @@ export default async function HomePage() {
             <p className="text-sm text-ink-600">
               Ready to carry what matters?{' '}
               <Link href="/shop" className="font-medium text-plum-700 hover:text-plum-900 motion-base">
-                Explore the collection →
+                Shop all pieces →
               </Link>
             </p>
           </section>

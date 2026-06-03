@@ -114,7 +114,7 @@ export default async function CustomOrdersPage() {
         <ScrollReveal delay={280}>
           <div className="mt-16 max-w-3xl mx-auto">
             <h2 className="font-display text-2xl font-semibold text-plum-900 text-center mb-8">
-              Inspiration from the Bond Collection
+              Inspiration from our collections
             </h2>
             <div className="grid grid-cols-3 gap-4">
               {images.shop.slice(0, 3).map((src, i) => (

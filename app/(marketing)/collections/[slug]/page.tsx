@@ -58,7 +58,7 @@ export default async function CollectionPage({ params }: Props) {
               <article className="surface-card overflow-hidden hover-lift">
                 <div className="relative aspect-square overflow-hidden">
                   <Image
-                    src={images.shop[index % images.shop.length]}
+                    src={product.images?.[0] || images.shop[index % images.shop.length]}
                     alt={product.name}
                     fill
                     sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
