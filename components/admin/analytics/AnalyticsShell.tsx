@@ -54,22 +54,28 @@ export function AnalyticsShell({ snapshot, tab }: AnalyticsShellProps) {
     (next: AnalyticsFilters) => {
       const params = encodeFilters(next);
       const qs = params.toString();
+      const current = searchParams.toString();
+      if (qs === current) return;
       startTransition(() => {
         router.replace(`${pathname}${qs ? `?${qs}` : ''}`, { scroll: false });
       });
     },
-    [pathname, router],
+    [pathname, router, searchParams],
   );
 
   const onTabChange = useCallback(
     (next: AnalyticsTabId) => {
+      if (next === tab) return;
       const params = new URLSearchParams(searchParams.toString());
       params.set('tab', next);
+      const qs = params.toString();
+      const current = searchParams.toString();
+      if (qs === current) return;
       startTransition(() => {
-        router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+        router.replace(`${pathname}?${qs}`, { scroll: false });
       });
     },
-    [pathname, router, searchParams],
+    [pathname, router, searchParams, tab],
   );
 
   const sensors = useSensors(

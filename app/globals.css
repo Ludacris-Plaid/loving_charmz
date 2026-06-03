@@ -1415,6 +1415,8 @@ header[data-site-header].scrolled {
   padding: 1rem;
   flex: 1;
   min-height: 0;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 .analytics-widget-footer {
   padding: 0.5rem 1rem;
