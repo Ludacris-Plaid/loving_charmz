@@ -17,16 +17,15 @@ export function NavigationProgress() {
   const lastPath = useRef<string>('');
 
   useEffect(() => {
-    const nextKey = `${pathname}?${searchParams?.toString() ?? ''}`;
-    if (lastPath.current === '' || lastPath.current === nextKey) {
-      lastPath.current = nextKey;
+    if (lastPath.current === '' || lastPath.current === pathname) {
+      lastPath.current = pathname;
       return;
     }
-    lastPath.current = nextKey;
+    lastPath.current = pathname;
     setPhase('done');
     if (doneTimer.current) clearTimeout(doneTimer.current);
     doneTimer.current = setTimeout(() => setPhase('idle'), DONE_RESET);
-  }, [pathname, searchParams]);
+  }, [pathname]);
 
   useEffect(() => {
     function onPointerDown(e: PointerEvent) {

@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
-import { useCallback, useMemo, useTransition } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useTransition } from 'react';
 import {
   DndContext,
   PointerSensor,
@@ -44,38 +44,43 @@ export function AnalyticsShell({ snapshot, tab }: AnalyticsShellProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
+  const spRef = useRef(searchParams);
+  useEffect(() => { spRef.current = searchParams; }, [searchParams]);
 
   const filters = useMemo<AnalyticsFilters>(
     () => decodeFilters(new URLSearchParams(searchParams.toString())),
     [searchParams],
   );
 
+  const filtersRef = useRef(filters);
+  useEffect(() => { filtersRef.current = filters; }, [filters]);
+
   const onFiltersChange = useCallback(
     (next: AnalyticsFilters) => {
       const params = encodeFilters(next);
       const qs = params.toString();
-      const current = searchParams.toString();
+      const current = spRef.current.toString();
       if (qs === current) return;
       startTransition(() => {
         router.replace(`${pathname}${qs ? `?${qs}` : ''}`, { scroll: false });
       });
     },
-    [pathname, router, searchParams],
+    [pathname, router],
   );
 
   const onTabChange = useCallback(
     (next: AnalyticsTabId) => {
       if (next === tab) return;
-      const params = new URLSearchParams(searchParams.toString());
+      const params = new URLSearchParams(spRef.current.toString());
       params.set('tab', next);
       const qs = params.toString();
-      const current = searchParams.toString();
+      const current = spRef.current.toString();
       if (qs === current) return;
       startTransition(() => {
         router.replace(`${pathname}?${qs}`, { scroll: false });
       });
     },
-    [pathname, router, searchParams, tab],
+    [pathname, router, tab],
   );
 
   const sensors = useSensors(
@@ -87,17 +92,17 @@ export function AnalyticsShell({ snapshot, tab }: AnalyticsShellProps) {
     (event: DragEndEvent) => {
       const { active, over } = event;
       if (!over || active.id === over.id) return;
-      const ids = filters.widgets as WidgetId[];
+      const ids = filtersRef.current.widgets as WidgetId[];
       const oldIndex = ids.indexOf(active.id as WidgetId);
       const newIndex = ids.indexOf(over.id as WidgetId);
       if (oldIndex < 0 || newIndex < 0) return;
       const next = arrayMove(ids, oldIndex, newIndex);
-      onFiltersChange(reorderWidgets(filters, next));
+      onFiltersChange(reorderWidgets(filtersRef.current, next));
     },
-    [filters, onFiltersChange],
+    [onFiltersChange],
   );
 
-  const visible = useCallback((id: WidgetId) => isWidgetVisible(filters, id), [filters]);
+  const visible = useCallback((id: WidgetId) => isWidgetVisible(filtersRef.current, id), []);
   const widgetIds = filters.widgets as WidgetId[];
 
   const tabContent = (() => {
