@@ -11,7 +11,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
-    "db:seed": "tsx scripts/seed-analytics.ts"
+    "db:seed": "tsx scripts/seed-analytics.ts",
+    "db:seed:products": "npx tsx scripts/seed-products.ts"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
