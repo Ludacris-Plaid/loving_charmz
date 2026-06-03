@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { getSession } from '@/components/admin/AdminGuard';
@@ -49,10 +50,29 @@ export default async function AccountDashboardPage() {
     <div className="space-y-8">
       <header className="surface-card p-6 sm:p-8">
         <span className="badge-mint">My account</span>
-        <h2 className="font-display text-2xl sm:text-3xl font-semibold text-plum-900 mt-3">
-          Hello, {greetingName}
-        </h2>
-        <p className="mt-1 text-sm text-ink-600">Manage your profile, wishlist, orders, and custom keepsakes.</p>
+        <div className="flex items-center gap-4 mt-4">
+          {profile?.avatar_url ? (
+            <div className="h-14 w-14 shrink-0 overflow-hidden rounded-full border-2 border-plum-200">
+              <Image
+                src={profile.avatar_url}
+                alt=""
+                width={56}
+                height={56}
+                className="object-cover h-full w-full"
+              />
+            </div>
+          ) : (
+            <div className="h-14 w-14 shrink-0 rounded-full bg-plum-100 text-plum-700 flex items-center justify-center text-lg font-semibold">
+              {greetingName.charAt(0).toUpperCase()}
+            </div>
+          )}
+          <div>
+            <h2 className="font-display text-2xl sm:text-3xl font-semibold text-plum-900">
+              Hello, {greetingName}
+            </h2>
+            <p className="mt-1 text-sm text-ink-600">Manage your profile, wishlist, orders, and custom keepsakes.</p>
+          </div>
+        </div>
         <dl className="mt-6 grid grid-cols-3 gap-3 text-center text-sm">
           <div className="surface-soft p-3">
             <dt className="text-xs uppercase tracking-wider text-ink-500">Cart</dt>

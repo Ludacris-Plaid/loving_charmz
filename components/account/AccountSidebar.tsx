@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import Link from 'next/link';
 import { getSession } from '@/components/admin/AdminGuard';
 import { createClient } from '@/lib/supabase/server';
@@ -28,9 +29,21 @@ export async function AccountSidebar() {
       <div className="sticky top-24 flex flex-col gap-4">
         {session && (
           <div className="glass p-4 flex items-center gap-3 rounded-md">
-            <div className="h-10 w-10 rounded-full bg-plum-100 text-plum-700 flex items-center justify-center text-sm font-semibold">
-              {(profile?.display_name || session.email || '?').charAt(0).toUpperCase()}
-            </div>
+            {profile?.avatar_url ? (
+              <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full border border-plum-200">
+                <Image
+                  src={profile.avatar_url}
+                  alt=""
+                  width={40}
+                  height={40}
+                  className="object-cover h-full w-full"
+                />
+              </div>
+            ) : (
+              <div className="h-10 w-10 shrink-0 rounded-full bg-plum-100 text-plum-700 flex items-center justify-center text-sm font-semibold">
+                {(profile?.display_name || session.email || '?').charAt(0).toUpperCase()}
+              </div>
+            )}
             <div className="min-w-0">
               <p className="text-sm font-medium text-plum-900 truncate">
                 {profile?.display_name || session.email}
