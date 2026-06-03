@@ -25,12 +25,6 @@ export default async function AdminLayout({ children }: { children: ReactNode })
               <span className="badge-plum">Admin</span>
             </div>
             <nav className="flex flex-wrap items-center gap-4 text-sm">
-              <Link href="/shop" className="font-medium text-ink-600 hover:text-plum-700 motion-base">
-                ← View storefront
-              </Link>
-              <Link href="/account" className="font-medium text-ink-600 hover:text-plum-700 motion-base">
-                My account
-              </Link>
               {session?.email && (
                 <span className="hidden text-xs text-ink-500 sm:inline">{session.email}</span>
               )}
