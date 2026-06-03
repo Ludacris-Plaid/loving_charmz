@@ -11,6 +11,7 @@ export type AdminSession = {
   userId: string;
   email: string | null;
   isAdmin: boolean;
+  avatarUrl: string | null;
 };
 
 export async function AdminGuard({ children }: AdminGuardProps) {
@@ -56,9 +57,16 @@ export async function getSession(): Promise<AdminSession | null> {
     .eq('user_id', user.id)
     .maybeSingle();
 
+  const { data: profile } = await admin
+    .from('profiles')
+    .select('avatar_url')
+    .eq('id', user.id)
+    .maybeSingle();
+
   return {
     userId: user.id,
     email: user.email ?? null,
     isAdmin: roles?.role === 'admin',
+    avatarUrl: profile?.avatar_url ?? null,
   };
 }

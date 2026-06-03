@@ -25,7 +25,7 @@ const COLOR_BG: Record<string, string> = {
 
 export function AnnotationDialog({ annotations }: AnnotationDialogProps) {
   const [open, setOpen] = useState(false);
-  const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
+  const [date, setDate] = useState('');
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
   const [color, setColor] = useState<'plum' | 'mint' | 'cream' | 'ink'>('plum');

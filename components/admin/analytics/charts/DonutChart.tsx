@@ -1,5 +1,6 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
 import { useId, useState } from 'react';
 
 type DonutSlice = {
@@ -41,6 +42,7 @@ export function DonutChart({
   onSelect,
   formatValue = (v) => v.toLocaleString(),
 }: DonutChartProps) {
+  const router = useRouter();
   const id = useId();
   const [hoverIdx, setHoverIdx] = useState<number | null>(null);
   const total = data.reduce((s, d) => s + d.value, 0);
@@ -86,7 +88,7 @@ export function DonutChart({
               onMouseLeave={() => setHoverIdx(null)}
               onClick={() => {
                 if (onSelect) onSelect(hoverIdx === i ? null : d.label);
-                else if (d.href) window.location.href = d.href;
+                else if (d.href) router.push(d.href);
               }}
               className="analytics-donut-slice"
               opacity={isActive ? 1 : 0.4}

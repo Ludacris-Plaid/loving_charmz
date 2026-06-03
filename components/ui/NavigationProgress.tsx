@@ -1,6 +1,6 @@
 'use client';
 
-import { usePathname, useSearchParams } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 
 type Phase = 'idle' | 'loading' | 'done';
@@ -10,21 +10,26 @@ const DONE_RESET = 380;
 
 export function NavigationProgress() {
   const pathname = usePathname();
-  const searchParams = useSearchParams();
   const [phase, setPhase] = useState<Phase>('idle');
   const activeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const doneTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastPath = useRef<string>('');
+  const mounted = useRef(false);
 
   useEffect(() => {
-    if (lastPath.current === '' || lastPath.current === pathname) {
-      lastPath.current = pathname;
-      return;
-    }
+    mounted.current = true;
+    lastPath.current = pathname;
+    return () => { mounted.current = false; };
+  }, [pathname]);
+
+  useEffect(() => {
+    if (!mounted.current || lastPath.current === pathname) return;
     lastPath.current = pathname;
     setPhase('done');
     if (doneTimer.current) clearTimeout(doneTimer.current);
-    doneTimer.current = setTimeout(() => setPhase('idle'), DONE_RESET);
+    doneTimer.current = setTimeout(() => {
+      if (mounted.current) setPhase('idle');
+    }, DONE_RESET);
   }, [pathname]);
 
   useEffect(() => {
@@ -44,15 +49,19 @@ export function NavigationProgress() {
       if (url.pathname + url.search === window.location.pathname + window.location.search) return;
 
       if (activeTimer.current) clearTimeout(activeTimer.current);
-      activeTimer.current = setTimeout(() => setPhase('loading'), ACTIVE_DELAY);
+      activeTimer.current = setTimeout(() => {
+        if (mounted.current) setPhase('loading');
+      }, ACTIVE_DELAY);
     }
     function onSubmit() {
       if (activeTimer.current) clearTimeout(activeTimer.current);
-      activeTimer.current = setTimeout(() => setPhase('loading'), ACTIVE_DELAY);
+      activeTimer.current = setTimeout(() => {
+        if (mounted.current) setPhase('loading');
+      }, ACTIVE_DELAY);
     }
     function onPopState() {
       if (activeTimer.current) clearTimeout(activeTimer.current);
-      setPhase('loading');
+      if (mounted.current) setPhase('loading');
     }
     document.addEventListener('pointerdown', onPointerDown, true);
     document.addEventListener('submit', onSubmit, true);
