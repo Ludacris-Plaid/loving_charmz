@@ -22,11 +22,16 @@ export function Logo({
   ariaLabel = 'Loving Charmz',
 }: LogoProps) {
   const inner = (
-    <span className="logo__text">
-      <span className="logo__mark" aria-hidden />
-      <span className="logo__loving">Loving</span>
-      <span className="logo__charmz">
-        Charm<span className="logo__z">z</span>
+    <span className="logo__inner">
+      <span className="logo__mono" aria-hidden>
+        <span className="logo__mono-l">L</span>
+        <span className="logo__mono-c">C</span>
+      </span>
+      <span className="logo__words">
+        <span className="logo__loving">Loving</span>
+        <span className="logo__charmz">
+          Charm<span className="logo__z">z</span>
+        </span>
       </span>
     </span>
   );

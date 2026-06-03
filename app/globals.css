@@ -984,68 +984,88 @@ header[data-site-header].scrolled {
   -webkit-tap-highlight-color: transparent;
   position: relative;
 }
-.logo:hover .logo__text,
-.logo:focus-visible .logo__text {
+
+.logo__inner {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55em;
+  transition: transform var(--motion-base) var(--motion-ease-bounce);
+}
+.logo:hover .logo__inner,
+.logo:focus-visible .logo__inner {
   transform: translateY(-1px);
 }
 
-.logo__text {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.3em;
-  font-family: var(--font-display);
-  letter-spacing: -0.01em;
-  line-height: 1;
-  transition: transform var(--motion-base) var(--motion-ease-bounce);
-}
-
-/* ── Decorative gem mark ───────────────────────────── */
-.logo__mark {
-  display: inline-flex;
+/* ── Monogram block ────────────────────────────────── */
+.logo__mono {
+  position: relative;
+  display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  width: 0.45em;
-  height: 0.45em;
+  width: 2em;
+  height: 2em;
   flex-shrink: 0;
-  position: relative;
-  top: -0.05em;
-}
-.logo__mark::before {
-  content: '';
-  display: block;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(135deg, var(--color-mint-400) 0%, var(--color-mint-600) 100%);
-  border-radius: 2px;
-  transform: rotate(45deg);
-  box-shadow: 0 0 6px rgba(63, 161, 161, 0.35);
+  border-radius: 0.375em;
+  background: linear-gradient(145deg, var(--color-plum-700) 0%, var(--color-plum-900) 100%);
+  box-shadow: 0 2px 8px rgba(74, 40, 93, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  line-height: 1;
   transition:
-    transform var(--motion-slow) var(--motion-ease-bounce),
-    box-shadow var(--motion-base) var(--motion-ease-smooth);
+    box-shadow var(--motion-base) var(--motion-ease-smooth),
+    transform var(--motion-slow) var(--motion-ease-bounce);
 }
-.logo:hover .logo__mark::before,
-.logo:focus-visible .logo__mark::before {
-  transform: rotate(225deg);
-  box-shadow: 0 0 10px rgba(63, 161, 161, 0.5);
-}
-
-/* ── "Loving" ──────────────────────────────────────── */
-.logo__loving {
-  color: var(--color-plum-800);
-  font-weight: 350;
-  font-style: italic;
-  letter-spacing: 0.02em;
-  font-size: 0.8em;
-  opacity: 0.85;
-  position: relative;
-  top: 0.1em;
+.logo:hover .logo__mono,
+.logo:focus-visible .logo__mono {
+  box-shadow: 0 4px 16px rgba(74, 40, 93, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  transform: scale(1.06);
 }
 
-/* ── "Charmz" ──────────────────────────────────────── */
-.logo__charmz {
-  color: var(--color-plum-700);
+.logo__mono-l {
+  font-family: var(--font-display);
   font-weight: 600;
-  letter-spacing: -0.02em;
+  font-size: 1em;
+  line-height: 0.9;
+  color: var(--color-cream-100);
+  letter-spacing: 0;
+  margin-bottom: -0.05em;
+}
+.logo__mono-c {
+  font-family: var(--font-display);
+  font-weight: 300;
+  font-style: italic;
+  font-size: 1em;
+  line-height: 0.9;
+  color: var(--color-mint-300);
+  letter-spacing: 0.04em;
+  margin-top: -0.05em;
+}
+
+/* ── Wordmark ──────────────────────────────────────── */
+.logo__words {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  line-height: 1.1;
+}
+
+.logo__loving {
+  font-family: var(--font-display);
+  font-weight: 300;
+  font-size: 0.65em;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-plum-800);
+  margin-bottom: 0.05em;
+}
+
+.logo__charmz {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 0.9em;
+  font-style: italic;
+  letter-spacing: -0.01em;
+  color: var(--color-plum-700);
+  line-height: 1;
 }
 
 /* ── Animated "z" ──────────────────────────────────── */
@@ -1078,29 +1098,20 @@ header[data-site-header].scrolled {
   50% { background-position: 100% 50%; }
 }
 
-/* ── Decorative underline ──────────────────────────── */
-.logo__text::after {
+/* ── Glow on the monogram at rest ──────────────────── */
+.logo__mono::after {
   content: '';
   position: absolute;
-  bottom: -3px;
-  left: 0;
-  width: 100%;
-  height: 1.5px;
-  background: linear-gradient(90deg, transparent 0%, var(--color-mint-400) 50%, transparent 100%);
-  transform: scaleX(0);
-  transform-origin: center;
-  transition: transform var(--motion-slow) var(--motion-ease-smooth);
-  opacity: 0.5;
-}
-.logo:hover .logo__text::after,
-.logo:focus-visible .logo__text::after {
-  transform: scaleX(1);
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(145deg, rgba(179, 236, 236, 0.08) 0%, transparent 60%);
+  pointer-events: none;
 }
 
 /* ── Size variants ─────────────────────────────────── */
-.logo--sm .logo__text { font-size: 1rem; }
-.logo--md .logo__text { font-size: 1.22rem; }
-.logo--lg .logo__text { font-size: 1.7rem; }
+.logo--sm .logo__inner { font-size: 0.85rem; }
+.logo--md .logo__inner { font-size: 1.05rem; }
+.logo--lg .logo__inner { font-size: 1.4rem; }
 
 @media (prefers-reduced-motion: reduce) {
   html {
