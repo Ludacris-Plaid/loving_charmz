@@ -40,10 +40,7 @@ export default async function HomePage() {
       <Container className="relative py-20 sm:py-28 lg:py-32">
         <div className="space-y-24 sm:space-y-32">
           <section className="text-center relative">
-            <span className="badge-mint mx-auto">
-              <span className="inline-block h-1.5 w-1.5 rounded-full bg-plum-700 animate-pulse" aria-hidden />
-              Bond Collection · 4 pieces
-            </span>
+            <span className="badge-mint mx-auto">Bond Collection · 4 pieces</span>
 
             <h1 className="font-display text-5xl sm:text-6xl lg:text-7xl font-semibold leading-[1.05] tracking-tight mt-8">
               <span className="block">
