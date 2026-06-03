@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { Suspense } from 'react';
 import Link from 'next/link';
-import { AdminSidebar } from '@/components/admin/AdminSidebar';
+import { AdminTabBar } from '@/components/admin/AdminTabBar';
 import { AdminGuard, getSession } from '@/components/admin/AdminGuard';
 import { Container } from '@/components/ui/Container';
 import { Section } from '@/components/ui/Section';
@@ -43,7 +43,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
             </nav>
           </div>
           <div className="flex flex-col gap-8 lg:flex-row">
-            <AdminSidebar />
+            <AdminTabBar />
             <main className="min-w-0 flex-1">{children}</main>
           </div>
         </Container>

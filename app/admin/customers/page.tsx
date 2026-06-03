@@ -24,7 +24,7 @@ export default async function AdminCustomersPage() {
           No customers yet.
         </div>
       ) : (
-        <div className="surface-card overflow-hidden">
+        <div className="surface-card overflow-x-auto">
           <table className="w-full">
             <thead>
               <tr className="bg-cream-100 text-left text-xs uppercase tracking-wider text-ink-500">
