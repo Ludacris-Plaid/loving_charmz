@@ -31,7 +31,7 @@ export function MobileMenu({ cartCount, isAdmin = false }: MobileMenuProps) {
       <div
         data-visible={open}
         className={[
-          'motion-base absolute right-0 top-[calc(100%+0.75rem)] w-[min(18rem,calc(100vw-2rem))] origin-top-right rounded-block border border-cream-300 bg-surface p-2 shadow-[0_20px_50px_rgba(93,51,115,0.12)]',
+          'motion-base absolute left-0 top-[calc(100%+0.75rem)] w-[min(18rem,calc(100vw-2rem))] origin-top-left rounded-block border border-cream-300 bg-surface p-2 shadow-[0_20px_50px_rgba(93,51,115,0.12)]',
           open
             ? 'pointer-events-auto translate-y-0 scale-100 opacity-100'
             : 'pointer-events-none -translate-y-2 scale-[0.98] opacity-0',
