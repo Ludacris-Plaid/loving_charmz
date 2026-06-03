@@ -47,7 +47,7 @@ export async function Header() {
               aria-label="Open admin dashboard"
             >
               <span aria-hidden className="text-[10px]">▸</span>
-              Admin
+              Admin Dash
             </Link>
           )}
           <Link

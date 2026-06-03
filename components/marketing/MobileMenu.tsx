@@ -58,7 +58,7 @@ export function MobileMenu({ cartCount, isAdmin = false }: MobileMenuProps) {
               >
                 <span className="flex items-center gap-2">
                   <span aria-hidden className="text-xs">▸</span>
-                  Admin dashboard
+                  Admin Dash
                 </span>
                 <span className="text-[10px] uppercase tracking-wider text-plum-500">Staff</span>
               </Link>
