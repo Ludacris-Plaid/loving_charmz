@@ -4,6 +4,7 @@ import { Container } from '@/components/ui/Container';
 import { MagneticWrap } from '@/components/ui/MagneticWrap';
 import { ScrollReveal } from '@/components/ui/ScrollReveal';
 import { getProducts } from '@/lib/supabase/queries/products';
+import { getCollections } from '@/lib/supabase/queries/collections';
 import { images } from '@/lib/images';
 
 const highlights = [
@@ -28,7 +29,10 @@ export const metadata = {
 };
 
 export default async function HomePage() {
-  const products = await getProducts(8).catch(() => []);
+  const [products, collections] = await Promise.all([
+    getProducts(8).catch(() => []),
+    getCollections().catch(() => []),
+  ]);
   const featuredImage = images.pets.goldenRetriever;
 
   return (
@@ -129,11 +133,11 @@ export default async function HomePage() {
             </div>
           </section>
 
-          {products.length > 0 && (
+          {collections.length > 0 && (
             <section>
               <ScrollReveal>
                 <div className="mb-8 flex flex-col items-center text-center">
-                  <span className="badge-mint">The Collection</span>
+                  <span className="badge-mint">The Collections</span>
                   <h2 className="font-display text-3xl sm:text-4xl font-semibold leading-[1.1] tracking-tight mt-4">
                     <span className="block">
                       <span className="hero-word hero-word-1 text-plum-900">Pieces</span>{' '}
@@ -146,7 +150,50 @@ export default async function HomePage() {
                       <span className="hero-word hero-word-6 text-plum-900">you</span>
                     </span>
                   </h2>
-                  <div className="hero-content mt-4">
+                </div>
+              </ScrollReveal>
+              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                {collections.map((collection, i) => (
+                  <ScrollReveal key={collection.id} delay={i * 100}>
+                    <Link
+                      href={`/collections/${collection.slug}`}
+                      className="group block surface-card inner-highlight overflow-hidden hover-lift"
+                    >
+                      <div className="relative aspect-[3/2] overflow-hidden">
+                        <Image
+                          src={collection.image_url || images.shop[i % images.shop.length]}
+                          alt={collection.name}
+                          fill
+                          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                          className="object-cover motion-base group-hover:scale-105"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-plum-900/60 via-transparent to-transparent" />
+                        <div className="absolute bottom-0 left-0 right-0 p-6">
+                          <h3 className="font-display text-xl font-semibold text-cream-50">{collection.name}</h3>
+                          {collection.description && (
+                            <p className="mt-1 text-sm text-cream-200 line-clamp-2">{collection.description}</p>
+                          )}
+                          <span className="mt-3 inline-flex text-xs font-medium uppercase tracking-wider text-mint-300">
+                            Browse collection →
+                          </span>
+                        </div>
+                      </div>
+                    </Link>
+                  </ScrollReveal>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {products.length > 0 && (
+            <section>
+              <ScrollReveal>
+                <div className="mb-8 text-center">
+                  <span className="badge-mint">All pieces</span>
+                  <h2 className="font-display text-2xl sm:text-3xl font-semibold text-plum-900 mt-3">
+                    Browse every keepsake
+                  </h2>
+                  <div className="hero-content mt-2">
                     <Link href="/shop" className="text-sm font-medium text-plum-700 hover:text-plum-900 motion-base">
                       See all →
                     </Link>
