@@ -10,18 +10,26 @@ export default function AboutPage() {
   return (
     <Container className="py-12 sm:py-16">
       <div className="max-w-3xl mx-auto">
-        <ScrollReveal>
+        <div className="text-center">
           <span className="badge-mint">Our story</span>
-          <h1 className="section-title font-display text-4xl sm:text-5xl font-semibold text-plum-900 mt-4">
-            Crafting meaningful connections
+          <h1 className="font-display text-4xl sm:text-5xl font-semibold leading-[1.1] tracking-tight mt-6">
+            <span className="block">
+              <span className="hero-word hero-word-1 text-plum-900">Crafting</span>{' '}
+              <span className="hero-word hero-word-2 text-plum-900">meaningful</span>
+            </span>
+            <span className="block mt-1">
+              <span className="hero-word hero-word-3 text-plum-900">connections</span>
+            </span>
           </h1>
-        </ScrollReveal>
+          <div className="hero-content">
+            <p className="mt-6 text-ink-700 leading-relaxed max-w-2xl mx-auto">
+              Loving Charmz was born from a simple truth: the bond between a person and their pet is one of the purest forms of love. It is a connection that transcends words, transcends time, and lasts forever.
+            </p>
+          </div>
+        </div>
 
         <ScrollReveal delay={120}>
           <div className="mt-8 space-y-6 text-ink-700 leading-relaxed">
-            <p>
-              Loving Charmz was born from a simple truth: the bond between a person and their pet is one of the purest forms of love. It is a connection that transcends words, transcends time, and lasts forever.
-            </p>
             <p>
               We believe that jewelry should be more than an accessory. It should be a vessel for memory — a tangible reminder of the bonds that shape our lives. Every piece we create is designed to carry your story: whether it honors a beloved companion who is with you now, or one who is forever in your heart.
             </p>

@@ -156,17 +156,25 @@ That next weekend, Linda adopted a three-month-old beagle mix. She named her Dai
 export default function StoriesPage() {
   return (
     <Container className="py-12 sm:py-16">
-      <ScrollReveal>
-        <div className="text-center mb-12">
-          <span className="badge-mint">Community stories</span>
-          <h1 className="section-title font-display text-4xl sm:text-5xl font-semibold text-plum-900 mt-4">
-            Stories that touch the heart
-          </h1>
-          <p className="mt-4 max-w-xl mx-auto text-ink-600">
+      <div className="text-center mb-12">
+        <span className="badge-mint">Community stories</span>
+        <h1 className="font-display text-4xl sm:text-5xl font-semibold leading-[1.1] tracking-tight mt-6">
+          <span className="block">
+            <span className="hero-word hero-word-1 text-plum-900">Stories</span>{' '}
+            <span className="hero-word hero-word-2 text-plum-900">that</span>{' '}
+            <span className="hero-word hero-word-3 text-plum-900">touch</span>
+          </span>
+          <span className="block mt-1">
+            <span className="hero-word hero-word-4 text-plum-900">the</span>{' '}
+            <span className="hero-word hero-word-5 text-plum-900">heart</span>
+          </span>
+        </h1>
+        <div className="hero-content">
+          <p className="mt-6 max-w-xl mx-auto text-ink-600">
             Composite stories inspired by the people who wear Loving Charmz — names and details changed to protect their privacy.
           </p>
         </div>
-      </ScrollReveal>
+      </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {stories.map((story, index) => (

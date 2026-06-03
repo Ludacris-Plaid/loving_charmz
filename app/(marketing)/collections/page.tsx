@@ -15,17 +15,20 @@ export default async function CollectionsPage() {
 
   return (
     <Container className="py-12 sm:py-16">
-      <ScrollReveal>
-        <div className="text-center mb-12">
-          <span className="badge-mint">Collections</span>
-          <h1 className="section-title font-display text-4xl sm:text-5xl font-semibold text-plum-900 mt-4">
-            Our collections
-          </h1>
-          <p className="mt-4 max-w-xl mx-auto text-ink-600">
+      <div className="text-center mb-12">
+        <span className="badge-mint">Collections</span>
+        <h1 className="font-display text-4xl sm:text-5xl font-semibold leading-[1.1] tracking-tight mt-6">
+          <span className="block">
+            <span className="hero-word hero-word-1 text-plum-900">Our</span>{' '}
+            <span className="hero-word hero-word-2 text-plum-900">collections</span>
+          </span>
+        </h1>
+        <div className="hero-content">
+          <p className="mt-6 max-w-xl mx-auto text-ink-600">
             Each collection tells a unique story. Explore our curated groups of pieces designed to honor your bond.
           </p>
         </div>
-      </ScrollReveal>
+      </div>
 
       {collections.length > 0 ? (
         <div className="grid gap-6 md:grid-cols-2">

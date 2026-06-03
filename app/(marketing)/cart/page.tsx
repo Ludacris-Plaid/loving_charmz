@@ -40,13 +40,18 @@ export default async function CartPage() {
 
   return (
     <Container className="py-12 sm:py-16">
-      <div className="mb-8 flex items-end justify-between">
-        <div>
-          <span className="badge-mint">Your cart</span>
-          <h1 className="font-display text-3xl sm:text-4xl font-semibold text-plum-900 mt-3">
-            Pieces you’re bringing home
-          </h1>
-        </div>
+      <div className="text-center mb-8">
+        <span className="badge-mint">Your cart</span>
+        <h1 className="font-display text-3xl sm:text-4xl font-semibold leading-[1.1] tracking-tight mt-4">
+          <span className="block">
+            <span className="hero-word hero-word-1 text-plum-900">Pieces</span>{' '}
+            <span className="hero-word hero-word-2 text-plum-900">you&rsquo;re</span>{' '}
+            <span className="hero-word hero-word-3 text-plum-900">bringing</span>
+          </span>
+          <span className="block mt-1">
+            <span className="hero-word hero-word-4 text-plum-900">home</span>
+          </span>
+        </h1>
       </div>
 
       {items.length === 0 ? (

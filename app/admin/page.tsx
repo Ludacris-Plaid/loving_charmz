@@ -36,7 +36,7 @@ export default async function AdminDashboardPage() {
     <div className="space-y-8">
       <div>
         <span className="badge-plum">Admin</span>
-        <h1 className="font-display text-3xl font-semibold text-plum-900 mt-3">Dashboard</h1>
+        <h1 className="font-display text-3xl font-semibold text-plum-900 mt-3">Overview</h1>
         <p className="text-sm text-ink-600 mt-1">A snapshot of your store.</p>
       </div>
 

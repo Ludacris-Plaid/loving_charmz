@@ -37,11 +37,17 @@ export default async function CollectionPage({ params }: Props) {
 
       <div className="text-center mb-12">
         <span className="badge-mint">Collection</span>
-        <h1 className="font-display text-4xl sm:text-5xl font-semibold text-plum-900 mt-4">
-          {collection.name}
+        <h1 className="font-display text-4xl sm:text-5xl font-semibold leading-[1.1] tracking-tight mt-6">
+          {collection.name.split(' ').map((word, i) => (
+            <span key={i} className={`hero-word hero-word-${(i % 6) + 1} text-plum-900 block`}>
+              {word}
+            </span>
+          ))}
         </h1>
         {collection.description && (
-          <p className="mt-4 max-w-xl mx-auto text-ink-600">{collection.description}</p>
+          <div className="hero-content">
+            <p className="mt-6 max-w-xl mx-auto text-ink-600">{collection.description}</p>
+          </div>
         )}
       </div>
 

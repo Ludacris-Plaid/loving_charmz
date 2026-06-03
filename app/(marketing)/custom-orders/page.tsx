@@ -39,17 +39,28 @@ export default async function CustomOrdersPage() {
       <div className="blob-plum bottom-32 -right-32 h-96 w-96" aria-hidden />
 
       <Container className="relative py-12 sm:py-16">
-        <ScrollReveal>
-          <div className="text-center max-w-3xl mx-auto">
-            <span className="badge-mint">Custom Creations</span>
-            <h1 className="section-title font-display text-4xl sm:text-5xl font-semibold text-plum-900 mt-4">
-              Your story, crafted into something lasting
-            </h1>
-            <p className="mt-4 text-ink-600 text-lg leading-relaxed">
+        <div className="text-center max-w-3xl mx-auto">
+          <span className="badge-mint">Custom Creations</span>
+          <h1 className="font-display text-4xl sm:text-5xl font-semibold leading-[1.1] tracking-tight mt-6">
+            <span className="block">
+              <span className="hero-word hero-word-1 text-plum-900">Your</span>{' '}
+              <span className="hero-word hero-word-2 text-plum-900">story,</span>
+            </span>
+            <span className="block mt-1">
+              <span className="hero-word hero-word-3 text-plum-900">crafted</span>{' '}
+              <span className="hero-word hero-word-4 text-plum-900">into</span>
+            </span>
+            <span className="block mt-1">
+              <span className="hero-word hero-word-5 text-plum-900">something</span>{' '}
+              <span className="hero-word hero-word-6 text-plum-900">lasting</span>
+            </span>
+          </h1>
+          <div className="hero-content">
+            <p className="mt-6 text-ink-600 text-lg leading-relaxed">
               Every pet bond is unique. Our custom order process lets you create a piece that carries your story — a name engraving, a specific charm, or a design inspired by your pet.
             </p>
           </div>
-        </ScrollReveal>
+        </div>
 
         <ScrollReveal delay={150}>
           <div className="mt-12 grid sm:grid-cols-3 gap-6">

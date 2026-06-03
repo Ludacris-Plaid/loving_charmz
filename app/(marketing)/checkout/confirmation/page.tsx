@@ -22,8 +22,15 @@ export default async function ConfirmationPage({ searchParams }: Props) {
           </svg>
         </div>
         <span className="badge-mint">Thank you</span>
-        <h1 className="font-display text-3xl sm:text-4xl font-semibold text-plum-900 mt-3 mb-3">
-          Your order is placed
+        <h1 className="font-display text-3xl sm:text-4xl font-semibold leading-[1.1] tracking-tight mt-5">
+          <span className="block">
+            <span className="hero-word hero-word-1 text-plum-900">Your</span>{' '}
+            <span className="hero-word hero-word-2 text-plum-900">order</span>{' '}
+            <span className="hero-word hero-word-3 text-plum-900">is</span>
+          </span>
+          <span className="block mt-1">
+            <span className="hero-word hero-word-4 text-plum-900">placed</span>
+          </span>
         </h1>
         <p className="text-ink-600">
           We have received your keepsake order. A confirmation email is on its way.
