@@ -19,23 +19,28 @@ export default async function ShopPage() {
 
   return (
     <Container className="py-12 sm:py-16">
-      <ScrollReveal>
-        <div className="text-center mb-12">
-          <h1 className="section-title font-display text-4xl sm:text-5xl font-semibold text-plum-900">
-            Every piece tells a story
-          </h1>
-          <div className="mt-4">
-            <span className="badge-mint">The Collection</span>
-          </div>
-          <p className="mt-4 max-w-xl mx-auto text-ink-600">
+      <div className="text-center mb-12">
+        <span className="badge-mint">The Collection</span>
+        <h1 className="font-display text-4xl sm:text-5xl font-semibold leading-[1.1] tracking-tight mt-6">
+          <span className="block">
+            <span className="hero-word hero-word-1 text-plum-900">Every</span>{' '}
+            <span className="hero-word hero-word-2 text-plum-900">piece</span>{' '}
+            <span className="hero-word hero-word-3 text-plum-900">tells</span>
+          </span>
+          <span className="block mt-1">
+            <span className="hero-word hero-word-4 text-plum-900">a</span>{' '}
+            <span className="hero-word hero-word-5 plum-gradient-text">story</span>
+          </span>
+        </h1>
+        <div className="hero-content">
+          <p className="mt-6 max-w-xl mx-auto text-ink-600">
             Symbolic jewelry designed to honor the bond you share with your pet. Each piece is crafted with care, ready to carry your memories close.
           </p>
         </div>
-      </ScrollReveal>
+      </div>
 
       {collections.length > 0 && (
-        <ScrollReveal delay={120}>
-          <div className="mb-10 flex flex-wrap items-center justify-center gap-2">
+        <div className="hero-content mb-10 flex flex-wrap items-center justify-center gap-2">
             <Link
               href="/shop"
               className="rounded-pill bg-plum-700 px-4 py-2 text-xs font-medium text-cream-50"
@@ -52,7 +57,7 @@ export default async function ShopPage() {
               </Link>
             ))}
           </div>
-        </ScrollReveal>
+        </div>
       )}
 
       {products.length > 0 ? (
