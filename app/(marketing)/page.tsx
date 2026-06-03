@@ -136,7 +136,7 @@ export default async function HomePage() {
           {products.length > 0 && (
             <section>
               <ScrollReveal>
-                <div className="mb-8">
+                <div className="mb-8 text-center">
                   <span className="badge-mint">The Collection</span>
                   <h2 className="font-display text-3xl sm:text-4xl font-semibold leading-[1.1] tracking-tight mt-4">
                     <span className="block">
@@ -208,7 +208,7 @@ export default async function HomePage() {
                   <Link href="/stories" className="btn-outline px-6 py-2.5 text-sm">Read the stories</Link>
                 </MagneticWrap>
                 <MagneticWrap strength={4}>
-                  <Link href="/about" className="btn-ghost px-6 py-2.5 text-sm">About Loving Charmz</Link>
+                  <Link href="/about" className="btn-outline px-6 py-2.5 text-sm">About Loving Charmz</Link>
                 </MagneticWrap>
               </div>
             </div>
