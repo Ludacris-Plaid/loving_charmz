@@ -15,7 +15,12 @@ export async function Header() {
       className="sticky top-0 z-50 border-b border-cream-300 glass"
     >
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-6 py-3 sm:px-10 lg:px-16">
-        <Logo size="md" className="motion-base" />
+        <div className="flex items-center gap-2">
+          <div className="md:hidden">
+            <MobileMenu cartCount={cartCount} isAdmin={isAdmin} />
+          </div>
+          <Logo size="md" className="motion-base" />
+        </div>
 
         <nav className="hidden items-center gap-8 md:flex">
           <Link href="/shop" className="nav-underline text-sm font-medium text-ink-700 hover:text-plum-700 motion-base">Shop</Link>
@@ -25,7 +30,6 @@ export async function Header() {
         </nav>
 
         <div className="flex items-center gap-2 sm:gap-3">
-          <MobileMenu cartCount={cartCount} isAdmin={isAdmin} />
           <Link
             href="/cart"
             className="hidden items-center gap-2 rounded-pill border border-cream-300 bg-surface px-3.5 py-1.5 text-xs font-medium text-ink-700 hover:border-plum-500 hover:text-plum-700 motion-base sm:inline-flex"
