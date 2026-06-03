@@ -136,7 +136,7 @@ export default async function HomePage() {
           {products.length > 0 && (
             <section>
               <ScrollReveal>
-                <div className="mb-8 text-center">
+                <div className="mb-8 flex flex-col items-center text-center">
                   <span className="badge-mint">The Collection</span>
                   <h2 className="font-display text-3xl sm:text-4xl font-semibold leading-[1.1] tracking-tight mt-4">
                     <span className="block">
