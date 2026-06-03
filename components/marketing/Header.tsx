@@ -29,21 +29,27 @@ export async function Header() {
           <Link href="/custom-orders" className="nav-underline text-sm font-medium text-ink-700 hover:text-plum-700 motion-base">Custom Orders</Link>
         </nav>
 
-        <div className="flex items-center gap-2 sm:gap-3">
+        <div className="flex items-center gap-1 sm:gap-3">
           <Link
             href="/cart"
-            className="relative inline-flex items-center gap-2 rounded-pill border border-cream-300 bg-surface px-3 py-1.5 text-xs font-medium text-ink-700 hover:border-plum-500 hover:text-plum-700 motion-base sm:px-3.5"
+            className="relative motion-base"
             aria-label={`View cart, ${cartCount} item${cartCount === 1 ? '' : 's'}`}
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="sm:hidden" aria-hidden>
-              <circle cx="9" cy="21" r="1" />
-              <circle cx="20" cy="21" r="1" />
-              <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
-            </svg>
-            <span aria-hidden className="hidden sm:inline">Cart</span>
-            <span className="inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded-pill bg-plum-700 px-1.5 text-[10px] font-semibold text-cream-50">
-              {cartCount}
+            <span className="inline-flex items-center justify-center rounded-pill border border-cream-300 bg-surface p-2 text-ink-700 hover:border-plum-500 hover:text-plum-700 motion-base sm:hidden">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                <circle cx="9" cy="21" r="1" />
+                <circle cx="20" cy="21" r="1" />
+                <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
+              </svg>
             </span>
+            <span className="hidden items-center gap-2 rounded-pill border border-cream-300 bg-surface px-3.5 py-1.5 text-xs font-medium text-ink-700 hover:border-plum-500 hover:text-plum-700 motion-base sm:inline-flex">
+              <span aria-hidden>Cart</span>
+            </span>
+            {cartCount > 0 && (
+              <span className="absolute -right-1.5 -top-1.5 inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-plum-700 px-1 text-[10px] font-semibold leading-none text-cream-50 sm:-right-2 sm:-top-2 sm:h-5 sm:min-w-[1.25rem]">
+                {cartCount}
+              </span>
+            )}
           </Link>
           {isAdmin && (
             <Link
