@@ -23,6 +23,7 @@ export function Logo({
 }: LogoProps) {
   const inner = (
     <span className="logo__text">
+      <span className="logo__mark" aria-hidden />
       <span className="logo__loving">Loving</span>
       <span className="logo__charmz">
         Charm<span className="logo__z">z</span>

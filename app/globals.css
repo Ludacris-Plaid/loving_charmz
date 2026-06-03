@@ -982,55 +982,125 @@ header[data-site-header].scrolled {
   text-decoration: none;
   user-select: none;
   -webkit-tap-highlight-color: transparent;
-  transition: opacity var(--motion-base) var(--motion-ease-smooth);
+  position: relative;
 }
-.logo:hover { opacity: 1; }
+.logo:hover .logo__text,
+.logo:focus-visible .logo__text {
+  transform: translateY(-1px);
+}
 
 .logo__text {
   display: inline-flex;
-  align-items: baseline;
+  align-items: center;
+  gap: 0.3em;
   font-family: var(--font-display);
-  font-weight: 500;
   letter-spacing: -0.01em;
   line-height: 1;
+  transition: transform var(--motion-base) var(--motion-ease-bounce);
 }
 
+/* ── Decorative gem mark ───────────────────────────── */
+.logo__mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 0.45em;
+  height: 0.45em;
+  flex-shrink: 0;
+  position: relative;
+  top: -0.05em;
+}
+.logo__mark::before {
+  content: '';
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, var(--color-mint-400) 0%, var(--color-mint-600) 100%);
+  border-radius: 2px;
+  transform: rotate(45deg);
+  box-shadow: 0 0 6px rgba(63, 161, 161, 0.35);
+  transition:
+    transform var(--motion-slow) var(--motion-ease-bounce),
+    box-shadow var(--motion-base) var(--motion-ease-smooth);
+}
+.logo:hover .logo__mark::before,
+.logo:focus-visible .logo__mark::before {
+  transform: rotate(225deg);
+  box-shadow: 0 0 10px rgba(63, 161, 161, 0.5);
+}
+
+/* ── "Loving" ──────────────────────────────────────── */
 .logo__loving {
-  color: var(--color-plum-900);
+  color: var(--color-plum-800);
+  font-weight: 350;
+  font-style: italic;
+  letter-spacing: 0.02em;
+  font-size: 0.8em;
+  opacity: 0.85;
+  position: relative;
+  top: 0.1em;
 }
 
+/* ── "Charmz" ──────────────────────────────────────── */
 .logo__charmz {
   color: var(--color-plum-700);
-  font-style: italic;
-  font-weight: 500;
-  margin-left: 0.3em;
+  font-weight: 600;
+  letter-spacing: -0.02em;
 }
 
+/* ── Animated "z" ──────────────────────────────────── */
 .logo__z {
   background: linear-gradient(
-    100deg,
+    120deg,
     var(--color-plum-700) 0%,
-    var(--color-plum-500) 40%,
-    var(--color-mint-500) 70%,
+    var(--color-plum-500) 25%,
+    var(--color-mint-400) 50%,
+    var(--color-plum-500) 75%,
     var(--color-plum-700) 100%
   );
-  background-size: 220% 100%;
+  background-size: 200% 100%;
   background-position: 0% 50%;
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
   color: transparent;
-  transition: background-position var(--motion-slow) var(--motion-ease-smooth);
   display: inline-block;
+  animation: logo-shimmer 4s ease-in-out infinite;
+  animation-play-state: paused;
 }
 .logo:hover .logo__z,
 .logo:focus-visible .logo__z {
-  background-position: 100% 50%;
+  animation-play-state: running;
 }
 
+@keyframes logo-shimmer {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+/* ── Decorative underline ──────────────────────────── */
+.logo__text::after {
+  content: '';
+  position: absolute;
+  bottom: -3px;
+  left: 0;
+  width: 100%;
+  height: 1.5px;
+  background: linear-gradient(90deg, transparent 0%, var(--color-mint-400) 50%, transparent 100%);
+  transform: scaleX(0);
+  transform-origin: center;
+  transition: transform var(--motion-slow) var(--motion-ease-smooth);
+  opacity: 0.5;
+}
+.logo:hover .logo__text::after,
+.logo:focus-visible .logo__text::after {
+  transform: scaleX(1);
+}
+
+/* ── Size variants ─────────────────────────────────── */
 .logo--sm .logo__text { font-size: 1rem; }
-.logo--md .logo__text { font-size: 1.18rem; }
-.logo--lg .logo__text { font-size: 1.6rem; }
+.logo--md .logo__text { font-size: 1.22rem; }
+.logo--lg .logo__text { font-size: 1.7rem; }
 
 @media (prefers-reduced-motion: reduce) {
   html {
