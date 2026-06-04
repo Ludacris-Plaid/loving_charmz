@@ -1,7 +1,7 @@
-import Image from 'next/image';
 import Link from 'next/link';
 import { Logo } from '@/components/marketing/Logo';
 import { MobileMenu } from '@/components/marketing/MobileMenu';
+import { AccountMenu } from '@/components/marketing/AccountMenu';
 import { getCartCount } from '@/lib/cart/server';
 import { getSession } from '@/components/admin/AdminGuard';
 
@@ -70,21 +70,11 @@ export async function Header() {
             </Link>
           )}
           {session?.avatarUrl ? (
-            <Link
-              href="/account"
-              className="hidden sm:inline-flex"
-              aria-label="Go to my account"
-            >
-              <span className="relative inline-flex h-8 w-8 overflow-hidden rounded-full border-2 border-plum-200 hover:border-plum-500 motion-base">
-                <Image
-                  src={session.avatarUrl}
-                  alt=""
-                  fill
-                  className="object-cover"
-                  sizes="32px"
-                />
-              </span>
-            </Link>
+            <AccountMenu
+              avatarUrl={session.avatarUrl}
+              email={session.email}
+              isAdmin={isAdmin}
+            />
           ) : (
             <Link
               href={session ? "/account" : "/login"}
