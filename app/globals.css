@@ -193,17 +193,6 @@ a {
   }
 }
 
-@keyframes badge-dot {
-  0%, 100% {
-    transform: scale(1);
-    box-shadow: 0 0 4px 1px color-mix(in srgb, var(--color-mint-500) 30%, transparent);
-  }
-  50% {
-    transform: scale(1.15);
-    box-shadow: 0 0 8px 3px color-mix(in srgb, var(--color-mint-500) 50%, transparent);
-  }
-}
-
 @keyframes reveal-blur {
   0% {
     opacity: 0;
@@ -403,16 +392,6 @@ a {
   letter-spacing: 0.18em;
   text-transform: uppercase;
 }
-.badge-mint::before {
-  content: "";
-  display: inline-block;
-  width: 6px;
-  height: 6px;
-  background: var(--color-mint-700);
-  border-radius: 9999px;
-  box-shadow: 0 0 4px 1px color-mix(in srgb, var(--color-mint-500) 40%, transparent);
-  animation: badge-dot 2.4s ease-in-out infinite;
-}
 
 .badge-plum {
   display: inline-flex;
@@ -427,16 +406,6 @@ a {
   font-weight: 600;
   letter-spacing: 0.18em;
   text-transform: uppercase;
-}
-.badge-plum::before {
-  content: "";
-  display: inline-block;
-  width: 6px;
-  height: 6px;
-  background: var(--color-mint-700);
-  border-radius: 9999px;
-  box-shadow: 0 0 4px 1px color-mix(in srgb, var(--color-mint-500) 40%, transparent);
-  animation: badge-dot 2.4s ease-in-out infinite;
 }
 
 .badge-soft {
