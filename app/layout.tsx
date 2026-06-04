@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Inter, Playfair_Display } from 'next/font/google';
+import { Inter, Playfair_Display, Caveat } from 'next/font/google';
 import './globals.css';
 
 const inter = Inter({
@@ -11,6 +11,12 @@ const inter = Inter({
 const playfairDisplay = Playfair_Display({
   subsets: ['latin'],
   variable: '--font-display',
+  display: 'swap',
+});
+
+const caveat = Caveat({
+  subsets: ['latin'],
+  variable: '--font-handwriting',
   display: 'swap',
 });
 
@@ -28,8 +34,8 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en">
-      <body className={`${inter.variable} ${playfairDisplay.variable}`}>{children}</body>
+    <html lang="en" suppressHydrationWarning>
+      <body className={`${inter.variable} ${playfairDisplay.variable} ${caveat.variable}`}>{children}</body>
     </html>
   );
 }

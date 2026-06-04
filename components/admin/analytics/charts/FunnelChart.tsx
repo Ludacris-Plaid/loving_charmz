@@ -19,7 +19,7 @@ const DEFAULT_COLORS = [
   'var(--color-mint-300)',
 ];
 
-export function FunnelChart({ steps, className, formatValue = (v) => v.toLocaleString() }: FunnelChartProps) {
+export function FunnelChart({ steps, className, formatValue = (v) => v.toLocaleString('en-US') }: FunnelChartProps) {
   if (steps.length === 0) return <div className="analytics-empty">No data</div>;
   const max = Math.max(1, ...steps.map((s) => s.value));
 

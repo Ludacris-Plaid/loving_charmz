@@ -1066,43 +1066,12 @@ header[data-site-header].scrolled {
 }
 
 .logo__charmz {
-  font-family: var(--font-sans);
+  font-family: var(--font-handwriting);
   font-weight: 500;
-  font-size: 0.85em;
-  letter-spacing: 0.02em;
-  color: var(--color-mint-700);
+  font-size: 1em;
+  letter-spacing: 0.01em;
+  color: var(--color-plum-700);
   line-height: 1;
-}
-
-/* ── Animated "z" ──────────────────────────────────── */
-.logo__z {
-  display: inline-block;
-  padding-right: 0.03em;
-  background: linear-gradient(
-    120deg,
-    var(--color-plum-700) 0%,
-    var(--color-plum-500) 25%,
-    var(--color-mint-400) 50%,
-    var(--color-plum-500) 75%,
-    var(--color-plum-700) 100%
-  );
-  background-size: 300% 100%;
-  background-position: 0% 50%;
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  color: transparent;
-  animation: logo-shimmer 4s ease-in-out infinite;
-  animation-play-state: paused;
-}
-.logo:hover .logo__z,
-.logo:focus-visible .logo__z {
-  animation-play-state: running;
-}
-
-@keyframes logo-shimmer {
-  0%, 100% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
 }
 
 /* ── Glow on the monogram at rest ──────────────────── */

@@ -94,7 +94,7 @@ export function AreaChart({
   showPrevious = false,
   annotations = [],
   className,
-  yFormat = (v) => v.toLocaleString(),
+  yFormat = (v) => v.toLocaleString('en-US'),
   formatBucket,
 }: AreaChartProps) {
   const id = useId();

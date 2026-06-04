@@ -13,18 +13,15 @@ export function NavigationProgress() {
   const [phase, setPhase] = useState<Phase>('idle');
   const activeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const doneTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const lastPath = useRef<string>('');
   const mounted = useRef(false);
 
   useEffect(() => {
     mounted.current = true;
-    lastPath.current = pathname;
     return () => { mounted.current = false; };
-  }, [pathname]);
+  }, []);
 
   useEffect(() => {
-    if (!mounted.current || lastPath.current === pathname) return;
-    lastPath.current = pathname;
+    if (!mounted.current) return;
     setPhase('done');
     if (doneTimer.current) clearTimeout(doneTimer.current);
     doneTimer.current = setTimeout(() => {

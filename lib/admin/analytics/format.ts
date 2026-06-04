@@ -48,22 +48,38 @@ export function formatHours(n: number | null): string {
   return `${(n / 24).toFixed(1)}d`;
 }
 
+function toLocalDate(iso: string) {
+  const [y, m, d] = iso.slice(0, 10).split('-').map(Number);
+  return new Date(y, m - 1, d);
+}
+
+function toLocalTime(iso: string): string {
+  if (!iso.includes('T')) return '';
+  return iso.slice(11, 16);
+}
+
 export function formatShortDate(iso: string): string {
-  return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  return toLocalDate(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
 export function formatLongDate(iso: string): string {
-  return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  return toLocalDate(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
 export function formatDateTime(iso: string): string {
-  return new Date(iso).toLocaleString('en-US', {
+  const date = toLocalDate(iso);
+  const formatted = date.toLocaleDateString('en-US', {
     month: 'short',
     day: 'numeric',
     year: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
   });
+  const time = toLocalTime(iso);
+  return time ? `${formatted}, ${time}` : formatted;
+}
+
+export function formatDate(iso: string): string {
+  const [y, m, d] = iso.slice(0, 10).split('-').map(Number);
+  return new Date(y, m - 1, d).toLocaleDateString('en-US');
 }
 
 export function formatRelative(iso: string): string {

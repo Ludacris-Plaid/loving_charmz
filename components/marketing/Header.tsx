@@ -18,7 +18,13 @@ export async function Header() {
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-6 py-3 sm:px-10 lg:px-16">
         <div className="flex items-center gap-2">
           <div className="md:hidden">
-            <MobileMenu cartCount={cartCount} isAdmin={isAdmin} />
+            <MobileMenu
+              cartCount={cartCount}
+              isAdmin={isAdmin}
+              avatarUrl={session?.avatarUrl}
+              email={session?.email}
+              isLoggedIn={!!session}
+            />
           </div>
           <Logo size="md" className="motion-base" />
         </div>

@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import type { AnalyticsFilters, DateRangePreset, Granularity } from '@/lib/admin/analytics/types';
+import { formatShortDate } from '@/lib/admin/analytics/format';
 
 type DateRangePickerProps = {
   filters: AnalyticsFilters;
@@ -25,9 +26,7 @@ const GRANULARITIES: { value: Granularity; label: string }[] = [
 
 function formatRangeLabel(filters: AnalyticsFilters): string {
   if (filters.preset === 'custom' && filters.start && filters.end) {
-    const s = new Date(filters.start);
-    const e = new Date(filters.end);
-    return `${s.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} – ${e.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
+    return `${formatShortDate(filters.start)} – ${formatShortDate(filters.end)}`;
   }
   const map: Record<DateRangePreset, string> = { '7d': 'Last 7 days', '30d': 'Last 30 days', '90d': 'Last 90 days', ytd: 'Year to date', custom: 'Custom' };
   return map[filters.preset];

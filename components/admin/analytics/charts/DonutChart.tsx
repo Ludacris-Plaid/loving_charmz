@@ -40,7 +40,7 @@ export function DonutChart({
   centerValue,
   className,
   onSelect,
-  formatValue = (v) => v.toLocaleString(),
+  formatValue = (v) => v.toLocaleString('en-US'),
 }: DonutChartProps) {
   const router = useRouter();
   const id = useId();

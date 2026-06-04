@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { Suspense } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { AdminTabBar } from '@/components/admin/AdminTabBar';
 import { AdminGuard, getSession } from '@/components/admin/AdminGuard';
@@ -26,7 +27,18 @@ export default async function AdminLayout({ children }: { children: ReactNode })
             </div>
             <nav className="flex flex-wrap items-center gap-4 text-sm">
               {session?.email && (
-                <span className="hidden text-xs text-ink-500 sm:inline">{session.email}</span>
+                <span className="hidden items-center gap-2 sm:inline-flex">
+                  {session.avatarUrl ? (
+                    <span className="relative inline-flex h-6 w-6 shrink-0 overflow-hidden rounded-full border border-plum-200">
+                      <Image src={session.avatarUrl} alt="" fill className="object-cover" sizes="24px" />
+                    </span>
+                  ) : (
+                    <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-plum-100 text-[10px] font-semibold text-plum-700">
+                      {session.email.charAt(0).toUpperCase()}
+                    </span>
+                  )}
+                  <span className="text-xs text-ink-500">{session.email}</span>
+                </span>
               )}
               <Link
                 href="/logout"

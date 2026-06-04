@@ -45,7 +45,7 @@ export async function uploadAvatarAction(userId: string, formData: FormData): Pr
   if (uploadError) return { error: uploadError.message };
 
   const { data: pub } = admin.storage.from('avatars').getPublicUrl(path);
-  const url = pub.publicUrl;
+  const url = `${pub.publicUrl}?t=${Date.now()}`;
 
   const { error: updateError } = await supabase
     .from('profiles')

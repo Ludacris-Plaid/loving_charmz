@@ -1,14 +1,18 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 
 type MobileMenuProps = {
   cartCount: number;
   isAdmin?: boolean;
+  avatarUrl?: string | null;
+  email?: string | null;
+  isLoggedIn?: boolean;
 };
 
-export function MobileMenu({ cartCount, isAdmin = false }: MobileMenuProps) {
+export function MobileMenu({ cartCount, isAdmin = false, avatarUrl, email, isLoggedIn = false }: MobileMenuProps) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -38,6 +42,25 @@ export function MobileMenu({ cartCount, isAdmin = false }: MobileMenuProps) {
         ].join(' ')}
       >
         <nav className="flex flex-col gap-1">
+          {isLoggedIn && (
+            <div className="px-3 py-3">
+              <Link href="/account" onClick={() => setOpen(false)} className="flex items-center gap-3">
+                {avatarUrl ? (
+                  <span className="relative inline-flex h-10 w-10 shrink-0 overflow-hidden rounded-full border-2 border-plum-200">
+                    <Image src={avatarUrl} alt="" fill className="object-cover" sizes="40px" />
+                  </span>
+                ) : (
+                  <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-plum-100 text-sm font-semibold text-plum-700">
+                    {(email || '?').charAt(0).toUpperCase()}
+                  </span>
+                )}
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-medium text-ink-800">{email || 'Account'}</p>
+                  <p className="text-xs text-ink-500">View profile</p>
+                </div>
+              </Link>
+            </div>
+          )}
           <MobileNavLink href="/shop" onClick={() => setOpen(false)}>Shop</MobileNavLink>
           <MobileNavLink href="/stories" onClick={() => setOpen(false)}>Stories</MobileNavLink>
           <MobileNavLink href="/about" onClick={() => setOpen(false)}>About</MobileNavLink>
@@ -47,7 +70,9 @@ export function MobileMenu({ cartCount, isAdmin = false }: MobileMenuProps) {
           <MobileNavLink href="/cart" onClick={() => setOpen(false)}>
             Cart <span className="ml-1 text-plum-600">({cartCount})</span>
           </MobileNavLink>
-          <MobileNavLink href="/account" onClick={() => setOpen(false)}>My Account</MobileNavLink>
+          <MobileNavLink href={isLoggedIn ? "/account" : "/login"} onClick={() => setOpen(false)}>
+            {isLoggedIn ? 'My Account' : 'Sign in'}
+          </MobileNavLink>
           {isAdmin && (
             <>
               <div className="my-2 border-t border-cream-300" />

@@ -33,7 +33,7 @@ export function BarChart({
   height = 240,
   showPrevious = false,
   className,
-  yFormat = (v) => v.toLocaleString(),
+  yFormat = (v) => v.toLocaleString('en-US'),
   orientation = 'vertical',
   onClickHref,
 }: BarChartProps) {

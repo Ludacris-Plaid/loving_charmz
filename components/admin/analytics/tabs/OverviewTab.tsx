@@ -8,7 +8,7 @@ import { SortableWidget } from '../widgets/SortableWidget';
 import { RevenueChartWidget } from '../widgets/RevenueChartWidget';
 import { InlineOrderStatusMenu } from '../widgets/InlineOrderStatusMenu';
 import { ExportButton } from '../controls/ExportButton';
-import { formatMoney, formatNumber, formatDelta } from '@/lib/admin/analytics/format';
+import { formatMoney, formatNumber, formatDelta, formatShortDate } from '@/lib/admin/analytics/format';
 import { getBucketLabel } from '@/lib/admin/analytics/aggregate';
 import type { AnalyticsFilters, AnalyticsSnapshot, WidgetId } from "@/lib/admin/analytics/types";
 
@@ -119,12 +119,24 @@ export function OverviewTab({ filters, snapshot, isWidgetVisible }: OverviewTabP
         )}
 
         {isWidgetVisible('recent-activity') && (
-          <SortableWidget id="recent-activity" title="Recent orders" span="half">
-            <ExportButton
-              filename="recent-orders"
-              rows={snapshot.kpis.revenue.delta ? [] : []}
-              className="hidden"
-            />
+          <SortableWidget
+            id="recent-activity"
+            title="Recent orders"
+            span="half"
+            toolbar={
+              <ExportButton
+                filename="recent-orders"
+                rows={snapshot.recentOrders.map((o) => ({
+                  id: o.id,
+                  customer: o.customer_name ?? '(guest)',
+                  date: o.created_at,
+                  items: o.item_count,
+                  status: o.status,
+                  total: Number(o.total).toFixed(2),
+                }))}
+              />
+            }
+          >
             <div className="analytics-list">
               {snapshot.recentOrders.length > 0 ? (
                 <table className="analytics-table">
@@ -143,7 +155,7 @@ export function OverviewTab({ filters, snapshot, isWidgetVisible }: OverviewTabP
                       <tr key={o.id}>
                         <td>#{o.id.slice(0, 8).toUpperCase()}</td>
                         <td>{o.customer_name ?? <span className="analytics-empty-inline">Guest</span>}</td>
-                        <td>{new Date(o.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</td>
+                        <td>{formatShortDate(o.created_at)}</td>
                         <td>{o.item_count}</td>
                         <td><InlineOrderStatusMenu orderId={o.id} currentStatus={o.status} /></td>
                         <td className="numeric"><strong>{formatMoney(Number(o.total))}</strong></td>

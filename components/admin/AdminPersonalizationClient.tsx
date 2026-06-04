@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from 'react';
 import { updatePersonalizationAction } from '@/lib/admin/actions';
+import { formatDate } from '@/lib/admin/analytics/format';
 
 type Row = {
   id: string;
@@ -73,7 +74,7 @@ export function AdminPersonalizationClient({ rows, statusOptions }: Props) {
                   <div>
                     <p className="font-medium text-ink-800">{row.product_name || 'Custom request'}</p>
                     <p className="text-xs text-ink-500 mt-0.5">
-                      Submitted {new Date(row.created_at).toLocaleDateString()}
+                      Submitted {formatDate(row.created_at)}
                     </p>
                   </div>
                   <span className={statusStyle[row.status] || 'badge-soft'}>{row.status}</span>

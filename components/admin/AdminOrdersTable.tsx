@@ -2,6 +2,7 @@
 
 import { Fragment, useState, useTransition } from 'react';
 import { updateOrderStatusAction } from '@/lib/admin/actions';
+import { formatDate } from '@/lib/admin/analytics/format';
 
 type Order = {
   id: string;
@@ -84,7 +85,7 @@ export function AdminOrdersTable({ orders, statusOptions }: Props) {
                         {order.customer_email || '—'}
                       </td>
                       <td className="px-4 py-3 text-ink-500">
-                        {new Date(order.created_at).toLocaleDateString()}
+                        {formatDate(order.created_at)}
                       </td>
                       <td className="px-4 py-3">
                         <span className={statusStyle[order.status] || 'badge-soft'}>
