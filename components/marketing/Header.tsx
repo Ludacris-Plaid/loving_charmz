@@ -15,7 +15,7 @@ export async function Header() {
       data-site-header
       className="sticky top-0 z-50 border-b border-cream-300 glass"
     >
-      <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-6 py-3 sm:px-10 lg:px-16">
+      <div className="mx-auto grid max-w-7xl grid-cols-[1fr_auto_1fr] items-center gap-4 px-6 py-3 sm:px-10 lg:px-16">
         <div className="flex items-center gap-2">
           <div className="md:hidden">
             <MobileMenu
@@ -29,7 +29,7 @@ export async function Header() {
           <Logo size="md" className="motion-base" />
         </div>
 
-        <nav className="hidden items-center gap-8 md:flex">
+        <nav className="hidden items-center justify-center gap-8 md:flex">
           <Link href="/shop" className="nav-underline text-sm font-medium text-ink-700 hover:text-plum-700 motion-base">Shop</Link>
           <Link href="/collections" className="nav-underline text-sm font-medium text-ink-700 hover:text-plum-700 motion-base">Collections</Link>
           <Link href="/stories" className="nav-underline text-sm font-medium text-ink-700 hover:text-plum-700 motion-base">Stories</Link>
@@ -37,7 +37,7 @@ export async function Header() {
           <Link href="/custom-orders" className="nav-underline text-sm font-medium text-ink-700 hover:text-plum-700 motion-base">Custom Orders</Link>
         </nav>
 
-        <div className="flex items-center gap-1 sm:gap-3">
+        <div className="flex items-center justify-end gap-1 sm:gap-3">
           <Link
             href="/cart"
             className="relative motion-base"
