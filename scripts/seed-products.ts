@@ -7,6 +7,7 @@
 //
 // Requires: NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY in env.
 
+import './lib/websocket-polyfill.mjs';
 import { config } from 'dotenv';
 config({ path: '.env.local' });
 

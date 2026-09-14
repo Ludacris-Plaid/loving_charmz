@@ -1,3 +1,4 @@
+import './lib/websocket-polyfill.mjs';
 import { createClient } from '@supabase/supabase-js';
 import { config } from 'dotenv';
 

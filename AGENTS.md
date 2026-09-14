@@ -22,12 +22,14 @@ npm run lint && npm run typecheck && npm run test
 |---|---|
 | `npm run dev` | Next.js dev server |
 | `npm run build` | Production build |
+| `npm run icons` | Rasterise the favicons from `app/icon.svg` (see Brand & style system) |
 | `npm run lint` | ESLint |
 | `npm run typecheck` | `tsc --noEmit` |
 | `npm run test` | Vitest unit/integration tests |
 | `npm run test:watch` | Vitest watch mode |
 | `npm run test:e2e` | Playwright E2E tests |
-| `npm run db:seed` | Idempotent seed of 120 orders + 12 customers + wishlist + custom + discount + annotation demo data |
+| `npm run db:seed` | Idempotent seed of 120 orders + 12 customers + wishlist + custom + discount + annotation demo data (demo data — do not run against production) |
+| `npm run db:migrate` | Supabase project migration tooling: `preflight`, `export`, `schema`, `import`, `storage`, `rewrite`, `verify` — see `supabase/MIGRATION.md` |
 
 ## Path alias
 
@@ -47,6 +49,29 @@ Middleware lives in **`proxy.ts`** at root (not `middleware.ts`). Matcher config
 
 Auth server actions (signup, login, logout) live in `lib/auth/actions.ts`.
 
+## Supabase project
+
+Current project: **`ivvsglfjlmejwmwofvuw`**. The previous project
+(`otareqhvjbcbiehmgzda`) was deleted, so there is no legacy data — accounts, orders and
+storage all start empty. See `supabase/MIGRATION.md` for the setup procedure, the
+verification gates, and the data-move tooling kept in `scripts/migrate/` for future
+project-to-project moves.
+
+Status: migrations `00001`–`00007` applied, catalog seeded (3 collections, 8 products,
+24 variants), no accounts yet. Verify a project at any time without database credentials:
+`npm run db:verify:api` (expect 23/23).
+
+Migrations `00001`–`00007` are the schema source of truth. **`00007` is required** for
+checkout and custom orders to work at all, and it closes a `user_roles` policy that let
+any signed-in user grant themselves admin.
+
+## Scripts and Node 20
+
+`@supabase/realtime-js` builds a Realtime client on every `createClient` and throws on
+Node < 22 unless a global `WebSocket` exists (Next's own runtime provides one, so the app
+is unaffected). Any standalone script must import `scripts/lib/websocket-polyfill.mjs`
+**before** `@supabase/supabase-js`; `ws` is a devDependency for that reason.
+
 ## Local Supabase workflow
 
 ```bash
@@ -65,6 +90,7 @@ Requires Docker. Local Supabase API runs on `http://127.0.0.1:54321`.
 - Animations are **CSS-only** (no Framer Motion). See `globals.css` keyframes: `hero-line-in`, `ambient-float`, `reveal-up`, etc.
 - `prefers-reduced-motion` respected globally via CSS media query in `globals.css`
 - `design-brief.md` contains detailed visual direction (brand tokens, animation specs, layout expectations) — reference it for design decisions
+- Favicon: `app/icon.svg` is the hand-authored source of truth (the `LC` monogram on the plum gradient, same mark as `components/marketing/Logo.tsx`). `app/icon.png` (192, Safari ignores SVG favicons), `app/apple-icon.png` (180, full bleed — iOS applies its own corner mask) and `app/favicon.ico` (16/32/48, legacy) are generated from it by `npm run icons` and committed; `tests/unit/brand-icons.test.ts` guards that contract
 - Mobile-first responsive layouts
 
 ## Architecture rules
@@ -72,7 +98,12 @@ Requires Docker. Local Supabase API runs on `http://127.0.0.1:54321`.
 - **Server components by default**, client components only when interactivity is needed
 - Route groups: `(marketing)/` for public storefront, `(auth)/` for login/signup
 - Admin is role-gated via `components/admin/AdminGuard.tsx` (checks `user_roles` table with service_role client)
-- First user is promoted to admin manually (seed or SQL function per `PLAN.md` §2.8)
+- The **first account created on a project is auto-promoted to admin** by the
+  `on_auth_user_created_promote_admin` trigger (`00002`), which fires while `user_roles` is
+  empty. On a fresh project, sign up before anyone else does. Note the corollary: an
+  automated test that creates users first will claim that slot — `scripts/migrate/sql/rls-smoke.sql`
+  and `scripts/migrate/verify-via-api.ts` both strip the auto-granted role from their
+  throwaway users so cross-tenant checks stay meaningful.
 
 ## Test setup
 
@@ -83,9 +114,23 @@ Requires Docker. Local Supabase API runs on `http://127.0.0.1:54321`.
 
 ## What does NOT exist yet (agent must not assume)
 
-- API routes and webhooks
 - E2E tests
 - Integration tests (only unit tests exist)
+- SMTP / transactional email — nothing is actually emailed (no order receipts, no password reset delivery)
+- Stock checks or discounts at checkout (quantity is taken as-is, `discount` is always 0)
+
+## Payments & checkout
+
+Checkout is a **redirect** flow: the order and a provider payment session are created together, then the shopper pays on the provider's own domain.
+
+- **Adapter layer** (`lib/payments/`): `config.ts` (env → provider config; any value matching `your_*` counts as unconfigured), `paypal.ts` (Orders v2: create, capture, webhook verification), `square.ts` (hosted Checkout payment links + webhook HMAC), `index.ts` (registry: `getProvider`, `startPaymentSession`, `confirmPayment`, `verifyAndParseWebhook`), `ledger.ts` (service-role order + `payment_transactions` transitions), `reconcile.ts` (shared webhook application), `returns.ts` (ownership check for return routes), `site.ts` (`getSiteUrl()`, honours `NEXT_PUBLIC_SITE_URL`).
+- **Order lifecycle**: `lib/checkout/actions.ts` inserts the order with `payment_status = 'awaiting_payment'` (never bare `'pending'`), writes a `payment_transactions` row, then creates the provider session. If the method is unconfigured or the provider refuses, the order is deleted — no unpaid order without a provider survives. The cart is emptied only when payment is captured.
+- **Settlement paths**: `app/api/payments/paypal/capture/[orderId]`, `app/api/payments/square/return/[orderId]` (confirm with the provider, then settle), `app/api/payments/paypal/cancel/[orderId]` (mark failed). `app/api/webhooks/paypal|square` are authoritative and settle orders whose shopper never came back.
+- **Security**: return routes load the order through the *member's* client and compare `user_id`; webhooks answer `503` unless `PAYPAL_WEBHOOK_ID` / `SQUARE_WEBHOOK_SIGNATURE_KEY` is set **and** the signature verifies, so an unsigned "payment completed" post can never mark an order paid.
+- **Analytics**: `awaiting_payment` is folded into the `pending` bucket by `paymentStatusKey()` in `lib/admin/analytics/queries.ts`, so abandoned checkouts still raise the stuck-payment action item.
+- **Money math**: `lib/checkout/pricing.ts` is the single source of truth (subtotal, free shipping over $100, 8% tax, minor-unit conversion). The checkout page and the provider charge call the same function — never recompute totals inline.
+- **Local limitation**: the shipped PayPal/Square values are placeholders, so checkout renders "Online payments are not configured" with a disabled button and creates no orders. Square's hosted checkout requires an HTTPS `redirect_url`, so it cannot be exercised from `localhost`.
+- **Test seam**: provider tests stub `fetch` (`tests/unit/payments/*`); `resetPayPalTokenCache()` exists because the OAuth token cache is module-level.
 
 ## Docs hierarchy
 
@@ -106,7 +151,7 @@ Requires Docker. Local Supabase API runs on `http://127.0.0.1:54321`.
 - **Hand-rolled SVG charts** in `components/admin/analytics/charts/`: `Sparkline` (for KPI cards), `AreaChart` (revenue/orders with previous-period dashed line + annotations), `BarChart` (vertical/horizontal, optional previous bar), `DonutChart` (clickable, hover-highlights), `Heatmap` (7×24 day×hour), `FunnelChart` (with step conversion %), `KpiCard` (with sparkline + delta%).
 - **Chart annotations** (notes pinned to specific dates on the revenue chart) require migration `00005_analytics_annotations.sql`. Apply with `supabase db push`.
 - **Demo data**: `npm run db:seed` populates 120 orders over 6 months, 12 customers, 10 wishlists, 6 custom requests, 3 discounts, 3 chart annotations. Idempotent (cleans prior seed by `metadata->>seed_tag = 'analytics-seed'` marker).
-- **Tests**: 75 unit tests in `tests/unit/admin/analytics/` for `aggregate`, `format`, `csv`, `urlState`. Total: 156/156 unit tests pass.
+- **Tests**: 75 unit tests in `tests/unit/admin/analytics/` for `aggregate`, `format`, `csv`, `urlState`. Total: 206/206 unit tests pass. Checkout and payments are covered in `tests/unit/checkout/` (pricing, checkout action) and `tests/unit/payments/` (config, PayPal, Square).
 - **CRITICAL — `'use client'` component gotcha**: A `'use client'` component's `children` prop MUST be rendered JSX, not a render-prop function. Server-to-client functions-as-children error: `Functions are not valid as a child of Client Components`. To pass dynamic data into a client component, render the content inside the client component and select via prop (e.g. `tab` id), not via a function-as-children pattern. Constants exported from `'use client'` files (e.g. `ANALYTICS_TABS`) become client-reference proxies when imported into server components — define them in a server-importable module instead.
 - **Turbopack stale-cache trap**: When server-component code that passes render-prop functions is edited, the dev server can serve stale compiled chunks. Symptoms: runtime error matches the OLD code. Fix: `pkill -9 -f "next dev" && rm -rf .next && npm run dev`. Hit repeatedly in this session — always do a hard restart when changing the analytics shell structure.
 - **NavigationProgress base animation trap**: `.nav-progress__bar` base class MUST NOT have `animation` — it runs constantly, visible on every page. Put animation only on `--active`/`--done` state classes. `.nav-progress` base MUST have `opacity: 0` + `transition` so the bar is invisible when idle.

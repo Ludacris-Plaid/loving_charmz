@@ -7,3 +7,17 @@ supabase/.temp/
 .env.local
 .env*.local
 .vercel
+
+# Playwright walkthrough screenshots
+tests/e2e/.artifacts/
+
+# Project-local Playwright browser cache (PLAYWRIGHT_BROWSERS_PATH)
+.playwright-cache/
+
+# Supabase project migration artifacts (credentials, data dumps, generated SQL)
+scripts/migrate/.env.migrate
+scripts/migrate/dump/
+scripts/migrate/generated/
+
+# Freebuff thread workspace artifacts
+.freebuff/

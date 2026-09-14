@@ -1,4 +1,5 @@
 // Fix product & collection images — replace picsum.photos with reliable Unsplash URLs
+import './lib/websocket-polyfill.mjs';
 import { config } from 'dotenv';
 config({ path: '.env.local' });
 import { createClient } from '@supabase/supabase-js';

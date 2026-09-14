@@ -7,6 +7,7 @@
 //
 // Requires: NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY in env.
 
+import './lib/websocket-polyfill.mjs';
 import { config } from 'dotenv';
 config({ path: '.env.local' });
 
@@ -177,7 +178,7 @@ async function main() {
 
     const subtotal = lineItems.reduce((s, l) => s + l.unit_price * l.quantity, 0);
     const discount = Math.random() < 0.25 ? randFloat(5, 25) : 0;
-    const shipping = subtotal > 100 ? 0 : randFloat(6, 12);
+    const shipping = subtotal > 50 ? 0 : randFloat(6, 12);
     const tax = subtotal * 0.08;
     const total = Math.max(0, subtotal + shipping + tax - discount);
     const status = pick(statuses);
