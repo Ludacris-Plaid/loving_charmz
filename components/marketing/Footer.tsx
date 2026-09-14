@@ -26,14 +26,11 @@ export function Footer() {
           <div>
             <h4 className="text-xs font-semibold uppercase tracking-[0.24em] text-plum-700">Company</h4>
             <ul className="mt-4 space-y-3">
-              <li><Link href="/about" className="nav-link text-sm">About</Link></li>
-              <li><Link href="/account" className="nav-link text-sm">My Account</Link></li>
-              <li>
-                <a href="mailto:hello@lovingcharmz.com" className="nav-link text-sm">
-                  Contact
-                </a>
-              </li>
-              <li><Link href="/account/orders" className="nav-link text-sm">Orders</Link></li>
+              <li><Link href="/about" className="nav-link text-sm">About Us</Link></li>
+              <li><Link href="/wholesale" className="nav-link text-sm">Wholesale</Link></li>
+              <li><Link href="/faq" className="nav-link text-sm">FAQ</Link></li>
+              <li><Link href="/shipping" className="nav-link text-sm">Shipping Policy</Link></li>
+              <li><Link href="/refunds" className="nav-link text-sm">Refund Policy</Link></li>
             </ul>
           </div>
         </div>
