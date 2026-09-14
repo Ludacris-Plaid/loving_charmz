@@ -1,34 +1,42 @@
 /**
- * Production smoke test: crawls every page on the live site, collects
- * console errors, failed network requests, and broken internal links.
+ * Production smoke test: crawls the live site for console errors, failed
+ * network requests, and broken links.
  *
- * Usage: node tests/prod/smoke.mjs [baseUrl]
+ * Pass SMOKE_EMAIL / SMOKE_PASSWORD to also crawl signed-in pages (account,
+ * orders, wishlist, cart, checkout) as a dedicated test customer. Without
+ * them the run covers public pages only.
+ *
+ * Usage:
+ *   node tests/prod/smoke.mjs [baseUrl]
+ *   SMOKE_EMAIL=... SMOKE_PASSWORD=... node tests/prod/smoke.mjs [baseUrl]
  * Default baseUrl: https://loving-charmz.vercel.app
  */
 import { chromium } from 'playwright';
 
 const BASE = (process.argv[2] || 'https://loving-charmz.vercel.app').replace(/\/$/, '');
 const START = '/';
+const EMAIL = process.env.SMOKE_EMAIL || '';
+const PASSWORD = process.env.SMOKE_PASSWORD || '';
 
 const consoleErrors = new Map(); // page -> messages[]
-const requestFailures = new Map(); // page -> [{url, status, method}]
-const brokenLinks = new Set(); // url -> where found (rendered "url (from x)")
+const requestFailures = new Map(); // page -> [{url, status, error}]
+const brokenLinks = new Set(); // rendered "url (from x)"
 const checked = new Set();
-const queue = [START];
+const queue = EMAIL ? [START, '/cart', '/checkout'] : [START];
 
 const SKIP = [
   /^\/api\//,
   /^\/admin/,
-  /^\/account/,
   /^\/login/,
   /^\/signup/,
-  /^\/checkout$/,
-  /\/cart$/,
+  /\/logout$/,
   /\.(png|jpg|jpeg|webp|gif|svg|ico|css|js|woff2?)$/i,
 ];
+// Only skipped when crawling anonymously; the authed pass visits them.
+const SKIP_ANON_ONLY = [/^\/account/, /^\/checkout$/, /\/cart$/];
 
 function shouldVisit(path) {
-  return !SKIP.some((re) => re.test(path));
+  return ![...SKIP, ...(EMAIL ? [] : SKIP_ANON_ONLY)].some((re) => re.test(path));
 }
 
 let browser;
@@ -62,6 +70,33 @@ try {
     }
   });
 
+  // ── Signed-in pass: log the test customer in before crawling ──
+  if (EMAIL && PASSWORD) {
+    process.stdout.write(`signing in as ${EMAIL} `);
+    await page.goto(`${BASE}/login`, { waitUntil: 'networkidle', timeout: 45000 });
+    await page.fill('#email', EMAIL);
+    await page.fill('#password', PASSWORD);
+    await Promise.all([
+      page.waitForURL(`${BASE}/account**`, { timeout: 30000 }),
+      page.click('button[type="submit"]'),
+    ]);
+    process.stdout.write('ok\n');
+
+    // Seed one item into the cart through the UI so /cart and /checkout
+    // render their real contents (line items, totals, discount field,
+    // payment methods) rather than their empty states.
+    try {
+      process.stdout.write('seeding cart ');
+      await page.goto(`${BASE}/shop`, { waitUntil: 'networkidle', timeout: 45000 });
+      await page.locator('a[href^="/products/"]').first().click();
+      await page.getByRole('button', { name: 'Add to cart' }).click();
+      await page.getByRole('status').filter({ hasText: 'Added to cart' }).waitFor({ timeout: 15_000 });
+      process.stdout.write('ok\n');
+    } catch (err) {
+      process.stdout.write(`WARN: could not seed cart (${err.message.split('\n')[0]}) — checkout will render its empty state\n`);
+    }
+  }
+
   while (queue.length > 0) {
     const path = queue.shift();
     if (checked.has(path)) continue;
@@ -80,6 +115,13 @@ try {
     // Let client-side hydration errors surface.
     await page.waitForTimeout(1200);
     process.stdout.write('ok\n');
+
+    // A signed-in crawl that bounced to /login means an auth or session
+    // problem on that page — record it rather than silently passing.
+    if (EMAIL && page.url().includes('/login')) {
+      consoleErrors.set(path, [...(consoleErrors.get(path) || []), 'redirected to /login while signed in']);
+      continue;
+    }
 
     // Collect same-origin http(s) links actually present in the rendered DOM.
     // mailto:/tel:/javascript: links are excluded — their .pathname is an
@@ -113,13 +155,10 @@ try {
     }
   }
 
-  // HEAD-check collected same-origin links we deliberately do not browse.
-  for (const path of [...checked].filter((p) => SKIP.some((re) => re.test(p)) && /^\/api\//.test(p))) {
-    // no body — API routes verified through responses above
-  }
-
   console.log('\n=== SUMMARY ===');
-  console.log(`Pages visited: ${[...checked].filter((p) => !SKIP.some((re) => re.test(p))).length}`);
+  const visitedPages = [...checked].filter((p) => !SKIP.some((re) => re.test(p)));
+  console.log(`Pages visited: ${visitedPages.length}${EMAIL ? ' (signed in)' : ' (anonymous)'}`);
+  console.log(visitedPages.map((p) => `  ${p}`).join('\n'));
 
   if (consoleErrors.size === 0) {
     console.log('Console errors: none');
