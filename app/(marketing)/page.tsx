@@ -5,7 +5,9 @@ import { MagneticWrap } from '@/components/ui/MagneticWrap';
 import { ScrollReveal } from '@/components/ui/ScrollReveal';
 import { getProducts } from '@/lib/supabase/queries/products';
 import { getCollections } from '@/lib/supabase/queries/collections';
+import { getCatalogStats } from '@/lib/supabase/queries/stats';
 import { images } from '@/lib/images';
+import { capitalize, numberToWords } from '@/lib/numberToWords';
 
 const highlights = [
   {
@@ -29,9 +31,10 @@ export const metadata = {
 };
 
 export default async function HomePage() {
-  const [products, collections] = await Promise.all([
+  const [products, collections, stats] = await Promise.all([
     getProducts(8).catch(() => []),
     getCollections().catch(() => []),
+    getCatalogStats().catch(() => ({ productCount: 0, collectionCount: 0, startingPrice: null })),
   ]);
   const featuredImage = images.pets.goldenRetriever;
 
@@ -44,7 +47,10 @@ export default async function HomePage() {
       <Container className="relative py-20 sm:py-28 lg:py-32">
         <div className="space-y-24 sm:space-y-32">
           <section className="text-center relative">
-            <span className="badge-mint mx-auto">Three collections · Eight keepsake pieces</span>
+            <span className="badge-mint mx-auto">
+              {capitalize(numberToWords(stats.collectionCount))} collections ·{' '}
+              {capitalize(numberToWords(stats.productCount))} keepsake pieces
+            </span>
 
             <h1 className="font-display text-5xl sm:text-6xl lg:text-7xl font-semibold leading-[1.05] tracking-tight mt-8">
               <span className="block">
@@ -75,7 +81,7 @@ export default async function HomePage() {
             </div>
 
             <p className="hero-content mt-8 text-center text-xs uppercase tracking-[0.3em] text-ink-500">
-              3 collections · 8 pieces · Starting at $165
+              {stats.startingPrice !== null && `Starting at $${stats.startingPrice.toFixed(0)}`}
             </p>
           </section>
 
