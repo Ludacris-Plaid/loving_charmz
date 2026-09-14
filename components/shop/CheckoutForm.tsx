@@ -1,27 +1,62 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import { useRouter } from 'next/navigation';
 import { Input } from '@/components/ui/Input';
 import { createCheckoutAction } from '@/lib/checkout/actions';
+import { validateDiscountCode } from '@/lib/checkout/discount';
+
+type PaymentMethodOption = {
+  id: 'paypal' | 'card';
+  label: string;
+  description: string;
+  configured: boolean;
+};
 
 type Props = {
   defaultEmail: string;
+  methods: PaymentMethodOption[];
 };
 
-export function CheckoutForm({ defaultEmail }: Props) {
-  const router = useRouter();
+export function CheckoutForm({ defaultEmail, methods }: Props) {
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [discountInput, setDiscountInput] = useState('');
+  const [discountStatus, setDiscountStatus] = useState<'idle' | 'checking' | 'applied' | 'error'>('idle');
+  const [discountMsg, setDiscountMsg] = useState<string | null>(null);
+  const [discountData, setDiscountData] = useState<{ code: string; type: string; value: number } | null>(null);
+  const available = methods.filter((method) => method.configured);
+  const paymentsUnavailable = available.length === 0;
+
+  const handleApplyDiscount = () => {
+    if (!discountInput.trim()) return;
+    setDiscountStatus('checking');
+    setDiscountMsg(null);
+    validateDiscountCode(discountInput.trim()).then((res) => {
+      if (res.valid) {
+        setDiscountStatus('applied');
+        setDiscountData({ code: res.code!, type: res.discount_type!, value: res.discount_value! });
+        setDiscountMsg(null);
+      } else {
+        setDiscountStatus('error');
+        setDiscountMsg(res.error || 'Invalid code');
+        setDiscountData(null);
+      }
+    });
+  };
 
   const handleSubmit = (formData: FormData) => {
     setError(null);
+    if (discountData) {
+      formData.set('discountCode', discountData.code);
+    }
     startTransition(async () => {
       const res = await createCheckoutAction(formData);
       if (res.error) {
         setError(res.error);
-      } else if (res.orderId) {
-        router.push(`/checkout/confirmation?id=${res.orderId}`);
+      } else if (res.redirectUrl) {
+        window.location.assign(res.redirectUrl);
+      } else {
+        setError('We could not start the payment. Please try again.');
       }
     });
   };
@@ -56,38 +91,92 @@ export function CheckoutForm({ defaultEmail }: Props) {
       </section>
 
       <section className="surface-card p-6">
-        <h2 className="font-display text-lg font-semibold text-plum-900 mb-4">Payment method</h2>
-        <div className="space-y-3">
-          {[
-            { value: 'paypal', label: 'PayPal' },
-            { value: 'card', label: 'Credit / Debit Card' },
-          ].map((opt, i) => (
-            <label
-              key={opt.value}
-              className="flex items-center gap-3 p-4 rounded-md border border-cream-300 cursor-pointer hover:border-plum-500 motion-base"
+        <h2 className="font-display text-lg font-semibold text-plum-900 mb-4">Discount code</h2>
+        {discountStatus === 'applied' && discountData ? (
+          <div className="flex items-center gap-3">
+            <span className="badge-plum">{discountData.code}</span>
+            <span className="text-sm text-plum-700 font-medium">
+              {discountData.type === 'percentage' ? `${discountData.value}% off` : `$${discountData.value.toFixed(2)} off`}
+            </span>
+            <button
+              type="button"
+              onClick={() => { setDiscountData(null); setDiscountInput(''); setDiscountStatus('idle'); }}
+              className="text-xs text-ink-500 hover:text-red-600 motion-base ml-auto"
             >
-              <input
-                type="radio"
-                name="paymentMethod"
-                value={opt.value}
-                defaultChecked={i === 0}
-                className="accent-plum-700"
-              />
-              <span className="text-ink-800">{opt.label}</span>
-            </label>
-          ))}
-        </div>
-        <p className="text-xs text-ink-500 mt-3">
-          You will be redirected to your payment provider to complete the transaction. No card details are stored on this site.
-        </p>
+              Remove
+            </button>
+          </div>
+        ) : (
+          <div className="flex gap-2">
+            <Input
+              label=""
+              name="discountCode"
+              placeholder="Enter code"
+              value={discountInput}
+              onChange={(e) => setDiscountInput(e.target.value)}
+              className="flex-1"
+            />
+            <button
+              type="button"
+              onClick={handleApplyDiscount}
+              disabled={discountStatus === 'checking' || !discountInput.trim()}
+              className="btn-outline self-end px-5 py-2.5 text-xs"
+            >
+              {discountStatus === 'checking' ? 'Checking…' : 'Apply'}
+            </button>
+          </div>
+        )}
+        {discountMsg && <p className="text-xs text-red-600 mt-2" role="alert">{discountMsg}</p>}
+      </section>
+
+      <section className="surface-card p-6">
+        <h2 className="font-display text-lg font-semibold text-plum-900 mb-4">Payment</h2>
+        {paymentsUnavailable ? (
+          <p
+            role="alert"
+            className="rounded-md border border-cream-300 bg-cream-100 px-4 py-3 text-sm text-ink-800"
+          >
+            Online payments are not configured for this environment yet, so checkout cannot take payment.
+            No order will be placed. Please contact us and we will arrange your keepsake directly.
+          </p>
+        ) : (
+          <div className="space-y-3">
+            {available.map((option, index) => (
+              <label
+                key={option.id}
+                className="flex items-start gap-3 p-4 rounded-md border border-cream-300 cursor-pointer hover:border-plum-500 motion-base"
+              >
+                <input
+                  type="radio"
+                  name="paymentMethod"
+                  value={option.id}
+                  defaultChecked={index === 0}
+                  className="mt-0.5 accent-plum-700"
+                />
+                <span>
+                  <span className="block text-ink-800">{option.label}</span>
+                  <span className="block text-xs text-ink-500 mt-1">{option.description}</span>
+                </span>
+              </label>
+            ))}
+            <p className="text-xs text-ink-500">
+              You will be redirected to your payment provider to complete the transaction. No card details
+              are stored on this site.
+            </p>
+          </div>
+        )}
       </section>
 
       {error && (
         <p className="text-sm text-red-600" role="alert">{error}</p>
       )}
 
-      <button type="submit" disabled={pending} className="btn-plum w-full py-3 text-sm">
-        {pending ? 'Placing order…' : 'Place order'}
+      <button
+        type="submit"
+        disabled={pending || paymentsUnavailable}
+        className="btn-plum w-full py-3 text-sm disabled:opacity-60"
+      >
+        {pending ? 'Opening secure payment…' : 'Continue to payment'}
       </button>
     </form>
   );

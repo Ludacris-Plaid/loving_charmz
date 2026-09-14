@@ -4,6 +4,8 @@ import { Container } from '@/components/ui/Container';
 import { getCartWithItemsServer } from '@/lib/cart/server';
 import { getSession } from '@/components/admin/AdminGuard';
 import { CheckoutForm } from '@/components/shop/CheckoutForm';
+import { computeOrderTotals, lineUnitPrice } from '@/lib/checkout/pricing';
+import { getPaymentMethodOptions } from '@/lib/payments/config';
 import { images } from '@/lib/images';
 import type { CartItem } from '@/lib/supabase/types';
 
@@ -11,8 +13,24 @@ export const metadata = {
   title: 'Checkout — Loving Charmz',
 };
 
-export default async function CheckoutPage() {
-  const [session, cart] = await Promise.all([getSession(), getCartWithItemsServer()]);
+const PAYMENT_NOTICES: Record<string, string> = {
+  failed: 'That payment did not go through and nothing was charged. You can try again below.',
+  cancelled: 'Payment was cancelled — nothing was charged, and your cart is still here.',
+  pending:
+    'We have not received confirmation of that payment yet. If you completed checkout it should appear shortly; otherwise start a new payment below.',
+  unavailable: 'We could not find an active payment for that order. Please start a new payment below.',
+};
+
+type Props = {
+  searchParams: Promise<{ payment?: string }>;
+};
+
+export default async function CheckoutPage({ searchParams }: Props) {
+  const [{ payment }, session, cart] = await Promise.all([
+    searchParams,
+    getSession(),
+    getCartWithItemsServer(),
+  ]);
   if (!session) redirect('/login?next=/checkout');
   const items: CartItem[] = cart?.items || [];
 
@@ -29,30 +47,45 @@ export default async function CheckoutPage() {
     );
   }
 
-  const subtotal = items.reduce<number>((sum, item) => {
-    const price = Number(item.product?.base_price || 0) + Number(item.variant?.price_adjustment || 0);
-    return sum + price * Number(item.quantity || 0);
-  }, 0);
-  const shipping = subtotal > 100 ? 0 : 9.99;
-  const tax = +(subtotal * 0.08).toFixed(2);
-  const total = +(subtotal + shipping + tax).toFixed(2);
+  const totals = computeOrderTotals(
+    items.map((item) => ({
+      unitPrice: lineUnitPrice({
+        base_price: item.product?.base_price,
+        price_adjustment: item.variant?.price_adjustment,
+      }),
+      quantity: Number(item.quantity || 0),
+    })),
+  );
 
   const summaryItems = items.map((item, index) => ({
     id: item.id,
     name: item.product?.name || 'Item',
     variant: item.variant?.name || null,
     quantity: item.quantity,
-    price:
-      Number(item.product?.base_price || 0) + Number(item.variant?.price_adjustment || 0),
+    price: lineUnitPrice({
+      base_price: item.product?.base_price,
+      price_adjustment: item.variant?.price_adjustment,
+    }),
     image: images.shop[index % images.shop.length],
   }));
+
+  const methods = getPaymentMethodOptions();
+  const notice = payment ? PAYMENT_NOTICES[payment] : undefined;
 
   return (
     <Container className="py-12 sm:py-16">
       <h1 className="font-display text-3xl sm:text-4xl font-semibold text-plum-900 mb-8">Checkout</h1>
+      {notice && (
+        <p
+          role="status"
+          className="mb-8 rounded-md border border-cream-300 bg-cream-100 px-4 py-3 text-sm text-ink-800"
+        >
+          {notice}
+        </p>
+      )}
       <div className="grid lg:grid-cols-3 gap-10">
         <div className="lg:col-span-2">
-          <CheckoutForm defaultEmail={session.email || ''} />
+          <CheckoutForm defaultEmail={session.email || ''} methods={methods} />
         </div>
         <aside className="surface-card p-6 h-fit lg:sticky lg:top-24">
           <h2 className="font-display text-lg font-semibold text-plum-900 mb-4">Order review</h2>
@@ -70,19 +103,21 @@ export default async function CheckoutPage() {
           <div className="border-t border-cream-300 pt-4 space-y-2 text-sm">
             <div className="flex justify-between">
               <span className="text-ink-600">Subtotal</span>
-              <span className="text-ink-800">${subtotal.toFixed(2)}</span>
+              <span className="text-ink-800">${totals.subtotal.toFixed(2)}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-ink-600">Shipping</span>
-              <span className="text-ink-800">{shipping === 0 ? 'FREE' : `$${shipping.toFixed(2)}`}</span>
+              <span className="text-ink-800">
+                {totals.shipping === 0 ? 'FREE' : `$${totals.shipping.toFixed(2)}`}
+              </span>
             </div>
             <div className="flex justify-between">
               <span className="text-ink-600">Tax</span>
-              <span className="text-ink-800">${tax.toFixed(2)}</span>
+              <span className="text-ink-800">${totals.tax.toFixed(2)}</span>
             </div>
             <div className="pt-2 border-t border-cream-300 flex justify-between">
               <span className="font-medium text-plum-900">Total</span>
-              <span className="font-semibold plum-gradient-text text-lg">${total.toFixed(2)}</span>
+              <span className="font-semibold plum-gradient-text text-lg">${totals.total.toFixed(2)}</span>
             </div>
           </div>
         </aside>

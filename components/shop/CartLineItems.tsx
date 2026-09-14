@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useState, useEffect, useTransition } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import {
@@ -17,8 +17,25 @@ type LineItem = {
   image: string;
 };
 
+type ProductSelections = {
+  metalType: string;
+  size: string;
+  metalAdjustment: number;
+};
+
 type Props = {
   items: LineItem[];
+};
+
+const METAL_LABELS: Record<string, string> = {
+  brass: 'Brass',
+  stainless_steel: 'Stainless Steel',
+};
+
+const SIZE_LABELS: Record<string, string> = {
+  small: 'Small',
+  medium: 'Medium',
+  large: 'Large',
 };
 
 export function CartLineItems({ items }: Props) {
@@ -26,6 +43,22 @@ export function CartLineItems({ items }: Props) {
   const [busy, setBusy] = useState<string | null>(null);
   const [clearing, setClearing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [selections, setSelections] = useState<Record<string, ProductSelections>>({});
+
+  useEffect(() => {
+    const loaded: Record<string, ProductSelections> = {};
+    items.forEach((item) => {
+      if (item.product?.id) {
+        const stored = localStorage.getItem(`product_${item.product.id}_selections`);
+        if (stored) {
+          try {
+            loaded[item.product.id] = JSON.parse(stored);
+          } catch {}
+        }
+      }
+    });
+    setSelections(loaded);
+  }, [items]);
 
   const updateQty = (itemId: string, qty: number) => {
     setBusy(itemId);
@@ -87,15 +120,25 @@ export function CartLineItems({ items }: Props) {
                 <Image src={item.image} alt={item.product?.name || ''} fill className="object-cover" />
               </Link>
               <div className="flex-1 min-w-0">
-                <Link
-                  href={`/products/${item.product?.slug || ''}`}
-                  className="font-display text-lg font-semibold text-plum-900 hover:text-plum-700 motion-base"
-                >
-                  {item.product?.name || 'Item'}
-                </Link>
-                {item.variant && (
-                  <p className="text-xs text-ink-500 mt-0.5">{item.variant.name}</p>
-                )}
+              <Link
+                href={`/products/${item.product?.slug || ''}`}
+                className="font-display text-lg font-semibold text-plum-900 hover:text-plum-700 motion-base"
+              >
+                {item.product?.name || 'Item'}
+              </Link>
+              {item.variant && (
+                <p className="text-xs text-ink-500 mt-0.5">{item.variant.name}</p>
+              )}
+              {item.product?.id && selections[item.product.id] && (
+                <div className="flex gap-2 mt-1">
+                  <span className="text-xs text-ink-500 bg-cream-100 px-2 py-0.5 rounded">
+                    {METAL_LABELS[selections[item.product.id].metalType] || selections[item.product.id].metalType}
+                  </span>
+                  <span className="text-xs text-ink-500 bg-cream-100 px-2 py-0.5 rounded">
+                    {SIZE_LABELS[selections[item.product.id].size] || selections[item.product.id].size}
+                  </span>
+                </div>
+              )}
                 <p className="text-sm font-medium text-plum-700 mt-1">${price.toFixed(2)} each</p>
               </div>
               <div className="flex flex-col items-end justify-between">

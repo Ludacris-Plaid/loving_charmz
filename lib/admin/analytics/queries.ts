@@ -87,6 +87,17 @@ function statusKey(s: string): string {
   return (s || 'unknown').toLowerCase();
 }
 
+/**
+ * `awaiting_payment` means a provider checkout is open but unsettled, so it is
+ * reported under the existing `pending` bucket. Without this mapping those
+ * orders would vanish from the payment-status widget and from the
+ * abandoned-checkout alert.
+ */
+function paymentStatusKey(s: string): string {
+  const key = statusKey(s);
+  return key === 'awaiting_payment' ? 'pending' : key;
+}
+
 function applyOrderFilters(orders: Order[], filters: AnalyticsFilters): Order[] {
   if (filters.statuses.length) {
     const set = new Set(filters.statuses);
@@ -305,7 +316,7 @@ export async function getAnalyticsSnapshot(filters: AnalyticsFilters): Promise<A
 
   const payStatusMap = new Map<string, PaymentStatusBucket>();
   for (const o of scopedCurrent) {
-    const k = statusKey(o.payment_status);
+    const k = paymentStatusKey(o.payment_status);
     const entry = payStatusMap.get(k) || { status: k as PaymentStatusBucket['status'], count: 0, amount: 0 };
     entry.count += 1;
     entry.amount += Number(o.total || 0);
@@ -635,7 +646,7 @@ export async function getAnalyticsSnapshot(filters: AnalyticsFilters): Promise<A
       count: failedPayments.count,
     });
   }
-  const stuckPayments = scopedCurrent.filter((o) => statusKey(o.payment_status) === 'pending' && statusKey(o.status) !== 'cancelled');
+  const stuckPayments = scopedCurrent.filter((o) => paymentStatusKey(o.payment_status) === 'pending' && statusKey(o.status) !== 'cancelled');
   if (stuckPayments.length > 0) {
     actionItems.push({
       id: 'pending-payments',

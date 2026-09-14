@@ -11,7 +11,9 @@ type Order = {
   subtotal: number;
   tax: number;
   shipping_cost: number;
+  discount: number;
   customer_email: string | null;
+  discount_code: string | null;
   created_at: string;
   items: Array<{
     id: string;
@@ -125,6 +127,15 @@ export function AdminOrdersTable({ orders, statusOptions }: Props) {
                               </ul>
                               <dl className="mt-3 space-y-1 text-xs text-ink-500">
                                 <div className="flex justify-between"><dt>Subtotal</dt><dd>${order.subtotal.toFixed(2)}</dd></div>
+                                {order.discount_code && (
+                                  <div className="flex justify-between">
+                                    <dt>
+                                      Discount{' '}
+                                      <span className="badge-mint ml-1 uppercase">{order.discount_code}</span>
+                                    </dt>
+                                    <dd className="text-plum-700">−${order.discount.toFixed(2)}</dd>
+                                  </div>
+                                )}
                                 <div className="flex justify-between"><dt>Shipping</dt><dd>${order.shipping_cost.toFixed(2)}</dd></div>
                                 <div className="flex justify-between"><dt>Tax</dt><dd>${order.tax.toFixed(2)}</dd></div>
                                 <div className="flex justify-between font-semibold text-ink-700"><dt>Total</dt><dd>${order.total.toFixed(2)}</dd></div>

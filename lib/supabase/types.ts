@@ -73,6 +73,7 @@ export interface Order {
   shipping_cost: number;
   tax: number;
   discount: number;
+  discount_code: string | null;
   total: number;
   shipping_address: Record<string, unknown> | null;
   payment_method: string | null;

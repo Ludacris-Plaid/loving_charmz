@@ -34,7 +34,9 @@ export default async function AdminOrdersPage() {
           subtotal: Number(o.subtotal),
           tax: Number(o.tax),
           shipping_cost: Number(o.shipping_cost),
+          discount: Number(o.discount || 0),
           customer_email: o.customer_email || null,
+          discount_code: o.discount_code || null,
           created_at: o.created_at,
           items: (o.items || []).map((it: any) => ({
             id: it.id,

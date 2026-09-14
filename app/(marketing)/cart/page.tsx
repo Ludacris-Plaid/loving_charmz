@@ -34,7 +34,7 @@ export default async function CartPage() {
     const price = Number(item.product?.base_price || 0) + Number(item.variant?.price_adjustment || 0);
     return sum + price * Number(item.quantity || 0);
   }, 0);
-  const shipping = subtotal > 100 ? 0 : 9.99;
+  const shipping = subtotal > 50 ? 0 : 9.99;
   const tax = +(subtotal * 0.08).toFixed(2);
   const total = +(subtotal + shipping + tax).toFixed(2);
 
@@ -110,7 +110,7 @@ export default async function CartPage() {
             <p className="mt-3 text-center text-xs text-ink-500">
               {shipping === 0
                 ? 'You qualify for free shipping.'
-                : `Add $${(100 - subtotal).toFixed(2)} more for free shipping.`}
+                : `Add $${(50 - subtotal).toFixed(2)} more for free shipping.`}
             </p>
           </aside>
         </div>

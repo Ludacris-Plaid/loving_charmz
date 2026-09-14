@@ -1,5 +1,7 @@
 import Link from 'next/link';
 import { Container } from '@/components/ui/Container';
+import { createClient } from '@/lib/supabase/server';
+import { formatMoney } from '@/lib/checkout/pricing';
 
 type Props = {
   searchParams: Promise<{ id?: string }>;
@@ -9,9 +11,38 @@ export const metadata = {
   title: 'Order confirmed — Loving Charmz',
 };
 
+/**
+ * Post-payment confirmation. The order is loaded through the member's own
+ * client so RLS guarantees a shopper can only ever see their own summary;
+ * an unknown or foreign id simply renders the generic thank-you.
+ */
 export default async function ConfirmationPage({ searchParams }: Props) {
   const { id } = await searchParams;
   const display = id ? id.slice(0, 8).toUpperCase() : 'NEW';
+
+  let order: {
+    total: number;
+    discount: number;
+    discount_code: string | null;
+  } | null = null;
+  if (id) {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      const { data } = await supabase
+        .from('orders')
+        .select('total, discount, discount_code, user_id')
+        .eq('id', id)
+        .maybeSingle();
+      if (data && data.user_id === user.id) {
+        order = {
+          total: Number(data.total),
+          discount: Number(data.discount || 0),
+          discount_code: data.discount_code ?? null,
+        };
+      }
+    }
+  }
 
   return (
     <Container className="py-16">
@@ -41,7 +72,30 @@ export default async function ConfirmationPage({ searchParams }: Props) {
           </p>
         )}
 
-        <div className="surface-card p-6 mt-8 text-left">
+        {order && (
+          <div className="surface-card p-6 mt-6 text-left">
+            <h2 className="font-display text-lg font-semibold text-plum-900 mb-3">Order summary</h2>
+            <dl className="space-y-1 text-sm text-ink-700">
+              {order.discount > 0 && (
+                <div className="flex justify-between">
+                  <dt>
+                    Discount
+                    {order.discount_code && (
+                      <span className="badge-mint ml-2 uppercase">{order.discount_code}</span>
+                    )}
+                  </dt>
+                  <dd className="text-plum-700">−{formatMoney(order.discount)}</dd>
+                </div>
+              )}
+              <div className="flex justify-between font-semibold text-ink-800">
+                <dt>Total paid</dt>
+                <dd>{formatMoney(order.total)}</dd>
+              </div>
+            </dl>
+          </div>
+        )}
+
+        <div className="surface-card p-6 mt-6 text-left">
           <h2 className="font-display text-lg font-semibold text-plum-900 mb-4">What happens next</h2>
           <ol className="space-y-3 text-sm text-ink-700">
             <li className="flex items-start gap-3">
