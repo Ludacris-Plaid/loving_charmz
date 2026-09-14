@@ -4,9 +4,21 @@ import { useState, useTransition } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Container } from '@/components/ui/Container';
+import { AnimatedSelect, SelectOption } from '@/components/ui/AnimatedSelect';
 import { addToCartAction } from '@/lib/cart/actions';
 import { images } from '@/lib/images';
 import type { Product, ProductVariant } from '@/lib/supabase/types';
+
+const METAL_OPTIONS: SelectOption[] = [
+  { value: 'brass', label: 'Brass', priceAdjustment: 0 },
+  { value: 'stainless_steel', label: 'Stainless Steel', priceAdjustment: 25 },
+];
+
+const SIZE_OPTIONS: SelectOption[] = [
+  { value: 'small', label: 'Small' },
+  { value: 'medium', label: 'Medium' },
+  { value: 'large', label: 'Large' },
+];
 
 type Props = {
   product: Product;
@@ -18,15 +30,23 @@ type Props = {
 
 export default function ProductDetailClient({ product, variants, imageUrl, initialCartCount, isLoggedIn }: Props) {
   const [selected, setSelected] = useState<ProductVariant | null>(variants[0] || null);
+  const [metalType, setMetalType] = useState<string>(METAL_OPTIONS[0].value);
+  const [size, setSize] = useState<string>(SIZE_OPTIONS[0].value);
   const [pending, startTransition] = useTransition();
   const [feedback, setFeedback] = useState<{ kind: 'ok' | 'err'; text: string } | null>(null);
 
-  const totalPrice = product.base_price + (selected?.price_adjustment || 0);
+  const metalAdjustment = METAL_OPTIONS.find((m) => m.value === metalType)?.priceAdjustment || 0;
+  const totalPrice = product.base_price + (selected?.price_adjustment || 0) + metalAdjustment;
   const productImage = imageUrl || images.shop[0];
 
   const handleAdd = () => {
     setFeedback(null);
     startTransition(async () => {
+      // Store selections in localStorage for cart display
+      const selections = { metalType, size, metalAdjustment };
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(`product_${product.id}_selections`, JSON.stringify(selections));
+      }
       const res = await addToCartAction(product.id, selected?.id || null, 1);
       if (res.error) setFeedback({ kind: 'err', text: res.error });
       else setFeedback({ kind: 'ok', text: 'Added to cart' });
@@ -73,35 +93,22 @@ export default function ProductDetailClient({ product, variants, imageUrl, initi
             </div>
           )}
 
-          {variants.length > 0 && (
-            <div className="space-y-3">
-              <p className="text-xs font-medium uppercase tracking-[0.2em] text-plum-700">Select finish</p>
-              <div className="flex flex-wrap gap-2">
-                {variants.map((variant) => {
-                  const isSelected = selected?.id === variant.id;
-                  return (
-                    <button
-                      key={variant.id}
-                      onClick={() => setSelected(variant)}
-                      className={[
-                        'motion-base rounded-pill px-4 py-2 text-sm font-medium',
-                        isSelected
-                          ? 'bg-plum-700 text-cream-50'
-                          : 'border border-cream-300 bg-surface text-ink-700 hover:border-plum-500 hover:text-plum-700',
-                      ].join(' ')}
-                    >
-                      {variant.name}
-                      {variant.price_adjustment > 0 && (
-                        <span className={['ml-1 text-xs', isSelected ? 'text-mint-200' : 'text-ink-500'].join(' ')}>
-                          +${variant.price_adjustment}
-                        </span>
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          )}
+
+
+          <div className="grid grid-cols-2 gap-4">
+            <AnimatedSelect
+              label="Metal Type"
+              options={METAL_OPTIONS}
+              value={metalType}
+              onChange={setMetalType}
+            />
+            <AnimatedSelect
+              label="Size"
+              options={SIZE_OPTIONS}
+              value={size}
+              onChange={setSize}
+            />
+          </div>
 
           <div className="space-y-3">
             <button
@@ -135,7 +142,7 @@ export default function ProductDetailClient({ product, variants, imageUrl, initi
 
           <div className="divider-cream" />
           <ul className="space-y-3 text-sm text-ink-700">
-            <li className="flex items-start gap-3"><span className="badge-mint shrink-0">1</span> Free shipping on orders over $100</li>
+            <li className="flex items-start gap-3"><span className="badge-mint shrink-0">1</span> Free shipping on orders over $50 CAD</li>
             <li className="flex items-start gap-3"><span className="badge-mint shrink-0">2</span> Handcrafted to order, just for you</li>
             <li className="flex items-start gap-3"><span className="badge-mint shrink-0">3</span> Lifetime quality guarantee</li>
           </ul>

@@ -38,8 +38,7 @@ export default async function ProductPage({ params }: Props) {
     getCartCount(),
   ]);
 
-  const allImages = images.shop;
-  const imageUrl = allImages[(product.name.length + product.id.length) % allImages.length];
+  const imageUrl = product.images?.[0] || images.shop[(product.name.length + product.id.length) % images.shop.length];
 
   return (
     <ProductDetailClient

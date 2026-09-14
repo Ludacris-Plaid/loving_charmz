@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Loving Charmz">
+  <title>Loving Charmz</title>
+  <defs>
+    <linearGradient id="lc-plum" x1="9" y1="3" x2="57" y2="62" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#6b3d84" />
+      <stop offset="0.55" stop-color="#5d3373" />
+      <stop offset="1" stop-color="#3a1f48" />
+    </linearGradient>
+    <linearGradient id="lc-sheen" x1="8" y1="2" x2="40" y2="46" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.18" />
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0" />
+    </linearGradient>
+  </defs>
+
+  <rect x="1.5" y="1.5" width="61" height="61" rx="14" fill="url(#lc-plum)" />
+  <rect x="1.5" y="1.5" width="61" height="61" rx="14" fill="url(#lc-sheen)" />
+  <rect x="2.25" y="2.25" width="59.5" height="59.5" rx="13.25" fill="none" stroke="#ffffff" stroke-opacity="0.16" stroke-width="1.5" />
+
+  <text
+    x="31.5"
+    y="44.3"
+    text-anchor="middle"
+    font-family="'Playfair Display', Georgia, 'Liberation Serif', 'Times New Roman', serif"
+    font-size="39"
+    letter-spacing="-1.6"
+  ><tspan fill="#fbf7f0" font-weight="700">L</tspan><tspan fill="#b3ecec" font-style="italic" font-weight="500">C</tspan></text>
+</svg>
