@@ -1,0 +1,52 @@
+name: Production Smoke
+
+# Nightly crawl of the live site for console errors, failed requests, and
+# broken links. The signed-in pass (account, cart, checkout) runs when the
+# SMOKE_TEST_EMAIL / SMOKE_TEST_PASSWORD secrets exist; otherwise it covers
+# public pages only. workflow_dispatch lets you run it on demand, e.g. right
+# after a deploy.
+
+on:
+  schedule:
+    - cron: '0 9 * * *' # 09:00 UTC daily (~3am mountain time)
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Crawl production
+        shell: bash
+        env:
+          SMOKE_EMAIL: ${{ secrets.SMOKE_TEST_EMAIL }}
+          SMOKE_PASSWORD: ${{ secrets.SMOKE_TEST_PASSWORD }}
+        run: |
+          set -o pipefail
+          mkdir -p smoke-output
+          node tests/prod/smoke.mjs https://loving-charmz.vercel.app | tee smoke-output/smoke.log
+
+      - name: Upload failure report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-report
+          path: smoke-output/
+          if-no-files-found: ignore

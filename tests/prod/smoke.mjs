@@ -188,6 +188,13 @@ try {
     console.log(`\nBroken links (${brokenLinks.size}):`);
     for (const l of brokenLinks) console.log(`  ${l}`);
   }
+
+  // CI mode: any finding fails the run so scheduled crawls catch regressions.
+  const findings = consoleErrors.size + requestFailures.size + brokenLinks.size;
+  if (process.env.CI && findings > 0) {
+    console.error(`\nFAIL: ${findings} page(s) with findings`);
+    process.exitCode = 1;
+  }
 } finally {
   if (browser) await browser.close();
 }
