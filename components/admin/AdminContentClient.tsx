@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from 'react';
 import { Input } from '@/components/ui/Input';
+import { SingleImageUpload } from '@/components/admin/SingleImageUpload';
 import { upsertContentBlockAction } from '@/lib/admin/actions';
 
 type Block = {
@@ -20,6 +21,7 @@ type Props = {
 export function AdminContentClient({ blocks }: Props) {
   const [editing, setEditing] = useState<Block | null>(null);
   const [showNew, setShowNew] = useState(false);
+  const [blockImage, setBlockImage] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -34,6 +36,7 @@ export function AdminContentClient({ blocks }: Props) {
         setSuccess('Content block saved.');
         setEditing(null);
         setShowNew(false);
+        setBlockImage(null);
         setTimeout(() => setSuccess(null), 2500);
       }
     });
@@ -42,7 +45,7 @@ export function AdminContentClient({ blocks }: Props) {
   return (
     <div className="space-y-6">
       <div className="flex justify-end">
-        <button onClick={() => { setShowNew(true); setEditing(null); }} className="btn-plum px-5 py-2 text-xs">
+        <button onClick={() => { setShowNew(true); setEditing(null); setBlockImage(null); }} className="btn-plum px-5 py-2 text-xs">
           New block
         </button>
       </div>
@@ -55,10 +58,11 @@ export function AdminContentClient({ blocks }: Props) {
           <h2 className="font-display text-lg font-semibold text-plum-900">
             {editing ? 'Edit block' : 'New block'}
           </h2>
+          <input type="hidden" name="image_url" value={blockImage || ''} />
+          <SingleImageUpload value={blockImage} onChange={setBlockImage} folder="content" label="Block image" />
           <div className="grid sm:grid-cols-2 gap-4">
             <Input label="Slug" name="slug" required defaultValue={editing?.slug} hint="Unique identifier" />
             <Input label="Title" name="title" defaultValue={editing?.title || ''} />
-            <Input label="Image URL" name="image_url" defaultValue={editing?.image_url || ''} />
             <label className="flex items-center gap-2 text-sm text-ink-700 self-end pb-2">
               <input
                 type="checkbox"
@@ -80,7 +84,7 @@ export function AdminContentClient({ blocks }: Props) {
             />
           </div>
           <div className="flex justify-end gap-2">
-            <button type="button" onClick={() => { setShowNew(false); setEditing(null); }} className="btn-ghost px-4 py-2 text-xs">Cancel</button>
+            <button type="button" onClick={() => { setShowNew(false); setEditing(null); setBlockImage(null); }} className="btn-ghost px-4 py-2 text-xs">Cancel</button>
             <button type="submit" disabled={pending} className="btn-plum px-5 py-2 text-xs">
               {pending ? 'Saving…' : 'Save block'}
             </button>
@@ -113,7 +117,7 @@ export function AdminContentClient({ blocks }: Props) {
                   </td>
                   <td className="px-4 py-3 text-right">
                     <button
-                      onClick={() => { setEditing(b); setShowNew(false); }}
+                      onClick={() => { setEditing(b); setShowNew(false); setBlockImage(b.image_url); }}
                       className="text-xs font-medium uppercase tracking-wider text-plum-700 hover:text-plum-900 motion-base"
                     >
                       Edit

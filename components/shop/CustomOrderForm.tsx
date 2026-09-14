@@ -1,8 +1,9 @@
 'use client';
 
-import { useRef, useState, useTransition } from 'react';
+import { useRef, useState, useTransition, type ChangeEvent } from 'react';
 import { Input } from '@/components/ui/Input';
 import { createPersonalizationRequestAction } from '@/lib/personalization/actions';
+import { uploadReferenceImageAction } from '@/lib/personalization/upload';
 
 type Props = {
   products: Array<{ id: string; name: string }>;
@@ -12,7 +13,30 @@ export function CustomOrderForm({ products }: Props) {
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [referenceUrl, setReferenceUrl] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [fileName, setFileName] = useState<string | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
+
+  const handleFile = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    setUploadError(null);
+    setFileName(file.name);
+    setUploading(true);
+    startTransition(async () => {
+      const res = await uploadReferenceImageAction(file);
+      setUploading(false);
+      if (res.error || !res.url) {
+        setUploadError(res.error || 'Upload failed');
+        setFileName(null);
+        return;
+      }
+      setReferenceUrl(res.url);
+    });
+  };
 
   const handleSubmit = (formData: FormData) => {
     setError(null);
@@ -73,13 +97,31 @@ export function CustomOrderForm({ products }: Props) {
         />
       </div>
 
-      <Input
-        label="Reference image URL (optional)"
-        name="reference_image_url"
-        placeholder="https://"
-        type="url"
-        autoComplete="off"
-      />
+      <input type="hidden" name="reference_image_url" value={referenceUrl || ''} />
+      <div className="space-y-1.5">
+        <span className="block text-sm font-medium text-ink-700">Reference photo (optional)</span>
+        <label
+          className={[
+            'flex w-full cursor-pointer flex-col items-center justify-center gap-1 rounded-md border-2 border-dashed px-4 py-6 text-center motion-base',
+            uploading
+              ? 'cursor-wait border-cream-200 bg-cream-50 text-ink-400'
+              : 'border-cream-300 bg-cream-50 text-ink-600 hover:border-plum-300 hover:bg-cream-100',
+          ].join(' ')}
+        >
+          <span className="text-sm font-medium">
+            {uploading
+              ? 'Uploading…'
+              : fileName
+                ? fileName
+                : 'Drop a photo here, or click to choose from your device'}
+          </span>
+          <span className="text-xs text-ink-500">PNG, JPEG, or WebP · up to 5MB</span>
+          <input type="file" accept="image/png,image/jpeg,image/webp" onChange={handleFile} className="sr-only" />
+        </label>
+        {uploadError && (
+          <p className="text-xs text-red-600" role="alert">{uploadError}</p>
+        )}
+      </div>
 
       {error && (
         <p className="text-sm text-red-600" role="alert">{error}</p>

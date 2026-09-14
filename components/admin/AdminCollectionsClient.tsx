@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from 'react';
 import { Input } from '@/components/ui/Input';
+import { SingleImageUpload } from '@/components/admin/SingleImageUpload';
 import { upsertCollectionAction, deleteCollectionAction } from '@/lib/admin/collections-and-variants';
 
 type Collection = {
@@ -123,12 +124,15 @@ type FormProps = {
 };
 
 function CollectionForm({ initial, pending, onCancel, onSubmit }: FormProps) {
+  const [imageUrl, setImageUrl] = useState<string | null>(initial?.image_url || null);
+
   return (
     <form action={onSubmit} className="surface-card p-6 space-y-4">
       <h2 className="font-display text-lg font-semibold text-plum-900">
         {initial ? 'Edit collection' : 'New collection'}
       </h2>
       {initial && <input type="hidden" name="id" value={initial.id} />}
+      <input type="hidden" name="image_url" value={imageUrl || ''} />
       <div className="grid sm:grid-cols-2 gap-4">
         <Input label="Name" name="name" required defaultValue={initial?.name} />
         <Input label="Slug" name="slug" required defaultValue={initial?.slug} />
@@ -138,8 +142,8 @@ function CollectionForm({ initial, pending, onCancel, onSubmit }: FormProps) {
           type="number"
           defaultValue={initial?.sort_order ?? 0}
         />
-        <Input label="Image URL" name="image_url" defaultValue={initial?.image_url || ''} />
       </div>
+      <SingleImageUpload value={imageUrl} onChange={setImageUrl} folder="collections" label="Collection image" />
       <div>
         <label htmlFor="description" className="block text-sm font-medium text-ink-700 mb-1.5">Description</label>
         <textarea

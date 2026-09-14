@@ -124,6 +124,38 @@ export async function updateProductAction(id: string, formData: FormData): Promi
 
 export type ImageUploadResult = { url?: string; error?: string };
 
+/** Folders inside the product-images bucket that admin uploads may target. */
+const SITE_IMAGE_FOLDERS = new Set(['products', 'collections', 'content']);
+
+/**
+ * Site-wide image upload for admin surfaces (collections, content blocks,
+ * products). Everything lands in the public-read product-images bucket under
+ * a per-type folder — no external URLs anywhere in admin forms.
+ */
+export async function uploadSiteImageAction(file: File, folder = 'products'): Promise<ImageUploadResult> {
+  const guard = await getAdminClient();
+  if (guard.kind === 'error') return { error: guard.error };
+  const client = guard.client;
+
+  if (!file || !(file instanceof File)) return { error: 'No file provided' };
+  if (file.size === 0) return { error: 'File is empty' };
+  if (file.size > PRODUCT_IMAGE_MAX_BYTES) return { error: 'File too large (max 5MB)' };
+  if (!PRODUCT_IMAGE_MIME.has(file.type)) return { error: 'Unsupported type (PNG, JPEG, or WebP only)' };
+  if (!SITE_IMAGE_FOLDERS.has(folder)) return { error: 'Unknown image folder' };
+
+  const path = `${folder}/${Date.now()}-${safeName(file.name) || 'image'}.${extFromMime(file.type)}`;
+
+  const { error } = await client.storage.from(PRODUCT_IMAGE_BUCKET).upload(path, file, {
+    contentType: file.type,
+    cacheControl: '31536000',
+    upsert: false,
+  });
+  if (error) return { error: error.message };
+
+  const { data } = client.storage.from(PRODUCT_IMAGE_BUCKET).getPublicUrl(path);
+  return { url: data.publicUrl };
+}
+
 export async function uploadProductImageAction(file: File, productSlug?: string): Promise<ImageUploadResult> {
   const guard = await getAdminClient();
   if (guard.kind === 'error') return { error: guard.error };
@@ -164,6 +196,8 @@ export async function deleteProductImageAction(url: string): Promise<AdminResult
   if (error) return { error: error.message };
 
   revalidatePath('/admin/products');
+  revalidatePath('/admin/collections');
+  revalidatePath('/admin/content');
   return { success: true };
 }
 
