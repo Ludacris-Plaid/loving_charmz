@@ -1,5 +1,7 @@
 import { getPersonalizations } from '@/lib/admin/data';
 import { AdminPersonalizationClient } from '@/components/admin/AdminPersonalizationClient';
+import { redirect } from 'next/navigation';
+import { getSession } from '@/components/admin/AdminGuard';
 
 export const metadata = {
   title: 'Admin · Personalization — Loving Charmz',
@@ -17,6 +19,10 @@ const statusOptions = [
 ];
 
 export default async function AdminPersonalizationPage() {
+  // Verify the admin in-page (layout guard runs in parallel, not first).
+  const session = await getSession();
+  if (!session?.isAdmin) redirect('/login?next=/admin/personalization');
+
   const rows = await getPersonalizations();
   return (
     <div className="space-y-6">

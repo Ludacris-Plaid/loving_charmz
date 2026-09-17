@@ -10,6 +10,7 @@ const adminNavItems = [
   { href: '/admin/inventory', label: 'Inventory' },
   { href: '/admin/orders', label: 'Orders' },
   { href: '/admin/customers', label: 'Customers' },
+  { href: '/admin/subscribers', label: 'Mailing list' },
   { href: '/admin/personalization', label: 'Personalization' },
   { href: '/admin/content', label: 'Content' },
   { href: '/admin/discounts', label: 'Discounts' },
@@ -40,6 +41,13 @@ export function AdminTabBar() {
               </Link>
             );
           })}
+          <Link
+            href="/guide"
+            className="motion-base flex shrink-0 items-center gap-2 rounded-pill border border-mint-300 bg-mint-50 px-4 py-2 text-sm font-semibold text-plum-800 whitespace-nowrap hover:border-mint-400 hover:bg-mint-100"
+          >
+            <span aria-hidden>📖</span>
+            How-to guide
+          </Link>
         </div>
       </nav>
 
@@ -62,6 +70,15 @@ export function AdminTabBar() {
               </Link>
             );
           })}
+          {/* The owner's instruction manual — styled to stand out so it is
+              always easy to find. */}
+          <Link
+            href="/guide"
+            className="motion-base mt-3 flex items-center gap-2 rounded-md border border-mint-300 bg-mint-50 px-4 py-2.5 text-sm font-semibold text-plum-800 hover:border-mint-400 hover:bg-mint-100"
+          >
+            <span aria-hidden>📖</span>
+            How-to guide
+          </Link>
           <hr className="my-3 border-cream-300" />
           <Link
             href="/shop"

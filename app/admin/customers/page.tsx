@@ -1,4 +1,6 @@
 import { getAdminCustomers } from '@/lib/admin/data';
+import { redirect } from 'next/navigation';
+import { getSession } from '@/components/admin/AdminGuard';
 
 export const metadata = {
   title: 'Admin · Customers — Loving Charmz',
@@ -7,6 +9,10 @@ export const metadata = {
 export const dynamic = 'force-dynamic';
 
 export default async function AdminCustomersPage() {
+  // Verify the admin in-page (layout guard runs in parallel, not first).
+  const session = await getSession();
+  if (!session?.isAdmin) redirect('/login?next=/admin/customers');
+
   const customers = await getAdminCustomers();
 
   return (

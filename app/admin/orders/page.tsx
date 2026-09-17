@@ -1,5 +1,7 @@
 import { getAdminOrders } from '@/lib/admin/data';
 import { AdminOrdersTable } from '@/components/admin/AdminOrdersTable';
+import { redirect } from 'next/navigation';
+import { getSession } from '@/components/admin/AdminGuard';
 
 export const metadata = {
   title: 'Admin · Orders — Loving Charmz',
@@ -16,6 +18,11 @@ const statusOptions = [
 ];
 
 export default async function AdminOrdersPage() {
+  // Pages render in parallel with AdminGuard — verify the admin here too,
+  // before any customer data is fetched.
+  const session = await getSession();
+  if (!session?.isAdmin) redirect('/login?next=/admin/orders');
+
   const orders = await getAdminOrders();
 
   return (
