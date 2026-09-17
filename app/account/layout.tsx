@@ -21,12 +21,12 @@ export default function AccountLayout({ children }: { children: ReactNode }) {
             <h1 className="font-display text-xl font-semibold text-plum-900">My Account</h1>
           </div>
           <nav className="flex flex-wrap items-center gap-4 text-sm">
-            <Link href="/shop" className="font-medium text-ink-600 hover:text-plum-700 motion-base">
+            <Link href="/shop" className="btn-outline px-4 py-1.5 text-xs">
               ← Back to shop
             </Link>
             <Link
               href="/logout"
-              className="font-medium text-ink-600 hover:text-plum-700 motion-base"
+              className="btn-plum px-4 py-1.5 text-xs"
             >
               Sign out
             </Link>

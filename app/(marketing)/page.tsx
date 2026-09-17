@@ -101,9 +101,8 @@ export default async function HomePage() {
                     <span className="badge-soft">Made to stay with you</span>
                   </div>
                   <MagneticWrap strength={6}>
-                    <Link href="/shop" className="inline-flex items-center gap-2 text-sm font-medium text-plum-700 hover:text-plum-900 motion-base">
+                    <Link href="/shop" className="btn-outline px-6 py-2.5 text-xs">
                       View all pieces
-                      <span aria-hidden>→</span>
                     </Link>
                   </MagneticWrap>
                 </div>
@@ -199,8 +198,8 @@ export default async function HomePage() {
                   <h2 className="font-display text-2xl sm:text-3xl font-semibold text-plum-900 mt-3">
                     Browse every keepsake
                   </h2>
-                  <div className="hero-content mt-2">
-                    <Link href="/shop" className="text-sm font-medium text-plum-700 hover:text-plum-900 motion-base">
+                  <div className="hero-content mt-3">
+                    <Link href="/shop" className="btn-outline px-5 py-2 text-xs">
                       See all →
                     </Link>
                   </div>
@@ -264,12 +263,14 @@ export default async function HomePage() {
           </section>
 
           <section className="text-center">
-            <p className="text-sm text-ink-600">
-              Ready to carry what matters?{' '}
-              <Link href="/shop" className="font-medium text-plum-700 hover:text-plum-900 motion-base">
-                Shop all pieces →
-              </Link>
-            </p>
+            <p className="text-sm text-ink-600">Ready to carry what matters?</p>
+            <div className="mt-4">
+              <MagneticWrap strength={5}>
+                <Link href="/shop" className="btn-plum px-8 py-3 text-sm">
+                  Shop all pieces
+                </Link>
+              </MagneticWrap>
+            </div>
           </section>
         </div>
       </Container>

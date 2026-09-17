@@ -23,7 +23,6 @@ export default async function AdminLayout({ children }: { children: ReactNode })
               <Logo size="sm" />
               <span aria-hidden className="text-cream-400">/</span>
               <h1 className="font-display text-xl font-semibold text-plum-900">Admin</h1>
-              <span className="badge-plum">Admin</span>
             </div>
             <nav className="flex flex-wrap items-center gap-4 text-sm">
               {session?.email && (
@@ -42,7 +41,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
               )}
               <Link
                 href="/logout"
-                className="font-medium text-ink-600 hover:text-plum-700 motion-base"
+                className="btn-outline px-4 py-1.5 text-xs"
               >
                 Sign out
               </Link>

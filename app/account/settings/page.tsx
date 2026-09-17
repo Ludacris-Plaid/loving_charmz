@@ -43,8 +43,8 @@ export default async function SettingsPage() {
         <p className="text-sm text-ink-600 mb-4">
           You can sign out of your account at any time.
         </p>
-        <Link href="/logout" className="text-sm text-ink-600 hover:text-plum-700 motion-base">
-          Sign out of your account →
+        <Link href="/logout" className="btn-plum px-5 py-2 text-xs">
+          Sign out of your account
         </Link>
       </section>
     </div>
