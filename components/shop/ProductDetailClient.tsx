@@ -62,10 +62,11 @@ export default function ProductDetailClient({ product, variants, imageUrl, initi
       </nav>
 
       <div className="grid gap-12 lg:grid-cols-2">
-        <div className="surface-card overflow-hidden">
-          <div className="relative aspect-square">
-            <Image src={productImage} alt={product.name} fill className="object-cover" priority />
-          </div>
+        {/* Photo fills the whole card on desktop (no dead white space below the
+            square), and stays a neat square on phones. Applies to every product
+            automatically, old or new. */}
+        <div className="surface-card relative overflow-hidden aspect-square lg:aspect-auto">
+          <Image src={productImage} alt={product.name} fill className="object-cover" priority />
         </div>
 
         <div className="space-y-6">
