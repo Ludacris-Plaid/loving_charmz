@@ -15,7 +15,9 @@ export async function Header() {
       data-site-header
       className="sticky top-0 z-50 border-b border-cream-300 glass"
     >
-      <div className="mx-auto grid max-w-7xl grid-cols-[1fr_auto_1fr] items-center gap-4 px-6 py-3 sm:px-10 lg:px-16">
+      {/* Mobile: flex row so Account/Cart hug the right edge. md+: three-column
+          grid keeps the nav dead-center (grid starts only when the nav shows). */}
+      <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-6 py-3 md:grid md:grid-cols-[1fr_auto_1fr] sm:px-10 lg:px-16">
         <div className="flex items-center gap-2">
           <div className="md:hidden">
             <MobileMenu
