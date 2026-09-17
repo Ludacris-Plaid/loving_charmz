@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useTransition } from 'react';
+import { subscribeAction } from '@/lib/subscribers/actions';
 
 const STORAGE_KEY = 'lc_email_signup_dismissed';
 const COUPON_CODE = 'WELCOME10';
@@ -8,8 +9,9 @@ const COUPON_CODE = 'WELCOME10';
 export function EmailSignupPopup() {
   const [visible, setVisible] = useState(false);
   const [email, setEmail] = useState('');
-  const [status, setStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const [status, setStatus] = useState<'idle' | 'saving' | 'success' | 'error'>('idle');
   const [copied, setCopied] = useState(false);
+  const [, startTransition] = useTransition();
 
   useEffect(() => {
     const dismissed = localStorage.getItem(STORAGE_KEY);
@@ -25,8 +27,16 @@ export function EmailSignupPopup() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email.trim()) return;
-    setStatus('success');
+    if (!email.trim() || status === 'saving') return;
+    setStatus('saving');
+    startTransition(async () => {
+      const res = await subscribeAction(email);
+      if (res.error) {
+        setStatus('error');
+      } else {
+        setStatus('success');
+      }
+    });
   };
 
   const copyCode = async () => {
@@ -116,10 +126,16 @@ export function EmailSignupPopup() {
               </div>
               <button
                 type="submit"
+                disabled={status === 'saving'}
                 className="btn-plum w-full px-6 py-3 text-sm"
               >
-                Get my 10% off
+                {status === 'saving' ? 'Saving…' : 'Get my 10% off'}
               </button>
+              {status === 'error' && (
+                <p role="alert" className="text-xs text-center text-red-600">
+                  Sorry — that didn&apos;t save. Please check the address and try again.
+                </p>
+              )}
               <p className="text-xs text-center text-ink-500">
                 No spam, ever. Unsubscribe anytime.
               </p>
