@@ -283,6 +283,7 @@ export default function GuidePage() {
             <LI><strong>Collections</strong> — groups of jewellery, like &ldquo;Winter&rdquo;.</LI>
             <LI><strong>Inventory</strong> — how many of each piece you have left.</LI>
             <LI><strong>Orders</strong> — what customers bought.</LI>
+            <LI><strong>History</strong> — completed and cancelled orders.</LI>
             <LI><strong>Customers</strong> — who has an account.</LI>
             <LI><strong>Mailing list</strong> — who signed up for emails (the pop-up).</LI>
             <LI><strong>Personalization</strong> — custom-order requests.</LI>
@@ -361,10 +362,11 @@ export default function GuidePage() {
           </P>
           <Ex>
             Monday morning: sign in → Overview says &ldquo;2 new orders, 1 custom
-            request&rdquo; → Orders: two bracelets bought, both say &ldquo;paid&rdquo;
-            → you will mail them today and press <strong>Shipped</strong> (chapter 4)
-            → Personalization: one engraving request, reply to the customer by email
-            (chapter 11) → done.
+            request&rdquo; → Orders: two bracelets bought, both show <strong>Pending</strong>{' '}
+            → click <strong>Manage</strong> on the first one → copy the address → paste
+            it into a shipping label → change status to <strong>Shipped</strong> → close
+            → repeat for the second → Personalization: one engraving request, reply to
+            the customer by email (chapter 11) → done.
           </Ex>
         </div>
 
@@ -377,30 +379,61 @@ export default function GuidePage() {
             website does it for you. Your job is only to <em>keep the status fresh</em>.
           </P>
           <H3>Understanding the status badges</H3>
+          <P>Each order has a coloured badge that tells you its status at a glance:</P>
           <UList>
-            <LI><strong>Paid</strong> — money received. This is your cue to make/pack the piece.</LI>
-            <LI><strong>Processing</strong> — you are working on it (you set this yourself).</LI>
-            <LI><strong>Shipped</strong> — you mailed it. Set this the day you mail it.</LI>
-            <LI><strong>Delivered</strong> — it arrived. Optional, but nice book-keeping.</LI>
-            <LI><strong>Cancelled</strong> — for cancelled orders only.</LI>
+            <LI><strong>Pending</strong> (cream) — order placed, payment received. This is your cue to make/pack the piece.</LI>
+            <LI><strong>Processing</strong> (green) — you are working on it (you set this yourself).</LI>
+            <LI><strong>Shipped</strong> (blue) — you mailed it. Set this the day you mail it.</LI>
+            <LI><strong>Delivered</strong> (green) — it arrived. Optional, but nice book-keeping.</LI>
+            <LI><strong>Completed</strong> (bright green) — the order is fully done. Clicking this moves the order to the <strong>History</strong> tab so it does not clutter your active orders.</LI>
+            <LI><strong>Cancelled</strong> (red) — for cancelled orders. Also moves to <strong>History</strong>.</LI>
           </UList>
-          <H3>Marking an order as shipped</H3>
+          <H3>Opening an order&rsquo;s details</H3>
           <OList>
             <Step n="1">Click <strong>Orders</strong> in the left-hand list.</Step>
             <Step n="2">
-              Find the order in the list. Not sure which is which? Click the small{' '}
-              <strong>Details</strong> arrow/word on a row to see what is inside it —
-              the customer&rsquo;s name, what they bought, and the mailing address.
-            </Step>
-            <Step n="3">
-              On the same row, find the <strong>status dropdown</strong> (a small box
-              that says &ldquo;Paid&rdquo; or &ldquo;Processing&rdquo;). Click it.
-            </Step>
-            <Step n="4">
-              Click <strong>Shipped</strong> in the list that appears. Done. The change
-              saves by itself.
+              Find the order in the list. Click the purple <strong>Manage</strong> button
+              on its row. A large pop-up window (a &ldquo;modal&rdquo;) opens showing
+              <strong> everything</strong> about that order:
             </Step>
           </OList>
+          <UList>
+            <LI><strong>📦 Ship To</strong> — the customer&rsquo;s full name and mailing
+              address, formatted like a shipping label. There is a <strong>Copy Address</strong>{' '}
+              button — click it and the address is copied to your clipboard so you can
+              paste it straight into a shipping label.</LI>
+            <LI><strong>Customer</strong> — their email address.</LI>
+            <LI><strong>Payment</strong> — how they paid (Square card or PayPal) and
+              whether the payment went through.</LI>
+            <LI><strong>Items</strong> — exactly what they bought, including the metal
+              type and size (like &ldquo;Brass / Large&rdquo;).</LI>
+            <LI><strong>Order summary</strong> — subtotal, discount code used, shipping,
+              tax, and total.</LI>
+            <LI><strong>Status buttons</strong> — click one to change the status (see
+              below).</LI>
+            <LI><strong>Timestamps</strong> — when the order was created and last updated.</LI>
+          </UList>
+          <H3>Updating an order&rsquo;s status</H3>
+          <OList>
+            <Step n="1">
+              Inside the Manage modal, look at the <strong>Update Status</strong> section
+              at the bottom.
+            </Step>
+            <Step n="2">
+              Click the status you want. The buttons are colour-coded so you can see
+              what you are picking. The change saves immediately.
+            </Step>
+            <Step n="3">
+              When you are done, close the modal by clicking the <strong>✕</strong> in
+              the top-right corner, or click anywhere on the dark background outside the
+              box.
+            </Step>
+          </OList>
+          <Tip>
+            <strong>Mailing something today?</strong> Open the order → copy the address
+            → paste it into your shipping label → change status to <strong>Shipped</strong>{' '}
+            → close the modal. Under two minutes, start to finish.
+          </Tip>
           <Tip>
             A customer can see their own order status when they sign in. Marking{' '}
             <strong>Shipped</strong> is the modern version of a handshake — it tells
@@ -413,11 +446,11 @@ export default function GuidePage() {
             />
             <QA
               q="I marked the wrong status by mistake"
-              a="No harm done. Click the same dropdown again and pick the right one. Statuses can be changed as many times as needed."
+              a="No harm done. Open the Manage modal again and click the correct status. Statuses can be changed as many times as needed."
             />
             <QA
-              q="The customer says they paid but the order says Awaiting payment"
-              a="Check the total. Sometimes the payment is still settling overnight. If it is still wrong after 24 hours, phone your wonderful loving son with the order number."
+              q="An order disappeared from the list"
+              a="If you (or someone) marked it Completed or Cancelled, it moved to the History tab. Click History in the left-hand list to find it. All the details are still there."
             />
           </TROUBLE>
         </div>
@@ -975,6 +1008,10 @@ export default function GuidePage() {
                 <strong>Admin dashboard</strong> button
               </LI>
               <LI>
+                <strong>Where are completed orders?</strong> History tab (in the
+                left-hand list, right below Orders).
+              </LI>
+              <LI>
                 <strong>This guide:</strong> loving-charmz.vercel.app/guide
               </LI>
               <LI>
@@ -982,8 +1019,13 @@ export default function GuidePage() {
                 password?&rdquo; on the sign-in page and follow the email.
               </LI>
               <LI>
-                <strong>New order today?</strong> Orders → change status to Shipped
-                after you mail it.
+                <strong>New order today?</strong> Orders → click <strong>Manage</strong> →
+                copy the address → paste into shipping label → change status to
+                <strong>Shipped</strong>.
+              </LI>
+              <LI>
+                <strong>Order is done?</strong> Mark it <strong>Completed</strong> in the
+                Manage modal — it moves to the History tab automatically.
               </LI>
               <LI>
                 <strong>Made more stock?</strong> Inventory → click the number → type
