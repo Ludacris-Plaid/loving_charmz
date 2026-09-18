@@ -52,46 +52,57 @@ export function OverviewTab({ filters, snapshot, isWidgetVisible }: OverviewTabP
 
         {isWidgetVisible('orders-by-status') && (
           <SortableWidget id="orders-by-status" title="Orders by status" span="third">
-            <div className="flex flex-col md:flex-row items-center gap-4">
-              <DonutChart
-                data={snapshot.ordersByStatus.map((s, i) => ({
-                  label: s.status,
-                  value: s.count,
-                  color: [
-                    'var(--color-plum-700)',
-                    'var(--color-plum-500)',
-                    'var(--color-mint-500)',
-                    'var(--color-mint-300)',
-                    'var(--color-cream-300)',
-                    'var(--color-ink-300)',
-                  ][i] ?? 'var(--color-plum-300)',
-                }))}
-                size={160}
-                thickness={22}
-                centerLabel="Total"
-                centerValue={formatNumber(snapshot.ordersByStatus.reduce((s, x) => s + x.count, 0))}
-              />
-              <div className="analytics-donut-legend flex-1">
-                {snapshot.ordersByStatus.map((s, i) => (
-                  <div key={s.status} className="analytics-donut-legend-row">
-                    <span
-                      className="analytics-donut-legend-swatch"
-                      style={{
-                        background: [
-                          'var(--color-plum-700)',
-                          'var(--color-plum-500)',
-                          'var(--color-mint-500)',
-                          'var(--color-mint-300)',
-                          'var(--color-cream-300)',
-                          'var(--color-ink-300)',
-                        ][i] ?? 'var(--color-plum-300)',
-                      }}
-                    />
-                    <span className="analytics-donut-legend-label">{s.status}</span>
-                    <span className="analytics-donut-legend-value">{s.count}</span>
-                  </div>
-                ))}
-              </div>
+            {/* Horizontal bars: one row per status actually present, count +
+                share + revenue. A donut lied here whenever most orders shared
+                one status (a 97% circle reads as broken). */}
+            <div className="space-y-2.5">
+              {(() => {
+                const total = snapshot.ordersByStatus.reduce((s, x) => s + x.count, 0);
+                const palette: Record<string, string> = {
+                  pending: 'var(--color-cream-300)',
+                  processing: 'var(--color-mint-300)',
+                  shipped: 'var(--color-mint-500)',
+                  delivered: 'var(--color-plum-700)',
+                  cancelled: 'var(--color-ink-300)',
+                  refunded: 'var(--color-plum-300)',
+                };
+                const max = Math.max(...snapshot.ordersByStatus.map((s) => s.count), 1);
+                if (total === 0) {
+                  return <div className="analytics-empty">No orders in the selected range.</div>;
+                }
+                return (
+                  <>
+                    <div className="flex items-baseline justify-between">
+                      <span className="text-xs font-medium uppercase tracking-wider text-ink-500">Total orders</span>
+                      <span className="font-display text-2xl font-semibold text-plum-900">{formatNumber(total)}</span>
+                    </div>
+                    {snapshot.ordersByStatus.map((s) => {
+                      const pct = Math.round((s.count / total) * 100);
+                      return (
+                        <div key={s.status} className="analytics-statusbreak-row">
+                          <div className="flex items-baseline justify-between text-sm">
+                            <span className="font-medium capitalize text-ink-800">{s.status}</span>
+                            <span className="text-ink-600">
+                              {formatNumber(s.count)}
+                              <span className="ml-1.5 text-xs text-ink-400">· {pct}%</span>
+                            </span>
+                          </div>
+                          <div className="analytics-statusbreak-track" role="presentation">
+                            <div
+                              className="analytics-statusbreak-fill"
+                              style={{
+                                width: `${Math.max((s.count / max) * 100, 4)}%`,
+                                background: palette[s.status] ?? 'var(--color-plum-500)',
+                              }}
+                            />
+                          </div>
+                          <div className="text-xs text-ink-500">{formatMoney(s.revenue)}</div>
+                        </div>
+                      );
+                    })}
+                  </>
+                );
+              })()}
             </div>
           </SortableWidget>
         )}
@@ -122,7 +133,7 @@ export function OverviewTab({ filters, snapshot, isWidgetVisible }: OverviewTabP
           <SortableWidget
             id="recent-activity"
             title="Recent orders"
-            span="half"
+            span="full"
             toolbar={
               <ExportButton
                 filename="recent-orders"
