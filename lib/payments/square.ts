@@ -108,13 +108,31 @@ export async function confirmSquareOrder(
 
   const tender = Array.isArray(order.tenders) && order.tenders.length > 0 ? order.tenders[0] : undefined;
   const amountMinor = tender?.amount_money?.amount;
+  const providerTransactionId = safeReference(tender?.payment_id ?? tender?.id, 64);
+
+  // Orders created through payment links stay OPEN even after the money has
+  // moved — Square never flips them to COMPLETED. The payment object behind
+  // the tender is the source of truth for capture, so when a tender exists we
+  // ask Square about that payment directly and let the order state only
+  // provide the fallback (CANCELED → failed, no tenders → pending).
+  let status = resolveSquareOutcome(order.state);
+  if (tender?.payment_id && status !== 'paid') {
+    const paymentPayload = await requestJson<{ payment?: { status?: string } }>(
+      'square',
+      `${config.baseUrl}/v2/payments/${encodeURIComponent(tender.payment_id)}`,
+      { method: 'GET', headers: squareHeaders(config) },
+    );
+    const paymentStatus = paymentPayload?.payment?.status;
+    if (paymentStatus === 'COMPLETED') status = 'paid';
+    else if (paymentStatus === 'FAILED' || paymentStatus === 'CANCELED') status = 'failed';
+  }
 
   return {
     provider: 'square',
     orderId: null,
     providerOrderId: safeReference(order.id, 64) || providerOrderId,
-    providerTransactionId: safeReference(tender?.payment_id ?? tender?.id, 64),
-    status: resolveSquareOutcome(order.state),
+    providerTransactionId,
+    status,
     amount:
       typeof amountMinor === 'number'
         ? { value: minorUnitsToMoney(amountMinor), currency: tender?.amount_money?.currency || 'USD' }
