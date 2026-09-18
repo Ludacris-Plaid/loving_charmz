@@ -1,9 +1,11 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useState, useEffect, useTransition } from 'react';
 import { Input } from '@/components/ui/Input';
 import { createCheckoutAction } from '@/lib/checkout/actions';
 import { validateDiscountCode } from '@/lib/checkout/discount';
+import { getSquareClientConfig, type SquareClientConfig } from '@/lib/payments/config-client';
+import { SquareCardForm } from './SquareCardForm';
 
 type PaymentMethodOption = {
   id: 'paypal' | 'card';
@@ -15,17 +17,27 @@ type PaymentMethodOption = {
 type Props = {
   defaultEmail: string;
   methods: PaymentMethodOption[];
+  totalAmount: number;
 };
 
-export function CheckoutForm({ defaultEmail, methods }: Props) {
+export function CheckoutForm({ defaultEmail, methods, totalAmount }: Props) {
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [discountInput, setDiscountInput] = useState('');
   const [discountStatus, setDiscountStatus] = useState<'idle' | 'checking' | 'applied' | 'error'>('idle');
   const [discountMsg, setDiscountMsg] = useState<string | null>(null);
   const [discountData, setDiscountData] = useState<{ code: string; type: string; value: number } | null>(null);
+  const [squareConfig, setSquareConfig] = useState<SquareClientConfig | null>(null);
+  const [selectedPayment, setSelectedPayment] = useState<string>('card');
+  const [paymentSuccess, setPaymentSuccess] = useState(false);
+  const [orderId, setOrderId] = useState<string | null>(null);
   const available = methods.filter((method) => method.configured);
   const paymentsUnavailable = available.length === 0;
+
+  // Load Square config on mount
+  useEffect(() => {
+    getSquareClientConfig().then(setSquareConfig);
+  }, []);
 
   const handleApplyDiscount = () => {
     if (!discountInput.trim()) return;
@@ -44,21 +56,49 @@ export function CheckoutForm({ defaultEmail, methods }: Props) {
     });
   };
 
-  const handleSubmit = (formData: FormData) => {
+  const handleSubmit = async (formData: FormData) => {
     setError(null);
     if (discountData) {
       formData.set('discountCode', discountData.code);
     }
-    startTransition(async () => {
-      const res = await createCheckoutAction(formData);
-      if (res.error) {
-        setError(res.error);
-      } else if (res.redirectUrl) {
-        window.location.assign(res.redirectUrl);
-      } else {
-        setError('We could not start the payment. Please try again.');
-      }
-    });
+    
+    // For embedded Square payments, we need to create the order first,
+    // then show the card form
+    if (selectedPayment === 'card' && squareConfig) {
+      startTransition(async () => {
+        const res = await createCheckoutAction(formData);
+        if (res.error) {
+          setError(res.error);
+        } else if (res.orderId) {
+          // Order created, now show the card form
+          setOrderId(res.orderId);
+        } else {
+          setError('We could not start the payment. Please try again.');
+        }
+      });
+    } else {
+      // For PayPal or other redirect-based payments
+      startTransition(async () => {
+        const res = await createCheckoutAction(formData);
+        if (res.error) {
+          setError(res.error);
+        } else if (res.redirectUrl) {
+          window.location.assign(res.redirectUrl);
+        } else {
+          setError('We could not start the payment. Please try again.');
+        }
+      });
+    }
+  };
+
+  const handlePaymentSuccess = (result: { orderId: string }) => {
+    setPaymentSuccess(true);
+    // Redirect to confirmation page
+    window.location.href = `/checkout/confirmation?id=${result.orderId}`;
+  };
+
+  const handlePaymentError = (errorMsg: string) => {
+    setError(errorMsg);
   };
 
   return (
@@ -141,7 +181,7 @@ export function CheckoutForm({ defaultEmail, methods }: Props) {
           </p>
         ) : (
           <div className="space-y-3">
-            {available.map((option, index) => (
+            {available.map((option) => (
               <label
                 key={option.id}
                 className="flex items-start gap-3 p-4 rounded-md border border-cream-300 cursor-pointer hover:border-plum-500 motion-base"
@@ -150,7 +190,8 @@ export function CheckoutForm({ defaultEmail, methods }: Props) {
                   type="radio"
                   name="paymentMethod"
                   value={option.id}
-                  defaultChecked={index === 0}
+                  checked={selectedPayment === option.id}
+                  onChange={() => setSelectedPayment(option.id)}
                   className="mt-0.5 accent-plum-700"
                 />
                 <span>
@@ -159,10 +200,33 @@ export function CheckoutForm({ defaultEmail, methods }: Props) {
                 </span>
               </label>
             ))}
-            <p className="text-xs text-ink-500">
-              You will be redirected to your payment provider to complete the transaction. No card details
-              are stored on this site.
-            </p>
+            
+            {/* Show embedded card form when card is selected and Square is configured */}
+            {selectedPayment === 'card' && squareConfig && orderId ? (
+              <div className="mt-4 p-4 border border-cream-300 rounded-md">
+                <p className="text-sm text-ink-600 mb-4">
+                  Enter your card details below. Your card information is securely processed by Square and never touches our servers.
+                </p>
+                <SquareCardForm
+                  applicationId={squareConfig.applicationId}
+                  locationId={squareConfig.locationId}
+                  amount={totalAmount}
+                  currency="CAD"
+                  orderId={orderId}
+                  onPaymentSuccess={handlePaymentSuccess}
+                  onPaymentError={handlePaymentError}
+                />
+              </div>
+            ) : selectedPayment === 'card' && squareConfig ? (
+              <p className="text-xs text-ink-500 mt-2">
+                Click "Continue to payment" to enter your card details securely.
+              </p>
+            ) : (
+              <p className="text-xs text-ink-500">
+                You will be redirected to your payment provider to complete the transaction. No card details
+                are stored on this site.
+              </p>
+            )}
           </div>
         )}
       </section>

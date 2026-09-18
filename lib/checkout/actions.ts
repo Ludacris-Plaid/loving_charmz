@@ -1,5 +1,6 @@
 'use server';
 
+import { randomUUID } from 'node:crypto';
 import { revalidatePath } from 'next/cache';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { createClient } from '@/lib/supabase/server';
@@ -13,6 +14,7 @@ import { isPaymentProviderError } from '@/lib/payments/types';
 import { getSiteUrl } from '@/lib/payments/site';
 import { CURRENCY, computeOrderTotals, formatMoney, lineUnitPrice, type DiscountInfo } from './pricing';
 import { validateDiscountCode } from './discount';
+import { readPaymentEnv } from '@/lib/payments/config';
 
 export type CheckoutResult = { error?: string; orderId?: string; redirectUrl?: string };
 
@@ -182,4 +184,136 @@ function resolveRequestedMethod(paymentMethod: string) {
 async function discardUnpaidOrder(orderId: string): Promise<void> {
   const admin = createAdminClient();
   await admin.from('orders').delete().eq('id', orderId);
+}
+
+export type SquarePaymentResult = {
+  success: boolean;
+  orderId?: string;
+  error?: string;
+  transactionId?: string;
+};
+
+/**
+ * Processes a Square payment using the Web Payments SDK token.
+ * This is used for the embedded card form (no redirect needed).
+ */
+export async function processSquarePayment(params: {
+  sourceId: string;
+  orderId: string;
+  amount: number;
+  currency: string;
+}): Promise<SquarePaymentResult> {
+  const { sourceId, orderId, amount, currency } = params;
+
+  // Verify the order exists and belongs to the current user
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    return { success: false, error: 'Please sign in to complete payment.' };
+  }
+
+  const { data: order, error: orderErr } = await supabase
+    .from('orders')
+    .select('id, payment_status, total')
+    .eq('id', orderId)
+    .eq('user_id', user.id)
+    .maybeSingle();
+
+  if (orderErr || !order) {
+    return { success: false, error: 'Order not found.' };
+  }
+
+  if (order.payment_status === 'paid') {
+    return { success: true, orderId: order.id };
+  }
+
+  // Initialize Square SDK
+  const accessToken = readPaymentEnv('SQUARE_ACCESS_TOKEN');
+  const locationId = readPaymentEnv('SQUARE_LOCATION_ID');
+  const mode = readPaymentEnv('SQUARE_MODE') === 'live' ? 'production' : 'sandbox';
+
+  if (!accessToken || !locationId) {
+    return { success: false, error: 'Payment processing is not configured.' };
+  }
+
+  try {
+    // Dynamic import to avoid client-side bundling
+    const { SquareClient, SquareEnvironment, Currency } = await import('square');
+    
+    const client = new SquareClient({
+      token: accessToken,
+      environment: mode === 'production' ? SquareEnvironment.Production : SquareEnvironment.Sandbox,
+    });
+
+    const idempotencyKey = randomUUID();
+    const amountMinor = Math.round(amount * 100);
+
+    // Cast currency to the expected type
+    const currencyCode = currency as any;
+
+    const response = await client.payments.create({
+      sourceId,
+      idempotencyKey,
+      amountMoney: {
+        amount: BigInt(amountMinor),
+        currency: currencyCode,
+      },
+      locationId,
+      note: `Order ${orderId}`,
+    });
+
+    const payment = response.payment;
+    if (payment?.status === 'COMPLETED') {
+      // Record the successful payment
+      const admin = createAdminClient();
+      
+      await admin.from('payment_transactions').insert({
+        order_id: orderId,
+        provider: 'square',
+        provider_transaction_id: payment.id,
+        amount: amount,
+        currency: currency,
+        status: 'completed',
+        provider_data: payment,
+      });
+
+      // Update order status
+      await admin.from('orders').update({
+        payment_status: 'paid',
+        status: 'confirmed',
+        updated_at: new Date().toISOString(),
+      }).eq('id', orderId);
+
+      // Clear the cart
+      const { data: orderData } = await admin
+        .from('orders')
+        .select('user_id')
+        .eq('id', orderId)
+        .single();
+
+      if (orderData?.user_id) {
+        const { data: cart } = await admin
+          .from('carts')
+          .select('id')
+          .eq('user_id', orderData.user_id)
+          .maybeSingle();
+
+        if (cart) {
+          await admin.from('cart_items').delete().eq('cart_id', cart.id);
+        }
+      }
+
+      revalidatePath('/account/orders');
+      revalidatePath('/admin/orders');
+      revalidatePath('/admin/analytics');
+
+      return { success: true, orderId: order.id, transactionId: payment.id ?? undefined };
+    } else {
+      return { success: false, error: 'Payment was not completed. Please try again.' };
+    }
+  } catch (error: any) {
+    console.error('[processSquarePayment]', error);
+    const message = error?.body?.errors?.[0]?.detail || error?.message || 'Payment processing failed.';
+    return { success: false, error: message };
+  }
 }

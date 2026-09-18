@@ -34,6 +34,7 @@ describe('CheckoutForm', () => {
       <CheckoutForm
         defaultEmail="tracy@example.com"
         methods={methods.map((method) => ({ ...method, configured: false }))}
+        totalAmount={100}
       />,
     );
 
@@ -43,7 +44,7 @@ describe('CheckoutForm', () => {
   });
 
   it('only offers the configured providers', () => {
-    render(<CheckoutForm defaultEmail="tracy@example.com" methods={methods} />);
+    render(<CheckoutForm defaultEmail="tracy@example.com" methods={methods} totalAmount={100} />);
 
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
     expect(screen.getByRole('radio', { name: /paypal/i })).toBeChecked();
@@ -55,7 +56,7 @@ describe('CheckoutForm', () => {
     vi.stubGlobal('location', { assign });
     createCheckoutAction.mockResolvedValue({ orderId: 'order-1', redirectUrl: 'https://www.sandbox.paypal.com/x' });
 
-    const { container } = render(<CheckoutForm defaultEmail="tracy@example.com" methods={methods} />);
+    const { container } = render(<CheckoutForm defaultEmail="tracy@example.com" methods={methods} totalAmount={100} />);
     fireEvent.submit(container.querySelector('form') as HTMLFormElement);
 
     await waitFor(() => expect(createCheckoutAction).toHaveBeenCalledTimes(1));
@@ -66,7 +67,7 @@ describe('CheckoutForm', () => {
   it('shows the server error when no payment could be started', async () => {
     createCheckoutAction.mockResolvedValue({ error: 'PayPal is not configured for this environment.' });
 
-    const { container } = render(<CheckoutForm defaultEmail="tracy@example.com" methods={methods} />);
+    const { container } = render(<CheckoutForm defaultEmail="tracy@example.com" methods={methods} totalAmount={100} />);
     fireEvent.submit(container.querySelector('form') as HTMLFormElement);
 
     expect(await screen.findByText(/not configured/i)).toBeInTheDocument();
