@@ -18,8 +18,6 @@ const statusOptions = [
 ];
 
 export default async function AdminOrdersPage() {
-  // Pages render in parallel with AdminGuard — verify the admin here too,
-  // before any customer data is fetched.
   const session = await getSession();
   if (!session?.isAdmin) redirect('/login?next=/admin/orders');
 
@@ -44,6 +42,10 @@ export default async function AdminOrdersPage() {
           discount: Number(o.discount || 0),
           customer_email: o.customer_email || null,
           discount_code: o.discount_code || null,
+          shipping_address: o.shipping_address || null,
+          payment_method: o.payment_method || null,
+          payment_status: o.payment_status || 'pending',
+          updated_at: o.updated_at || o.created_at,
           created_at: o.created_at,
           items: (o.items || []).map((it: any) => ({
             id: it.id,
