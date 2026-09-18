@@ -9,6 +9,7 @@ const adminNavItems = [
   { href: '/admin/collections', label: 'Collections' },
   { href: '/admin/inventory', label: 'Inventory' },
   { href: '/admin/orders', label: 'Orders' },
+  { href: '/admin/history', label: 'History' },
   { href: '/admin/customers', label: 'Customers' },
   { href: '/admin/subscribers', label: 'Mailing list' },
   { href: '/admin/personalization', label: 'Personalization' },

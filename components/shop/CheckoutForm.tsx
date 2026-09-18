@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useTransition } from 'react';
+import { useState, useEffect, useTransition, useCallback } from 'react';
 import { Input } from '@/components/ui/Input';
 import { createCheckoutAction } from '@/lib/checkout/actions';
 import { validateDiscountCode } from '@/lib/checkout/discount';
@@ -30,6 +30,7 @@ export function CheckoutForm({ defaultEmail, methods, totalAmount }: Props) {
   const [squareConfig, setSquareConfig] = useState<SquareClientConfig | null>(null);
   const [selectedPayment, setSelectedPayment] = useState<string>('card');
   const [paymentSuccess, setPaymentSuccess] = useState(false);
+  const [country, setCountry] = useState('CA');
   const [orderId, setOrderId] = useState<string | null>(null);
   const available = methods.filter((method) => method.configured);
   const paymentsUnavailable = available.length === 0;
@@ -124,9 +125,22 @@ export function CheckoutForm({ defaultEmail, methods, totalAmount }: Props) {
             <Input label="Street address" name="address" required autoComplete="street-address" />
           </div>
           <Input label="City" name="city" required autoComplete="address-level2" />
-          <Input label="State / Region" name="state" required autoComplete="address-level1" />
-          <Input label="ZIP / Postal" name="zip" required autoComplete="postal-code" />
-          <Input label="Country" name="country" defaultValue="US" required autoComplete="country-name" />
+          <Input label="Province / State" name="state" required autoComplete="address-level1" />
+          <Input label={country === 'CA' ? 'Postal Code' : 'ZIP Code'} name="zip" required autoComplete="postal-code" placeholder={country === 'CA' ? 'e.g. T5A 0A1' : 'e.g. 90210'} />
+          <div>
+            <label className="block text-sm font-medium text-ink-700 mb-1">Country</label>
+            <select
+              name="country"
+              value={country}
+              onChange={(e) => setCountry(e.target.value)}
+              required
+              autoComplete="country-name"
+              className="input-base w-full"
+            >
+              <option value="CA">Canada</option>
+              <option value="US">United States</option>
+            </select>
+          </div>
         </div>
       </section>
 

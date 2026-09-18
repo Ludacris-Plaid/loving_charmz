@@ -49,9 +49,10 @@ type Props = {
 const statusStyle: Record<string, string> = {
   pending: 'badge-soft',
   processing: 'badge-mint',
-  shipped: 'badge-mint',
+  shipped: 'badge-shipped',
   delivered: 'badge-mint',
-  cancelled: 'inline-flex items-center gap-1.5 bg-red-50 text-red-700 border border-red-200 px-2.5 py-1 rounded-pill text-xs font-medium',
+  completed: 'badge-completed',
+  cancelled: 'badge-cancelled',
 };
 
 /* ── helpers ─────────────────────────────────────────────────────────── */

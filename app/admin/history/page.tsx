@@ -4,7 +4,7 @@ import { redirect } from 'next/navigation';
 import { getSession } from '@/components/admin/AdminGuard';
 
 export const metadata = {
-  title: 'Admin \u00b7 Orders \u2014 Loving Charmz',
+  title: 'Admin \u00b7 Order History \u2014 Loving Charmz',
 };
 
 export const dynamic = 'force-dynamic';
@@ -18,27 +18,27 @@ const statusOptions = [
   { value: 'cancelled', label: 'Cancelled' },
 ];
 
-export default async function AdminOrdersPage() {
+export default async function AdminHistoryPage() {
   const session = await getSession();
-  if (!session?.isAdmin) redirect('/login?next=/admin/orders');
+  if (!session?.isAdmin) redirect('/login?next=/admin/history');
 
   const orders = await getAdminOrders();
 
-  // Completed and cancelled orders live in /admin/history
-  const activeOrders = orders.filter(
-    (o) => o.status !== 'completed' && o.status !== 'cancelled'
+  // Show completed and cancelled orders
+  const archivedOrders = orders.filter(
+    (o) => o.status === 'completed' || o.status === 'cancelled'
   );
 
   return (
     <div className="space-y-6">
       <div>
-        <span className="badge-plum">Sales</span>
-        <h1 className="font-display text-3xl font-semibold text-plum-900 mt-3">Orders</h1>
-        <p className="text-sm text-ink-600 mt-1">Update status, view contents, and keep customers in the loop.</p>
+        <span className="badge-plum">Archive</span>
+        <h1 className="font-display text-3xl font-semibold text-plum-900 mt-3">Order History</h1>
+        <p className="text-sm text-ink-600 mt-1">Completed and cancelled orders. Click Manage to view full details.</p>
       </div>
 
       <AdminOrdersTable
-        orders={activeOrders.map((o) => ({
+        orders={archivedOrders.map((o) => ({
           id: o.id,
           status: o.status,
           total: Number(o.total),

@@ -216,7 +216,7 @@ export async function updateOrderStatusAction(orderId: string, status: string): 
   const guard = await getAdminClient();
   if (guard.kind === 'error') return { error: guard.error };
   const client = guard.client;
-  const valid = ['pending', 'processing', 'shipped', 'delivered', 'cancelled'];
+  const valid = ['pending', 'processing', 'shipped', 'delivered', 'completed', 'cancelled'];
   if (!valid.includes(status)) return { error: 'Invalid status' };
   const { error } = await client
     .from('orders')
