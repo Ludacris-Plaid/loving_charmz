@@ -211,7 +211,7 @@ export function AdminHistoryTable({ orders }: Props) {
               <th className="px-4 py-3 font-medium">Status</th>
               <th className="px-4 py-3 font-medium">Items</th>
               <th className="px-4 py-3 font-medium">Total</th>
-              <th className="px-4 py-3 font-medium text-right">Actions</th>
+              <th className="px-4 py-3 font-medium text-right sticky right-0 bg-cream-100 z-10">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -234,7 +234,7 @@ export function AdminHistoryTable({ orders }: Props) {
                     {itemCount} item{itemCount !== 1 ? 's' : ''}
                   </td>
                   <td className="px-4 py-3 font-medium">${order.total.toFixed(2)}</td>
-                  <td className="px-4 py-3 text-right">
+                  <td className="px-4 py-3 text-right sticky right-0 bg-white z-10">
                     <button
                       onClick={() => handleDelete(order.id)}
                       disabled={isDeleting || pending}

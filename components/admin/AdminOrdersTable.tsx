@@ -351,7 +351,7 @@ export function AdminOrdersTable({ orders, statusOptions }: Props) {
                 <th className="px-4 py-3">Date</th>
                 <th className="px-4 py-3">Status</th>
                 <th className="px-4 py-3 text-right">Total</th>
-                <th className="px-4 py-3" />
+                <th className="px-4 py-3 sticky right-0 bg-cream-100 z-10" />
               </tr>
             </thead>
             <tbody>
@@ -374,7 +374,7 @@ export function AdminOrdersTable({ orders, statusOptions }: Props) {
                   <td className="px-4 py-3 text-right font-semibold text-plum-700">
                     ${order.total.toFixed(2)}
                   </td>
-                  <td className="px-4 py-3 text-right">
+                  <td className="px-4 py-3 text-right sticky right-0 bg-white z-10">
                     <button
                       onClick={() => setModalOrderId(order.id)}
                       className="rounded-pill px-4 py-1.5 text-xs font-medium uppercase tracking-wider bg-plum-700 text-cream-50 hover:bg-plum-900 motion-base"
