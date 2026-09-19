@@ -9,11 +9,18 @@ The tooling in `scripts/migrate/` was written for a data-preserving move and is 
 for a future one — see [Appendix: moving data from another project](#appendix-moving-data-from-another-project).
 For this setup only the schema, seed, env and verification steps below matter.
 
-**Status as of 2026-09-13.** `00001`–`00007` applied to `ivvsglfjlmejwmwofvuw` (16 tables,
-34 policies, 2 buckets). Gate check 16/17 — only `auth.at_least_one_admin` fails, which is
-the intended state until the first signup. `rls-smoke.sql` 10/10 and `db:verify:api` 23/23
-against the live project. Catalog seeded: 3 collections, 8 products, 24 variants. No
-accounts exist, so **the admin slot is still free** — sign up first (step 4). `.env.local`
+**Status as of 2026-09-19.** `00001`–`00010` applied to `ivvsglfjlmejwmwofvuw` (catalog
+seeded, accounts live, production running at **https://lovingcharmz.com**).
+`00011_settlement_side_effects.sql` is **new and not yet applied** — it adds the
+`order_settlements` guard table and the `apply_order_settlement_effects` function
+(discount usage counting + stock decrement at payment settlement). Apply with the
+push command below before relying on checkout settlement effects; until then
+`markPaymentConfirmed` logs a harmless "function not found" RPC error and checkout
+still works.
+
+Historical status (2026-09-13): `00001`–`00007` applied (16 tables,
+34 policies, 2 buckets). Gate check 16/17 — only `auth.at_least_one_admin` failed, which was
+the intended state until the first signup. `.env.local`
 points at the new project; the Vercel environment variables are still to do (step 5).
 
 ---

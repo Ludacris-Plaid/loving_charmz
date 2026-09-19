@@ -30,6 +30,7 @@ npm run lint && npm run typecheck && npm run test
 | `npm run test:e2e` | Playwright E2E tests |
 | `npm run db:seed` | Idempotent seed of 120 orders + 12 customers + wishlist + custom + discount + annotation demo data (demo data — do not run against production) |
 | `npm run db:migrate` | Supabase project migration tooling: `preflight`, `export`, `schema`, `import`, `storage`, `rewrite`, `verify` — see `supabase/MIGRATION.md` |
+| `npm run test:smoke` | Crawl the live production site for console errors, failed requests, broken links (default base: https://lovingcharmz.com) |
 
 ## Path alias
 
@@ -112,12 +113,19 @@ Requires Docker. Local Supabase API runs on `http://127.0.0.1:54321`.
 - Tests use `@testing-library/react`, `@testing-library/jest-dom/vitest`, `@testing-library/user-event`
 - E2E: Playwright (`npm run test:e2e`)
 
+## Production domain
+
+Canonical origin: **https://lovingcharmz.com** (connected and live). The single
+source is `SITE_URL` in `lib/site.ts` — never hardcode a hostname in code or
+copy; import the constant. `NEXT_PUBLIC_SITE_URL=https://lovingcharmz.com`
+belongs on the Vercel project (Production) so payment return URLs, password-reset
+redirects and email links use the domain explicitly rather than a code fallback.
+The old `loving-charmz.vercel.app` stays attached as a Vercel alias. The nightly
+production smoke (`.github/workflows/smoke.yml`) crawls the new domain.
+
 ## What does NOT exist yet (agent must not assume)
 
-- E2E tests
 - Integration tests (only unit tests exist)
-- SMTP / transactional email — nothing is actually emailed (no order receipts, no password reset delivery)
-- Stock checks or discounts at checkout (quantity is taken as-is, `discount` is always 0)
 
 ## Payments & checkout
 
@@ -131,6 +139,8 @@ Checkout is a **redirect** flow: the order and a provider payment session are cr
 - **Money math**: `lib/checkout/pricing.ts` is the single source of truth (subtotal, free shipping over $100, 8% tax, minor-unit conversion). The checkout page and the provider charge call the same function — never recompute totals inline.
 - **Local limitation**: the shipped PayPal/Square values are placeholders, so checkout renders "Online payments are not configured" with a disabled button and creates no orders. Square's hosted checkout requires an HTTPS `redirect_url`, so it cannot be exercised from `localhost`.
 - **Test seam**: provider tests stub `fetch` (`tests/unit/payments/*`); `resetPayPalTokenCache()` exists because the OAuth token cache is module-level.
+- **Embedded card flow**: `chargeCardToken()` (registry) → `createSquareDirectCharge` (adapter) charges a Web Payments SDK token; settlement goes through `recordDirectCharge` in the ledger. Needs `SQUARE_APP_ID` in addition to the other Square vars for the client-side form. The charged amount is always the server-side order total — client-supplied amounts are display-only and ignored.
+- **Settlement side effects** (migration `00011`): `markPaymentConfirmed` calls `apply_order_settlement_effects` exactly once per order (guarded by the `order_settlements` table) — decrements variant stock (clamped at zero) and counts the order's discount code against `max_uses`. Stock is also re-validated server-side in `createCheckoutAction` before an order is created.
 
 ## Docs hierarchy
 
@@ -151,7 +161,7 @@ Checkout is a **redirect** flow: the order and a provider payment session are cr
 - **Hand-rolled SVG charts** in `components/admin/analytics/charts/`: `Sparkline` (for KPI cards), `AreaChart` (revenue/orders with previous-period dashed line + annotations), `BarChart` (vertical/horizontal, optional previous bar), `DonutChart` (clickable, hover-highlights), `Heatmap` (7×24 day×hour), `FunnelChart` (with step conversion %), `KpiCard` (with sparkline + delta%).
 - **Chart annotations** (notes pinned to specific dates on the revenue chart) require migration `00005_analytics_annotations.sql`. Apply with `supabase db push`.
 - **Demo data**: `npm run db:seed` populates 120 orders over 6 months, 12 customers, 10 wishlists, 6 custom requests, 3 discounts, 3 chart annotations. Idempotent (cleans prior seed by `metadata->>seed_tag = 'analytics-seed'` marker).
-- **Tests**: 75 unit tests in `tests/unit/admin/analytics/` for `aggregate`, `format`, `csv`, `urlState`. Total: 206/206 unit tests pass. Checkout and payments are covered in `tests/unit/checkout/` (pricing, checkout action) and `tests/unit/payments/` (config, PayPal, Square).
+- **Tests**: 75 unit tests in `tests/unit/admin/analytics/` for `aggregate`, `format`, `csv`, `urlState`. Total: 219/219 unit tests pass across 30 files. Checkout and payments are covered in `tests/unit/checkout/` (pricing, checkout action, embedded Square charge) and `tests/unit/payments/` (config, PayPal, Square). E2E: `tests/e2e/paypal-checkout.mjs` (live PayPal sandbox walkthrough) and `npm run test:smoke` (production crawl, also runs nightly in CI).
 - **CRITICAL — `'use client'` component gotcha**: A `'use client'` component's `children` prop MUST be rendered JSX, not a render-prop function. Server-to-client functions-as-children error: `Functions are not valid as a child of Client Components`. To pass dynamic data into a client component, render the content inside the client component and select via prop (e.g. `tab` id), not via a function-as-children pattern. Constants exported from `'use client'` files (e.g. `ANALYTICS_TABS`) become client-reference proxies when imported into server components — define them in a server-importable module instead.
 - **Turbopack stale-cache trap**: When server-component code that passes render-prop functions is edited, the dev server can serve stale compiled chunks. Symptoms: runtime error matches the OLD code. Fix: `pkill -9 -f "next dev" && rm -rf .next && npm run dev`. Hit repeatedly in this session — always do a hard restart when changing the analytics shell structure.
 - **NavigationProgress base animation trap**: `.nav-progress__bar` base class MUST NOT have `animation` — it runs constantly, visible on every page. Put animation only on `--active`/`--done` state classes. `.nav-progress` base MUST have `opacity: 0` + `transition` so the bar is invisible when idle.

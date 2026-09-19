@@ -67,8 +67,9 @@ These are intentionally deferred beyond MVP:
 
 ### Payment and communication integrations
 - Payments: PayPal and Square
-- Email marketing: Mailchimp
+- Email marketing: Resend (transactional + broadcasts) — sending domain `lovingcharmz.com` verified
 - Backend platform: Supabase for auth, database, storage, and admin-backed content/data
+- Production domain: https://lovingcharmz.com (canonical constant: `lib/site.ts`)
 
 ### Acceptance criteria
 The first launch is successful when:
@@ -139,10 +140,9 @@ SQUARE_ACCESS_TOKEN=
 SQUARE_LOCATION_ID=
 SQUARE_MODE=sandbox
 SQUARE_WEBHOOK_SIGNATURE_KEY= # optional — enables webhook HMAC verification
-NEXT_PUBLIC_SITE_URL=         # optional — canonical origin for payment return URLs
-MAILCHIMP_API_KEY=
-MAILCHIMP_AUDIENCE_ID=
-MAILCHIMP_SERVER_PREFIX=
+NEXT_PUBLIC_SITE_URL=         # set to https://lovingcharmz.com in production (payment return URLs, reset redirects, email links)
+RESEND_API_KEY=               # transactional email + broadcasts (order confirmation, shipping, password reset, welcome)
+SQUARE_APP_ID=                # public app id for the embedded card form (Web Payments SDK)
 ```
 
 ---
