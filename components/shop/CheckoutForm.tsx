@@ -32,6 +32,12 @@ export function CheckoutForm({ defaultEmail, methods, totalAmount }: Props) {
   const [paymentSuccess, setPaymentSuccess] = useState(false);
   const [country, setCountry] = useState('CA');
   const [orderId, setOrderId] = useState<string | null>(null);
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [address, setAddress] = useState('');
+  const [city, setCity] = useState('');
+  const [state, setState] = useState('');
+  const [zip, setZip] = useState('');
   const available = methods.filter((method) => method.configured);
   const paymentsUnavailable = available.length === 0;
 
@@ -118,15 +124,14 @@ export function CheckoutForm({ defaultEmail, methods, totalAmount }: Props) {
 
       <section className="surface-card p-6">
         <h2 className="font-display text-lg font-semibold text-plum-900 mb-4">Shipping address</h2>
-        <div className="grid sm:grid-cols-2 gap-4">
-          <Input label="First name" name="firstName" required autoComplete="given-name" />
-          <Input label="Last name" name="lastName" required autoComplete="family-name" />
-          <div className="sm:col-span-2">
-            <Input label="Street address" name="address" required autoComplete="street-address" />
-          </div>
-          <Input label="City" name="city" required autoComplete="address-level2" />
-          <Input label="Province / State" name="state" required autoComplete="address-level1" />
-          <Input label={country === 'CA' ? 'Postal Code' : 'ZIP Code'} name="zip" required autoComplete="postal-code" placeholder={country === 'CA' ? 'e.g. T5A 0A1' : 'e.g. 90210'} />
+        <div className="grid sm:grid-cols-2 gap-4">        <Input label="First name" name="firstName" required autoComplete="given-name" value={firstName} onChange={(e) => setFirstName(e.target.value)} />
+        <Input label="Last name" name="lastName" required autoComplete="family-name" value={lastName} onChange={(e) => setLastName(e.target.value)} />
+        <div className="sm:col-span-2">
+          <Input label="Street address" name="address" required autoComplete="street-address" value={address} onChange={(e) => setAddress(e.target.value)} />
+        </div>
+        <Input label="City" name="city" required autoComplete="address-level2" value={city} onChange={(e) => setCity(e.target.value)} />
+        <Input label="Province / State" name="state" required autoComplete="address-level1" value={state} onChange={(e) => setState(e.target.value)} />
+        <Input label={country === 'CA' ? 'Postal Code' : 'ZIP Code'} name="zip" required autoComplete="postal-code" placeholder={country === 'CA' ? 'e.g. T5A 0A1' : 'e.g. 90210'} value={zip} onChange={(e) => setZip(e.target.value)} />
           <div>
             <label className="block text-sm font-medium text-ink-700 mb-1">Country</label>
             <select
