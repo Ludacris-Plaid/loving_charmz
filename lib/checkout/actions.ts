@@ -287,7 +287,7 @@ export async function processSquarePayment(params: {
       // Clear the cart
       const { data: orderData } = await admin
         .from('orders')
-        .select('user_id')
+        .select('user_id, shipping_address, subtotal, shipping_cost, tax, discount, discount_code, total')
         .eq('id', orderId)
         .single();
 
@@ -301,6 +301,34 @@ export async function processSquarePayment(params: {
         if (cart) {
           await admin.from('cart_items').delete().eq('cart_id', cart.id);
         }
+      }
+
+      // Send order confirmation email
+      try {
+        const { sendOrderConfirmation } = await import('@/lib/email/transactional');
+        const { data: orderItems } = await admin
+          .from('order_items')
+          .select('product_name, variant_name, quantity, unit_price')
+          .eq('order_id', orderId);
+
+        const shippingAddr = orderData?.shipping_address as any;
+        if (orderItems && shippingAddr?.email) {
+          await sendOrderConfirmation({
+            to: shippingAddr.email,
+            orderId,
+            items: orderItems,
+            subtotal: Number(orderData?.subtotal ?? 0),
+            discount: Number(orderData?.discount ?? 0),
+            discountCode: orderData?.discount_code ?? null,
+            shipping: Number(orderData?.shipping_cost ?? 0),
+            tax: Number(orderData?.tax ?? 0),
+            total: Number(orderData?.total ?? 0),
+            shippingAddress: shippingAddr,
+          });
+        }
+      } catch (emailErr) {
+        console.error('[processSquarePayment] Failed to send confirmation email:', emailErr);
+        // Don't fail the order over email
       }
 
       revalidatePath('/account/orders');

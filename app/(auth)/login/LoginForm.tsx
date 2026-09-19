@@ -40,6 +40,14 @@ export function LoginForm() {
           autoComplete="current-password"
           placeholder="••••••••"
         />
+        <div className="text-right">
+          <Link
+            href="/forgot-password"
+            className="text-sm text-plum-600 hover:text-plum-800 motion-base"
+          >
+            Forgot your password?
+          </Link>
+        </div>
       </div>
 
       <input type="hidden" name="next" value={next} />

@@ -309,3 +309,64 @@ export async function deleteDiscountAction(code: string): Promise<AdminResult> {
   revalidatePath('/admin/discounts');
   return { success: true };
 }
+
+/* ------------------------------------------------------------------ */
+/*  Email broadcast                                                     */
+/* ------------------------------------------------------------------ */
+
+type BroadcastResult = { sent?: number; errors?: string[]; error?: string };
+
+export async function sendBroadcastAction(params: {
+  subject: string;
+  htmlBody: string;
+  recipients: string[];
+}): Promise<BroadcastResult> {
+  const guard = await getAdminClient();
+  if (guard.kind === 'error') return { error: guard.error };
+
+  const { sendBroadcast } = await import('@/lib/email/transactional');
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://loving-charmz.vercel.app';
+
+  const result = await sendBroadcast({
+    recipients: params.recipients,
+    subject: params.subject,
+    htmlBody: params.htmlBody,
+    unsubscribeUrl: `${siteUrl}/unsubscribe`,
+  });
+
+  return result;
+}
+
+/* ------------------------------------------------------------------ */
+/*  Shipping notification                                               */
+/* ------------------------------------------------------------------ */
+
+export async function sendShippingNotificationAction(
+  orderId: string,
+  trackingNumber?: string,
+): Promise<AdminResult> {
+  const guard = await getAdminClient();
+  if (guard.kind === 'error') return { error: guard.error };
+  const client = guard.client;
+
+  const { data: order, error: orderErr } = await client
+    .from('orders')
+    .select('shipping_address')
+    .eq('id', orderId)
+    .maybeSingle();
+
+  if (orderErr || !order) return { error: 'Order not found.' };
+
+  const addr = order.shipping_address as any;
+  if (!addr?.email) return { error: 'No email address on this order.' };
+
+  const { sendShippingNotification } = await import('@/lib/email/transactional');
+  const { error } = await sendShippingNotification({
+    to: addr.email,
+    orderId,
+    trackingNumber,
+  });
+
+  if (error) return { error: `Email failed: ${error}` };
+  return { success: true };
+}

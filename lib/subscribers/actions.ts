@@ -67,3 +67,22 @@ export async function deleteSubscriberAction(id: string): Promise<DeleteSubscrib
   revalidatePath('/admin/subscribers');
   return { ok: true };
 }
+
+/** Public: unsubscribe by email (no login required). */
+export async function unsubscribeAction(email: string): Promise<SubscribeResult> {
+  const trimmed = (email || '').trim().toLowerCase();
+  if (!EMAIL_RE.test(trimmed)) {
+    return { error: 'Please enter a valid email address.' };
+  }
+
+  const admin = createAdminClient();
+  const { error } = await admin
+    .from('subscribers')
+    .delete()
+    .eq('email', trimmed);
+
+  if (error) return { error: 'Something went wrong. Please try again.' };
+
+  revalidatePath('/admin/subscribers');
+  return { ok: true };
+}

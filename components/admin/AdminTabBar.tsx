@@ -12,6 +12,7 @@ const adminNavItems = [
   { href: '/admin/history', label: 'History' },
   { href: '/admin/customers', label: 'Customers' },
   { href: '/admin/subscribers', label: 'Mailing list' },
+  { href: '/admin/email', label: 'Send email' },
   { href: '/admin/personalization', label: 'Personalization' },
   { href: '/admin/content', label: 'Content' },
   { href: '/admin/discounts', label: 'Discounts' },

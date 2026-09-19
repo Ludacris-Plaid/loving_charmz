@@ -85,3 +85,54 @@ export async function logout() {
   revalidatePath('/', 'layout');
   redirect('/');
 }
+
+/* ------------------------------------------------------------------ */
+/*  Password reset                                                      */
+/* ------------------------------------------------------------------ */
+
+type ForgotPasswordResult = { error?: string; message?: string };
+
+export async function forgotPasswordAction(formData: FormData): Promise<ForgotPasswordResult> {
+  const email = (formData.get('email') as string || '').trim().toLowerCase();
+  if (!email) return { error: 'Please enter your email address.' };
+
+  const supabase = await createClient();
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://loving-charmz.vercel.app';
+
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${siteUrl}/reset-password`,
+  });
+
+  if (error) {
+    // Always show success to prevent email enumeration
+    console.error('[forgotPasswordAction]', error.message);
+  }
+
+  // Always show success — prevents email enumeration
+  return {
+    message: 'If an account exists with that email, you\'ll receive a password reset link shortly.',
+  };
+}
+
+export async function resetPasswordAction(
+  accessToken: string,
+  newPassword: string,
+): Promise<ForgotPasswordResult> {
+  if (!accessToken) return { error: 'Invalid reset link.' };
+  if (newPassword.length < 6) return { error: 'Password must be at least 6 characters.' };
+
+  const supabase = await createClient();
+
+  const { error } = await supabase.auth.updateUser({
+    password: newPassword,
+  });
+
+  if (error) {
+    console.error('[resetPasswordAction]', error.message);
+    return { error: 'Failed to reset password. The link may have expired — please request a new one.' };
+  }
+
+  // Sign in and redirect to login
+  revalidatePath('/', 'layout');
+  redirect('/login?error=Password%20updated%20successfully.%20Please%20sign%20in.');
+}
