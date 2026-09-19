@@ -1,5 +1,5 @@
 import { getAdminOrders } from '@/lib/admin/data';
-import { AdminOrdersTable } from '@/components/admin/AdminOrdersTable';
+import { AdminHistoryTable } from '@/components/admin/AdminHistoryTable';
 import { redirect } from 'next/navigation';
 import { getSession } from '@/components/admin/AdminGuard';
 
@@ -8,15 +8,6 @@ export const metadata = {
 };
 
 export const dynamic = 'force-dynamic';
-
-const statusOptions = [
-  { value: 'pending', label: 'Pending' },
-  { value: 'processing', label: 'Processing' },
-  { value: 'shipped', label: 'Shipped' },
-  { value: 'delivered', label: 'Delivered' },
-  { value: 'completed', label: 'Completed' },
-  { value: 'cancelled', label: 'Cancelled' },
-];
 
 export default async function AdminHistoryPage() {
   const session = await getSession();
@@ -34,10 +25,10 @@ export default async function AdminHistoryPage() {
       <div>
         <span className="badge-plum">Archive</span>
         <h1 className="font-display text-3xl font-semibold text-plum-900 mt-3">Order History</h1>
-        <p className="text-sm text-ink-600 mt-1">Completed and cancelled orders. Click Manage to view full details.</p>
+        <p className="text-sm text-ink-600 mt-1">Completed and cancelled orders. Export, delete individual orders, or clear all history.</p>
       </div>
 
-      <AdminOrdersTable
+      <AdminHistoryTable
         orders={archivedOrders.map((o) => ({
           id: o.id,
           status: o.status,
@@ -61,7 +52,6 @@ export default async function AdminHistoryPage() {
             quantity: it.quantity,
           })),
         }))}
-        statusOptions={statusOptions}
       />
     </div>
   );

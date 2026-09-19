@@ -370,3 +370,38 @@ export async function sendShippingNotificationAction(
   if (error) return { error: `Email failed: ${error}` };
   return { success: true };
 }
+
+/* ------------------------------------------------------------------ */
+/*  History deletion                                                    */
+/* ------------------------------------------------------------------ */
+
+export async function deleteHistoryOrderAction(orderId: string): Promise<AdminResult> {
+  const guard = await getAdminClient();
+  if (guard.kind === 'error') return { error: guard.error };
+  const client = guard.client;
+  // Delete order items first, then the order
+  await client.from('order_items').delete().eq('order_id', orderId);
+  const { error } = await client.from('orders').delete().eq('id', orderId);
+  if (error) return { error: error.message };
+  revalidatePath('/admin/history');
+  return { success: true };
+}
+
+export async function deleteAllHistoryAction(): Promise<AdminResult> {
+  const guard = await getAdminClient();
+  if (guard.kind === 'error') return { error: guard.error };
+  const client = guard.client;
+  // Get all completed/cancelled order IDs first
+  const { data: orders } = await client
+    .from('orders')
+    .select('id')
+    .in('status', ['completed', 'cancelled']);
+  if (orders && orders.length > 0) {
+    const ids = orders.map((o) => o.id);
+    await client.from('order_items').delete().in('order_id', ids);
+    const { error } = await client.from('orders').delete().in('id', ids);
+    if (error) return { error: error.message };
+  }
+  revalidatePath('/admin/history');
+  return { success: true };
+}
