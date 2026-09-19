@@ -60,7 +60,7 @@ export default function ShippingPolicyPage() {
           <section>
             <h2 className="font-display text-xl font-semibold text-plum-900 mb-3">Tracking</h2>
             <p>
-              Every order includes tracking. You can track your shipment using the link in your confirmation email or from your account dashboard under "Orders."
+              Every order includes tracking. You can track your shipment using the link in your confirmation email or from your account dashboard under &ldquo;Orders.&rdquo;
             </p>
           </section>
 

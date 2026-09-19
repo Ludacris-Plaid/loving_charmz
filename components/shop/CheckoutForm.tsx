@@ -28,7 +28,7 @@ export function CheckoutForm({ defaultEmail, methods, totalAmount }: Props) {
   const [discountMsg, setDiscountMsg] = useState<string | null>(null);
   const [discountData, setDiscountData] = useState<{ code: string; type: string; value: number } | null>(null);
   const [squareConfig, setSquareConfig] = useState<SquareClientConfig | null>(null);
-  const [selectedPayment, setSelectedPayment] = useState<string>('card');
+  const [selectedPayment, setSelectedPayment] = useState<string>(() => methods.find((m) => m.configured)?.id ?? '');
   const [paymentSuccess, setPaymentSuccess] = useState(false);
   const [country, setCountry] = useState('CA');
   const [orderId, setOrderId] = useState<string | null>(null);
@@ -238,7 +238,7 @@ export function CheckoutForm({ defaultEmail, methods, totalAmount }: Props) {
               </div>
             ) : selectedPayment === 'card' && squareConfig ? (
               <p className="text-xs text-ink-500 mt-2">
-                Click "Continue to payment" to enter your card details securely.
+                Click &ldquo;Continue to payment&rdquo; to enter your card details securely.
               </p>
             ) : (
               <p className="text-xs text-ink-500">

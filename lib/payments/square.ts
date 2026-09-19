@@ -5,6 +5,7 @@ import { requestJson, safeReference } from './http';
 import {
   PaymentProviderError,
   type CreateSessionInput,
+  type MoneyAmount,
   type PaymentConfirmation,
   type PaymentOutcome,
   type PaymentSession,
@@ -240,6 +241,51 @@ export function parseSquareWebhookEvent(event: unknown): PaymentWebhookEvent {
     amount: null,
     payerEmail: null,
     raw: event,
+  };
+}
+
+/**
+ * Direct card charge for the embedded Web Payments SDK flow.
+ *
+ * The browser only ever sends a single-use card token (`sourceId`), never card
+ * data, and never the amount: the caller is expected to pass the *server-side*
+ * order total. The idempotency key is derived from our order id, so a retried
+ * tokenization after a network blip cannot double-charge the shopper.
+ */
+export async function createSquareDirectCharge(
+  config: SquareConfig,
+  input: { sourceId: string; orderId: string; amount: MoneyAmount; reference?: string },
+): Promise<{ providerTransactionId: string | null; status: string; raw: unknown }> {
+  const amountMinor = toMinorUnits(input.amount.value);
+  if (!Number.isFinite(amountMinor) || amountMinor <= 0) {
+    throw new PaymentProviderError('square', 'invalid_amount', 'Square requires a positive order amount.', input.amount);
+  }
+
+  // Dynamic import keeps the Square SDK out of any bundle that does not
+  // actually charge a card.
+  const { SquareClient, SquareEnvironment } = await import('square');
+  const client = new SquareClient({
+    token: config.accessToken,
+    environment: config.mode === 'live' ? SquareEnvironment.Production : SquareEnvironment.Sandbox,
+  });
+
+  const response = await client.payments.create({
+    sourceId: input.sourceId,
+    idempotencyKey: `lc-order-${input.orderId}`,
+    amountMoney: {
+      amount: BigInt(amountMinor),
+      // The SDK's generated Currency type is a string union; CAD is valid.
+      currency: input.amount.currency as never,
+    },
+    locationId: config.locationId,
+    note: `Loving Charmz order ${input.reference ?? input.orderId}`.slice(0, 500),
+  });
+
+  const payment = response.payment;
+  return {
+    providerTransactionId: payment?.id ?? null,
+    status: payment?.status ?? 'UNKNOWN',
+    raw: payment,
   };
 }
 

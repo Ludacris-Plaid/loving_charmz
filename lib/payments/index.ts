@@ -9,7 +9,13 @@ import {
 } from './config';
 import { parsePayPalWebhookEvent, capturePayPalOrder, createPayPalSession, verifyPayPalWebhookSignature } from './paypal';
 import { orderReference } from './reference';
-import { parseSquareWebhookEvent, confirmSquareOrder, createSquareSession, verifySquareWebhookSignature } from './square';
+import {
+  parseSquareWebhookEvent,
+  confirmSquareOrder,
+  createSquareSession,
+  createSquareDirectCharge,
+  verifySquareWebhookSignature,
+} from './square';
 import type {
   MoneyAmount,
   PaymentMethodId,
@@ -49,13 +55,13 @@ export function getProvider(provider: PaymentProviderId): PaymentProvider | null
   }
 
   const config = getSquareConfig();
-  if (!config) return null;
-  return {
-    id: 'square',
-    mode: config.mode,
-    createSession: (input) => createSquareSession(config, input),
-    confirm: (providerOrderId) => confirmSquareOrder(config, providerOrderId),
-  };
+  if (!config) return null;    return {
+      id: 'square',
+      mode: config.mode,
+      createSession: (input) => createSquareSession(config, input),
+      confirm: (providerOrderId) => confirmSquareOrder(config, providerOrderId),
+      chargeCard: (input) => createSquareDirectCharge(config, input),
+    };
 }
 
 export function requirePaymentMethod(method: string): PaymentMethodOption {
@@ -103,6 +109,27 @@ export async function startPaymentSession(params: {
     amount: params.amount,
     returnUrl,
     cancelUrl,
+  });
+}
+
+/**
+ * Charges an embedded-card token (Square Web Payments SDK) through the provider
+ * adapter. Returns null when the provider has no embedded-card capability.
+ */
+export async function chargeCardToken(params: {
+  method: PaymentMethodId;
+  sourceId: string;
+  orderId: string;
+  amount: MoneyAmount;
+}): Promise<{ providerTransactionId: string | null; status: string; raw: unknown } | null> {
+  const option = requirePaymentMethod(params.method);
+  const provider = getProvider(option.provider);
+  if (!provider?.chargeCard) return null;
+  return provider.chargeCard({
+    sourceId: params.sourceId,
+    orderId: params.orderId,
+    amount: params.amount,
+    reference: orderReference(params.orderId),
   });
 }
 

@@ -303,4 +303,26 @@ describe('createCheckoutAction with a configured provider', () => {
     expect(result.error).toMatch(/sign in/i);
     expect(db.state.orders).toHaveLength(0);
   });
+
+  it('rejects the order when a variant has less stock than the cart asks for', async () => {
+    configurePayPal();
+    db.state.cartItems = [
+      {
+        id: 'ci-1',
+        quantity: 3,
+        product_id: 'p-1',
+        variant_id: 'v-1',
+        product: { name: 'Apex Cuff', base_price: 55 },
+        variant: { name: 'Silver', price_adjustment: 5, stock_quantity: 2 },
+      },
+    ];
+
+    const { createCheckoutAction } = await import('@/lib/checkout/actions');
+    const result = await createCheckoutAction(checkoutForm());
+
+    expect(result.error).toMatch(/only 2 left/i);
+    expect(db.state.orders).toHaveLength(0);
+    expect(db.state.transactions).toHaveLength(0);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
 });

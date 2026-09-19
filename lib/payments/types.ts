@@ -68,6 +68,16 @@ export type PaymentProvider = {
    * approved order; for Square it reads the state of the hosted checkout order.
    */
   confirm(providerOrderId: string): Promise<PaymentConfirmation>;
+  /**
+   * Direct charge for embedded card flows (Square Web Payments SDK token).
+   * Optional: PayPal has no embedded-card equivalent. Receives a single-use
+   * token plus the *server-computed* order amount, never a client amount.
+   */
+  chargeCard?(input: { sourceId: string; orderId: string; amount: MoneyAmount; reference?: string }): Promise<{
+    providerTransactionId: string | null;
+    status: string;
+    raw: unknown;
+  }>;
 };
 
 export type WebhookKind = 'paid' | 'failed' | 'refunded' | 'ignored';

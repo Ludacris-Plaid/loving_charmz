@@ -141,6 +141,15 @@ export async function findOrderIdByProviderPaymentId(
   return (data?.order_id as string | null) ?? null;
 }
 
+/**
+ * Marks an order paid.
+ *
+ * Settlement also carries two side effects — discount usage counting and stock
+ * decrement — applied exactly once via the `order_settlements` guard row in
+ * `apply_order_settlement_effects` (migration 00011). Webhooks, return routes
+ * and retries may all call this for the same order; the side effects run only
+ * for the first caller.
+ */
 export async function markPaymentConfirmed(params: {
   orderId: string;
   provider: PaymentProviderId;
@@ -168,6 +177,8 @@ export async function markPaymentConfirmed(params: {
     .update({ payment_status: 'paid', status: nextOrderStatus, updated_at: now })
     .eq('id', params.orderId);
   if (updateError) return { ok: false, error: updateError.message };
+
+  await applySettlementEffects(params.orderId);
 
   const transaction = await findLatestTransaction(params.orderId, params.provider);
   if (transaction) {
@@ -257,6 +268,120 @@ export async function markPaymentRefunded(params: {
   }
 
   return { ok: true };
+}
+
+/**
+ * Applies the once-per-order settlement side effects (discount usage, stock).
+ * Failure is logged but does not fail the settlement: the captured payment is
+ * the source of truth, and the effects can be reconciled afterwards.
+ */
+async function applySettlementEffects(orderId: string): Promise<void> {
+  const admin = createAdminClient();
+  const { data, error } = await admin.rpc('apply_order_settlement_effects', { p_order_id: orderId });
+  if (error) {
+    console.error(`[ledger] settlement effects for order ${orderId} failed`, error.message);
+  } else if (data === false) {
+    console.info(`[ledger] settlement effects for order ${orderId} already applied`);
+  }
+}
+
+/**
+ * Records a completed direct card charge (embedded Square flow) in the ledger,
+ * then settles the order through the same path as every other provider.
+ *
+ * `amount` and `currency` must be the server-side order totals — the action
+ * that calls this is responsible for never trusting client-supplied amounts.
+ */
+export async function recordDirectCharge(params: {
+  orderId: string;
+  provider: PaymentProviderId;
+  amount: number;
+  currency: string;
+  providerTransactionId: string | null;
+  raw: unknown;
+}): Promise<void> {
+  const admin = createAdminClient();
+
+  const { data: order } = await admin
+    .from('orders')
+    .select('user_id')
+    .eq('id', params.orderId)
+    .maybeSingle();
+
+  await admin.from('payment_transactions').insert({
+    order_id: params.orderId,
+    provider: params.provider,
+    provider_transaction_id: params.providerTransactionId,
+    amount: params.amount,
+    currency: params.currency,
+    status: 'captured',
+    provider_data: {
+      stage: 'settled',
+      payment_id: params.providerTransactionId,
+      settled_at: new Date().toISOString(),
+      raw: params.raw,
+    },
+  });
+
+  const settled = await markPaymentConfirmed({
+    orderId: params.orderId,
+    provider: params.provider,
+    providerTransactionId: params.providerTransactionId,
+    paymentId: params.providerTransactionId,
+    raw: params.raw,
+  });
+
+  if (!settled.ok) {
+    console.error(`[ledger] direct charge settle failed for order ${params.orderId}`, settled.error);
+  }
+
+  // Send the confirmation email. The cart was already cleared by
+  // markPaymentConfirmed; nothing else may depend on the caller.
+  await sendDirectChargeConfirmation({
+    orderId: params.orderId,
+    userId: (order?.user_id as string | null) ?? null,
+  });
+}
+
+/** Best-effort confirmation email for a settled direct charge. */
+async function sendDirectChargeConfirmation(params: {
+  orderId: string;
+  userId: string | null;
+}): Promise<void> {
+  try {
+    const { sendOrderConfirmation } = await import('@/lib/email/transactional');
+    const admin = createAdminClient();
+
+    const [{ data: order }, { data: items }] = await Promise.all([
+      admin
+        .from('orders')
+        .select('shipping_address, subtotal, shipping_cost, tax, discount, discount_code, total')
+        .eq('id', params.orderId)
+        .single(),
+      admin
+        .from('order_items')
+        .select('product_name, variant_name, quantity, unit_price')
+        .eq('order_id', params.orderId),
+    ]);
+
+    const shippingAddress = order?.shipping_address as { email?: string } | null;
+    if (!order || !items || items.length === 0 || !shippingAddress?.email) return;
+
+    await sendOrderConfirmation({
+      to: shippingAddress.email,
+      orderId: params.orderId,
+      items: items as any,
+      subtotal: Number(order.subtotal ?? 0),
+      discount: Number(order.discount ?? 0),
+      discountCode: (order.discount_code as string | null) ?? null,
+      shipping: Number(order.shipping_cost ?? 0),
+      tax: Number(order.tax ?? 0),
+      total: Number(order.total ?? 0),
+      shippingAddress: shippingAddress as any,
+    });
+  } catch (error) {
+    console.error('[ledger] confirmation email failed', error);
+  }
 }
 
 /**
