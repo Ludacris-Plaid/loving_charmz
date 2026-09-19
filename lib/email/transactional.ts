@@ -1,6 +1,54 @@
 import 'server-only';
+import { headers } from 'next/headers';
 import { getResendClient, FROM_EMAIL, FROM_SUPPORT } from './client';
 import { formatMoney } from '@/lib/checkout/pricing';
+import { SITE_URL } from '@/lib/site';
+
+/**
+ * Escapes user/provider-supplied text before it is interpolated into email
+ * HTML. Email clients render HTML with scripts disabled, but unescaped angle
+ * brackets still let a crafted product name or address rewrite the layout,
+ * forge links, or hide content — so everything shopper-controlled goes
+ * through this.
+ */
+function escapeHtml(value: unknown): string {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+/**
+ * Absolute site origin for email links.
+ *
+ * Emails are read in a mail client, not on our origin, so request-derived
+ * hosts (preview URLs, `localhost:3000`) are wrong more often than right;
+ * fall back to the canonical production domain (`SITE_URL`) when
+ * `NEXT_PUBLIC_SITE_URL` is unset and no request is in scope.
+ */
+async function siteOrigin(): Promise<string> {
+  const configured = (process.env.NEXT_PUBLIC_SITE_URL ?? '').trim().replace(/\/+$/, '');
+  if (configured) return configured;
+
+  // headers() throws outside a request scope (scripts, some webhook runtimes);
+  // that is fine, we just fall back to the production domain.
+  try {
+    const headerList = await headers();
+    const host =
+      (headerList.get('x-forwarded-host') ?? headerList.get('host') ?? '').trim();
+    if (host) {
+      const proto =
+        headerList.get('x-forwarded-proto') ??
+        (host.startsWith('localhost') || host.startsWith('127.0.0.1') ? 'http' : 'https');
+      return `${proto}://${host}`;
+    }
+  } catch {
+    // Not in a request scope — fall through to the production default.
+  }
+  return SITE_URL;
+}
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -28,7 +76,8 @@ type ShippingAddress = {
 /*  Shared email shell                                                 */
 /* ------------------------------------------------------------------ */
 
-function shell(content: string): string {
+async function shell(content: string): Promise<string> {
+  const site = await siteOrigin();
   return `<!DOCTYPE html>
 <html lang="en">
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
@@ -51,9 +100,9 @@ ${content}
   <tr><td style="background:#f5f0f7;padding:24px 32px;text-align:center;font-size:12px;color:#6b5b7b;">
     <p style="margin:0 0 8px;">Loving Charmz &mdash; Symbolic keepsake jewelry</p>
     <p style="margin:0;">
-      <a href="https://loving-charmz.vercel.app" style="color:#6b5b7b;">lovingcharmz.com</a>
+      <a href="${site}" style="color:#6b5b7b;">lovingcharmz.com</a>
       &nbsp;&middot;&nbsp;
-      <a href="https://loving-charmz.vercel.app/account/orders" style="color:#6b5b7b;">My Orders</a>
+      <a href="${site}/account/orders" style="color:#6b5b7b;">My Orders</a>
     </p>
   </td></tr>
 
@@ -88,8 +137,8 @@ export async function sendOrderConfirmation(params: {
       (item) =>
         `<tr>
           <td style="padding:8px 0;border-bottom:1px solid #eee;">
-            <strong>${item.product_name}</strong>${item.variant_name ? ` — ${item.variant_name}` : ''}
-            <br><span style="color:#6b5b7b;font-size:13px;">Qty: ${item.quantity} &times; ${formatMoney(item.unit_price)}</span>
+            <strong>${escapeHtml(item.product_name)}</strong>${item.variant_name ? ` — ${escapeHtml(item.variant_name)}` : ''}
+            <br><span style="color:#6b5b7b;font-size:13px;">Qty: ${Number(item.quantity) || 0} &times; ${formatMoney(item.unit_price)}</span>
           </td>
           <td style="padding:8px 0;border-bottom:1px solid #eee;text-align:right;font-weight:600;">
             ${formatMoney(item.unit_price * item.quantity)}
@@ -112,7 +161,7 @@ export async function sendOrderConfirmation(params: {
     `<tr><td style="padding:8px 0;font-weight:700;font-size:16px;border-top:2px solid #2d1b4e;">Total</td><td style="padding:8px 0;text-align:right;font-weight:700;font-size:16px;border-top:2px solid #2d1b4e;">${formatMoney(params.total)}</td></tr>`,
   ].filter(Boolean).join('\n');
 
-  const html = shell(`
+  const html = await shell(`
     <h2 style="margin:0 0 4px;font-size:24px;color:#2d1b4e;">Order confirmed</h2>
     <p style="margin:0 0 24px;color:#6b5b7b;font-size:14px;">Order #${shortId}</p>
 
@@ -127,16 +176,16 @@ export async function sendOrderConfirmation(params: {
     <div style="background:#f5f0f7;border-radius:8px;padding:20px;margin-bottom:24px;">
       <p style="margin:0 0 8px;font-weight:600;color:#2d1b4e;font-size:13px;text-transform:uppercase;letter-spacing:1px;">Shipping to</p>
       <p style="margin:0;font-size:15px;line-height:1.6;">
-        ${addr.firstName} ${addr.lastName}<br>
-        ${addr.address}<br>
-        ${addr.city}, ${addr.state} ${addr.zip}<br>
+        ${escapeHtml(`${addr.firstName} ${addr.lastName}`)}<br>
+        ${escapeHtml(addr.address)}<br>
+        ${escapeHtml(addr.city)}, ${escapeHtml(addr.state)} ${escapeHtml(addr.zip)}<br>
         ${countryLabel}
       </p>
     </div>
 
     <p style="margin:0;color:#6b5b7b;font-size:14px;line-height:1.6;">
       We&rsquo;ll email you tracking information once your order ships. You can also check your order status anytime from
-      <a href="https://loving-charmz.vercel.app/account/orders" style="color:#2d1b4e;">your account</a>.
+      <a href="${await siteOrigin()}/account/orders" style="color:#2d1b4e;">your account</a>.
     </p>
   `);
 
@@ -164,10 +213,10 @@ export async function sendShippingNotification(params: {
 
   const trackingHtml = params.trackingNumber
     ? `<p style="margin:16px 0;font-size:15px;">Your tracking number:<br>
-       <strong style="font-size:17px;letter-spacing:1px;">${params.trackingNumber}</strong></p>`
+       <strong style="font-size:17px;letter-spacing:1px;">${escapeHtml(params.trackingNumber)}</strong></p>`
     : '';
 
-  const html = shell(`
+  const html = await shell(`
     <h2 style="margin:0 0 16px;font-size:24px;color:#2d1b4e;">Your order has shipped!</h2>
     <p style="margin:0 0 8px;color:#6b5b7b;font-size:14px;">Order #${shortId}</p>
 
@@ -178,7 +227,7 @@ export async function sendShippingNotification(params: {
     </p>
 
     <div style="text-align:center;margin:24px 0;">
-      <a href="https://loving-charmz.vercel.app/account/orders"
+      <a href="${await siteOrigin()}/account/orders"
          style="display:inline-block;background:#2d1b4e;color:#fff;padding:12px 28px;border-radius:6px;text-decoration:none;font-size:14px;letter-spacing:1px;">
         VIEW MY ORDER
       </a>
@@ -205,7 +254,7 @@ export async function sendPasswordReset(params: {
 }): Promise<{ error?: string }> {
   const resend = getResendClient();
 
-  const html = shell(`
+  const html = await shell(`
     <h2 style="margin:0 0 16px;font-size:24px;color:#2d1b4e;">Reset your password</h2>
     <p style="margin:0 0 20px;color:#6b5b7b;font-size:14px;line-height:1.6;">
       We received a request to reset the password for your Loving Charmz account.
@@ -251,6 +300,7 @@ export async function sendBroadcast(params: {
   const batchSize = 50;
   for (let i = 0; i < params.recipients.length; i += batchSize) {
     const batch = params.recipients.slice(i, i + batchSize);
+    const site = await siteOrigin();
     const results = await resend.batch.send(
       batch.map((email) => ({
         from: FROM_SUPPORT,
@@ -258,7 +308,7 @@ export async function sendBroadcast(params: {
         subject: params.subject,
         html: params.htmlBody + `
           <div style="margin-top:32px;padding-top:16px;border-top:1px solid #eee;font-size:11px;color:#999;text-align:center;">
-            You're receiving this because you signed up at <a href="https://lovingcharmz.vercel.app" style="color:#999;">lovingcharmz.com</a>.
+            You're receiving this because you signed up at <a href="${site}" style="color:#999;">lovingcharmz.com</a>.
             <br><a href="${params.unsubscribeUrl}?email=${encodeURIComponent(email)}" style="color:#999;">Unsubscribe</a>
           </div>
         `,
@@ -293,14 +343,14 @@ export async function sendWelcomeEmail(params: {
       </div>`
     : '';
 
-  const html = shell(`
+  const html = await shell(`
     <h2 style="margin:0 0 16px;font-size:24px;color:#2d1b4e;">Welcome to Loving Charmz</h2>
     <p style="margin:0 0 16px;color:#6b5b7b;font-size:14px;line-height:1.6;">
       Thank you for joining our community. You&rsquo;ll be the first to know about new collections, exclusive offers, and the stories behind our keepsakes.
     </p>
     ${couponBlock}
     <div style="text-align:center;margin:24px 0;">
-      <a href="https://loving-charmz.vercel.app/shop"
+      <a href="${await siteOrigin()}/shop"
          style="display:inline-block;background:#2d1b4e;color:#fff;padding:12px 28px;border-radius:6px;text-decoration:none;font-size:14px;letter-spacing:1px;">
         EXPLORE THE SHOP
       </a>

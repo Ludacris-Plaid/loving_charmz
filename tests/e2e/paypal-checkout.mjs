@@ -8,7 +8,7 @@
  * real browser is the only honest way to prove the capture path.
  *
  * Usage:
- *   node tests/e2e/paypal-checkout.mjs --url=https://loving-charmz.vercel.app \
+ *   node tests/e2e/paypal-checkout.mjs --url=https://lovingcharmz.com \
  *     --email=... --password=... --buyer-email=... --buyer-password=...
  *
  * Flags:

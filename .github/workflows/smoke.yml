@@ -41,7 +41,7 @@ jobs:
         run: |
           set -o pipefail
           mkdir -p smoke-output
-          node tests/prod/smoke.mjs https://loving-charmz.vercel.app | tee smoke-output/smoke.log
+          node tests/prod/smoke.mjs https://lovingcharmz.com | tee smoke-output/smoke.log
 
       - name: Upload failure report
         if: failure()

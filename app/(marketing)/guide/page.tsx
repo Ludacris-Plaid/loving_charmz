@@ -167,7 +167,7 @@ export default function GuidePage() {
           <UList>
             <LI>
               <strong>You reach the admin area through the shop itself</strong> — no
-              secret addresses to type. Go to loving-charmz.vercel.app, click{' '}
+              secret addresses to type. Go to lovingcharmz.com, click{' '}
               <strong>ACCOUNT</strong> (top right corner), sign in, then click the
               purple <strong>Admin dashboard</strong> button on your account page.
               Chapter 1 walks you through it, one step at a time.
@@ -212,7 +212,7 @@ export default function GuidePage() {
             </Step>
             <Step n="2">
               In the long white bar at the very top of the screen, type:{' '}
-              <strong>loving-charmz.vercel.app</strong> and press Enter. That is the
+              <strong>lovingcharmz.com</strong> and press Enter. That is the
               shop itself — the one customers see.
             </Step>
             <Step n="3">
@@ -971,7 +971,7 @@ export default function GuidePage() {
             />
             <QA
               q="The website itself looks broken to customers"
-              a="First check on your phone using mobile data (not your wifi) — loving-charmz.vercel.app. If it works there, the problem is your computer or wifi, not the shop. If it fails everywhere, phone your wonderful loving son with what you see."
+              a="First check on your phone using mobile data (not your wifi) — lovingcharmz.com. If it works there, the problem is your computer or wifi, not the shop. If it fails everywhere, phone your wonderful loving son with what you see."
             />
             <QA
               q="Everything is slow / buttons do nothing when I click"
@@ -1003,7 +1003,7 @@ export default function GuidePage() {
             </p>
             <UList>
               <LI>
-                <strong>Getting to the admin:</strong> loving-charmz.vercel.app →
+                <strong>Getting to the admin:</strong> lovingcharmz.com →
                 ACCOUNT (top right) → My account → the purple{' '}
                 <strong>Admin dashboard</strong> button
               </LI>
@@ -1012,7 +1012,7 @@ export default function GuidePage() {
                 left-hand list, right below Orders).
               </LI>
               <LI>
-                <strong>This guide:</strong> loving-charmz.vercel.app/guide
+                <strong>This guide:</strong> lovingcharmz.com/guide
               </LI>
               <LI>
                 <strong>Forgotten password?</strong> Click &ldquo;Forgot your

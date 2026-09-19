@@ -9,11 +9,11 @@
  * Usage:
  *   node tests/prod/smoke.mjs [baseUrl]
  *   SMOKE_EMAIL=... SMOKE_PASSWORD=... node tests/prod/smoke.mjs [baseUrl]
- * Default baseUrl: https://loving-charmz.vercel.app
+ * Default baseUrl: https://lovingcharmz.com
  */
 import { chromium } from 'playwright';
 
-const BASE = (process.argv[2] || 'https://loving-charmz.vercel.app').replace(/\/$/, '');
+const BASE = (process.argv[2] || 'https://lovingcharmz.com').replace(/\/$/, '');
 const START = '/';
 const EMAIL = process.env.SMOKE_EMAIL || '';
 const PASSWORD = process.env.SMOKE_PASSWORD || '';

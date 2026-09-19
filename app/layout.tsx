@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { Inter, Playfair_Display, Caveat } from 'next/font/google';
+import { SITE_URL } from '@/lib/site';
 import './globals.css';
 
 const inter = Inter({
@@ -24,7 +25,7 @@ export const metadata: Metadata = {
   title: 'Loving Charmz — Symbolic jewelry for the bond that lasts',
   description:
     'Handcrafted symbolic jewelry for women who want to carry meaning, memories, and connection — especially with their pets.',
-  metadataBase: new URL('https://loving-charmz.vercel.app'),
+  metadataBase: new URL(SITE_URL),
   openGraph: {
     title: 'Loving Charmz',
     description: 'Handcrafted symbolic jewelry for the bond that lasts.',

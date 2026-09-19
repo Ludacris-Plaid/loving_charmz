@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { SITE_URL } from '@/lib/site';
 
 function safeNext(value: FormDataEntryValue | null) {
   if (typeof value !== 'string') return null;
@@ -97,7 +98,7 @@ export async function forgotPasswordAction(formData: FormData): Promise<ForgotPa
   if (!email) return { error: 'Please enter your email address.' };
 
   const supabase = await createClient();
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://loving-charmz.vercel.app';
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || SITE_URL;
 
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
     redirectTo: `${siteUrl}/reset-password`,

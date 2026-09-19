@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { getSession } from '@/components/admin/AdminGuard';
+import { SITE_URL } from '@/lib/site';
 
 export type AdminResult = { error?: string; success?: boolean; id?: string };
 
@@ -113,11 +114,26 @@ export async function updateProductAction(id: string, formData: FormData): Promi
     updates.images = parseImagesField(formData.get('images'));
   }
 
+  // Read the current row so the public page can be revalidated with the
+  // correct slug — the form may not submit one, and revalidating
+  // `/products/<undefined>` would leave the live product page stale.
+  const { data: current } = await client
+    .from('products')
+    .select('slug')
+    .eq('id', id)
+    .single();
+
   const { error } = await client.from('products').update(updates).eq('id', id);
   if (error) return { error: error.message };
 
   revalidatePath('/admin/products');
-  revalidatePath(`/products/${updates.slug || ''}`);
+  if (typeof current?.slug === 'string' && current.slug) {
+    revalidatePath(`/products/${current.slug}`);
+  }
+  if (typeof updates.slug === 'string' && updates.slug && updates.slug !== current?.slug) {
+    // The slug itself changed: the new URL needs its cache primed/busted too.
+    revalidatePath(`/products/${updates.slug}`);
+  }
   revalidatePath('/shop');
   return { success: true };
 }
@@ -325,7 +341,7 @@ export async function sendBroadcastAction(params: {
   if (guard.kind === 'error') return { error: guard.error };
 
   const { sendBroadcast } = await import('@/lib/email/transactional');
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://loving-charmz.vercel.app';
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || SITE_URL;
 
   const result = await sendBroadcast({
     recipients: params.recipients,
