@@ -266,10 +266,16 @@ function ProductForm({ initial, pending, onCancel, onSubmit }: FormProps) {
         <textarea
           id="description"
           name="description"
-          rows={3}
+          rows={10}
           defaultValue={initial?.description || ''}
-          className="input-base resize-none"
+          className="input-base resize-y"
+          placeholder={"Some companions have 4 paws.\nThe Companion charm celebrates the dog who is more than a pet…\nMaterial: Stainless steel\nSize: Large — 2.10”\nHandmade in Alberta"}
         />
+        <p className="mt-1 text-xs text-ink-500">
+          Formatting is automatic: <strong>one thought per line</strong>. Each line shows as its own paragraph; lines
+          like <em>Material: Brass</em> become bold-label bullets; a short line with no period after the spec lines
+          (like <em>Handmade in Alberta</em>) becomes a bullet too.
+        </p>
       </div>
       <ProductImageUpload
         value={images}
