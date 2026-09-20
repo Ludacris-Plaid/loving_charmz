@@ -92,6 +92,13 @@ try {
   await byId('cvv').fill(CARD.cvv);
   await byId('postalCode').fill('98101'); // must match the US card's country
   log('card fields', 'filled');
+  // The marketing email popup can appear mid-flow and intercept clicks —
+  // dismiss it (its X button) before attempting to pay.
+  const popupClose = page.getByRole('button', { name: 'Close' });
+  if (await popupClose.count()) {
+    await popupClose.click().catch(() => {});
+    log('popup', 'dismissed');
+  }
   await page.getByRole('button', { name: /pay \$\d/i }).click();
   try {
     await page.waitForURL(/\/checkout\/confirmation/, { timeout: 60000 });
