@@ -3,6 +3,7 @@
 import { useState, useTransition } from 'react';
 import { Input } from '@/components/ui/Input';
 import { ProductImageUpload } from '@/components/admin/ProductImageUpload';
+import { DescriptionPreview } from '@/components/admin/DescriptionPreview';
 import {
   createProductAction,
   updateProductAction,
@@ -191,6 +192,7 @@ type FormProps = {
 function ProductForm({ initial, pending, onCancel, onSubmit }: FormProps) {
   const [images, setImages] = useState<string[]>(initial?.images || []);
   const [imageError, setImageError] = useState<string | null>(null);
+  const [description, setDescription] = useState(initial?.description || '');
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -267,7 +269,8 @@ function ProductForm({ initial, pending, onCancel, onSubmit }: FormProps) {
           id="description"
           name="description"
           rows={10}
-          defaultValue={initial?.description || ''}
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
           className="input-base resize-y"
           placeholder={"Some companions have 4 paws.\nThe Companion charm celebrates the dog who is more than a pet…\nMaterial: Stainless steel\nSize: Large — 2.10”\nHandmade in Alberta"}
         />
@@ -276,6 +279,11 @@ function ProductForm({ initial, pending, onCancel, onSubmit }: FormProps) {
           like <em>Material: Brass</em> become bold-label bullets; a short line with no period after the spec lines
           (like <em>Handmade in Alberta</em>) becomes a bullet too.
         </p>
+
+        <p className="mt-4 mb-1.5 text-xs font-medium uppercase tracking-wider text-ink-500">
+          Preview — as shoppers will see it
+        </p>
+        <DescriptionPreview value={description} />
       </div>
       <ProductImageUpload
         value={images}
