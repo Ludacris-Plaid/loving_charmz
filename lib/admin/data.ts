@@ -85,7 +85,9 @@ export async function getInventoryRows() {
   const admin = createAdminClient();
   const { data, error } = await admin
     .from('product_variants')
-    .select('id, name, sku, stock_quantity, is_active, product_id, products(name, slug)')
+    .select(
+      'id, name, sku, stock_quantity, price_adjustment, is_active, material, size, product_id, products(name, slug, kind)',
+    )
     .order('stock_quantity', { ascending: true });
   if (error) throw new Error(error.message);
   return (data || []).map((row: any) => ({
@@ -93,9 +95,14 @@ export async function getInventoryRows() {
     name: row.name,
     sku: row.sku,
     stock_quantity: row.stock_quantity,
+    price_adjustment: row.price_adjustment ?? 0,
     is_active: row.is_active,
+    material: row.material ?? null,
+    size: row.size ?? null,
+    product_id: row.product_id,
     product_name: row.products?.name || '—',
     product_slug: row.products?.slug || '',
+    product_kind: row.products?.kind || 'jewelry',
   }));
 }
 

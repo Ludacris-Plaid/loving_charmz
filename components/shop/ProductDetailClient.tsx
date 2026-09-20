@@ -1,24 +1,22 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useMemo, useState, useTransition } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Container } from '@/components/ui/Container';
 import { AnimatedSelect, SelectOption } from '@/components/ui/AnimatedSelect';
 import { addToCartAction } from '@/lib/cart/actions';
+import {
+  availableMaterials,
+  availableSizes,
+  findVariant,
+  MATERIAL_LABELS,
+  SIZE_LABELS,
+  variantPrice,
+  type VariantLike,
+} from '@/lib/shop/variants';
 import { images } from '@/lib/images';
 import type { Product, ProductVariant } from '@/lib/supabase/types';
-
-const METAL_OPTIONS: SelectOption[] = [
-  { value: 'brass', label: 'Brass', priceAdjustment: 0 },
-  { value: 'stainless_steel', label: 'Stainless Steel', priceAdjustment: 25 },
-];
-
-const SIZE_OPTIONS: SelectOption[] = [
-  { value: 'small', label: 'Small' },
-  { value: 'medium', label: 'Medium' },
-  { value: 'large', label: 'Large' },
-];
 
 type Props = {
   product: Product;
@@ -28,26 +26,60 @@ type Props = {
   isLoggedIn: boolean;
 };
 
-export default function ProductDetailClient({ product, variants, imageUrl, initialCartCount, isLoggedIn }: Props) {
-  const [selected, setSelected] = useState<ProductVariant | null>(variants[0] || null);
-  const [metalType, setMetalType] = useState<string>(METAL_OPTIONS[0].value);
-  const [size, setSize] = useState<string>(SIZE_OPTIONS[0].value);
+export default function ProductDetailClient({
+  product,
+  variants,
+  imageUrl,
+  initialCartCount,
+  isLoggedIn,
+}: Props) {
+  const materials = useMemo(
+    () => availableMaterials(variants as unknown as VariantLike[]),
+    [variants],
+  );
+  const [material, setMaterial] = useState<string>(materials[0] || '');
+  const sizes = useMemo(
+    () => availableSizes(variants as unknown as VariantLike[], material),
+    [variants, material],
+  );
+  const [size, setSize] = useState<string>('');
+
+  // Keep the selected size valid whenever the material changes: if the new
+  // material doesn't offer the current size, fall back to its first size.
+  const effectiveSize = sizes.includes(size) ? size : sizes[0] || '';
+
+  // With no size dimension (jewelry), the size selector is hidden entirely.
+  const hasSizes = sizes.length > 0;
+
+  const selected = useMemo(
+    () => findVariant(variants as unknown as VariantLike[], material, hasSizes ? effectiveSize : null) ?? null,
+    [variants, material, hasSizes, effectiveSize],
+  );
+
+  const totalPrice = variantPrice(product as any, selected as any);
+  const productImage = imageUrl || images.shop[0];
+
+  const stock = selected ? Number(selected.stock_quantity) : 0;
+  const soldOut = !selected || stock <= 0;
+  const lowStock = !soldOut && stock <= 3;
+
   const [pending, startTransition] = useTransition();
   const [feedback, setFeedback] = useState<{ kind: 'ok' | 'err'; text: string } | null>(null);
 
-  const metalAdjustment = METAL_OPTIONS.find((m) => m.value === metalType)?.priceAdjustment || 0;
-  const totalPrice = product.base_price + (selected?.price_adjustment || 0) + metalAdjustment;
-  const productImage = imageUrl || images.shop[0];
+  const materialOptions: SelectOption[] = materials.map((m) => ({
+    value: m,
+    label: MATERIAL_LABELS[m] || m,
+  }));
+  const sizeOptions: SelectOption[] = sizes.map((s) => ({
+    value: s,
+    label: SIZE_LABELS[s] || s,
+  }));
 
   const handleAdd = () => {
+    if (!selected) return;
     setFeedback(null);
     startTransition(async () => {
-      // Store selections in localStorage for cart display
-      const selections = { metalType, size, metalAdjustment };
-      if (typeof window !== 'undefined') {
-        localStorage.setItem(`product_${product.id}_selections`, JSON.stringify(selections));
-      }
-      const res = await addToCartAction(product.id, selected?.id || null, 1);
+      const res = await addToCartAction(product.id, selected.id, 1);
       if (res.error) setFeedback({ kind: 'err', text: res.error });
       else setFeedback({ kind: 'ok', text: 'Added to cart' });
     });
@@ -94,30 +126,50 @@ export default function ProductDetailClient({ product, variants, imageUrl, initi
             </div>
           )}
 
-
-
-          <div className="grid grid-cols-2 gap-4">
+          <div className={hasSizes ? 'grid grid-cols-2 gap-4' : 'grid grid-cols-1 gap-4'}>
             <AnimatedSelect
-              label="Metal Type"
-              options={METAL_OPTIONS}
-              value={metalType}
-              onChange={setMetalType}
+              label="Material"
+              options={materialOptions}
+              value={material}
+              onChange={(m) => {
+                setMaterial(m);
+                setFeedback(null);
+              }}
             />
-            <AnimatedSelect
-              label="Size"
-              options={SIZE_OPTIONS}
-              value={size}
-              onChange={setSize}
-            />
+            {hasSizes && (
+              <AnimatedSelect
+                label="Size"
+                options={sizeOptions}
+                value={effectiveSize}
+                onChange={(s) => {
+                  setSize(s);
+                  setFeedback(null);
+                }}
+              />
+            )}
           </div>
+
+          {/* Live per-combination availability from the selected variant row. */}
+          <p
+            className={`text-sm ${
+              soldOut ? 'text-red-600' : lowStock ? 'text-amber-600' : 'text-ink-500'
+            }`}
+            role="status"
+          >
+            {soldOut
+              ? 'This combination is currently out of stock.'
+              : lowStock
+                ? `Only ${stock} left in ${selected?.name}.`
+                : 'In stock and handcrafted to order.'}
+          </p>
 
           <div className="space-y-3">
             <button
               onClick={handleAdd}
-              disabled={pending}
-              className="btn-plum w-full px-8 py-3.5 text-sm"
+              disabled={pending || soldOut}
+              className="btn-plum w-full px-8 py-3.5 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {pending ? 'Adding…' : isLoggedIn ? 'Add to cart' : 'Sign in to purchase'}
+              {pending ? 'Adding…' : soldOut ? 'Out of stock' : isLoggedIn ? 'Add to cart' : 'Sign in to purchase'}
             </button>
             {feedback && (
               <p

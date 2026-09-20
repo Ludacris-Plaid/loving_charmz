@@ -5,6 +5,8 @@ export interface Product {
   description: string | null;
   tagline: string | null;
   base_price: number;
+  /** 'charm' products carry a material×size matrix; 'jewelry' is material-only. */
+  kind: 'charm' | 'jewelry';
   images: string[];
   is_active: boolean;
   is_personalizable: boolean;
@@ -30,6 +32,8 @@ export interface ProductVariant {
   product_id: string;
   name: string;
   sku: string | null;
+  material: string | null;
+  size: string | null;
   price_adjustment: number;
   stock_quantity: number;
   is_active: boolean;

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition, useSyncExternalStore } from 'react';
+import { useState, useTransition } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import {
@@ -17,38 +17,8 @@ type LineItem = {
   image: string;
 };
 
-type ProductSelections = {
-  metalType: string;
-  size: string;
-  metalAdjustment: number;
-};
-
-/** Reads a product's saved selections from localStorage; SSR-safe. */
-function readSelections(productId: string): ProductSelections | null {
-  if (typeof window === 'undefined') return null;
-  try {
-    const stored = localStorage.getItem(`product_${productId}_selections`);
-    return stored ? (JSON.parse(stored) as ProductSelections) : null;
-  } catch {
-    return null;
-  }
-}
-
-const subscribeNoop = () => () => {};
-
 type Props = {
   items: LineItem[];
-};
-
-const METAL_LABELS: Record<string, string> = {
-  brass: 'Brass',
-  stainless_steel: 'Stainless Steel',
-};
-
-const SIZE_LABELS: Record<string, string> = {
-  small: 'Small',
-  medium: 'Medium',
-  large: 'Large',
 };
 
 export function CartLineItems({ items }: Props) {
@@ -56,16 +26,6 @@ export function CartLineItems({ items }: Props) {
   const [busy, setBusy] = useState<string | null>(null);
   const [clearing, setClearing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  // True only after hydration, with no effect and no setState (which the
-  // react-hooks lint rules reject). readSelections() reads localStorage safely
-  // because the server snapshot is false and localStorage is only touched when
-  // this is true on the client.
-  const localStorageReady = useSyncExternalStore(
-    subscribeNoop,
-    () => true,
-    () => false,
-  );
 
   const updateQty = (itemId: string, qty: number) => {
     setBusy(itemId);
@@ -136,20 +96,6 @@ export function CartLineItems({ items }: Props) {
               {item.variant && (
                 <p className="text-xs text-ink-500 mt-0.5">{item.variant.name}</p>
               )}
-              {item.product?.id && localStorageReady && (() => {
-                const selections = readSelections(item.product!.id!);
-                if (!selections) return null;
-                return (
-                  <div className="flex gap-2 mt-1">
-                    <span className="text-xs text-ink-500 bg-cream-100 px-2 py-0.5 rounded">
-                      {METAL_LABELS[selections.metalType] || selections.metalType}
-                    </span>
-                    <span className="text-xs text-ink-500 bg-cream-100 px-2 py-0.5 rounded">
-                      {SIZE_LABELS[selections.size] || selections.size}
-                    </span>
-                  </div>
-                );
-              })()}
                 <p className="text-sm font-medium text-plum-700 mt-1">${price.toFixed(2)} each</p>
               </div>
               <div className="flex flex-col items-end justify-between">

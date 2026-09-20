@@ -14,6 +14,7 @@ type Product = {
   name: string;
   slug: string;
   base_price: number;
+  kind?: 'charm' | 'jewelry';
   is_active: boolean;
   is_personalizable: boolean;
   variant_count: number;
@@ -148,6 +149,9 @@ export function AdminProductsClient({ initialProducts }: Props) {
                     <span className={p.is_active ? 'badge-mint' : 'badge-soft'}>
                       {p.is_active ? 'Active' : 'Inactive'}
                     </span>
+                    {p.kind === 'charm' && (
+                      <span className="ml-1 badge-plum">Charm</span>
+                    )}
                     {p.is_personalizable && (
                       <span className="ml-1 badge-plum">Custom</span>
                     )}
@@ -235,6 +239,25 @@ function ProductForm({ initial, pending, onCancel, onSubmit }: FormProps) {
           defaultValue={initial?.tagline || ''}
           placeholder="Short, evocative line"
         />
+        <div>
+          <label htmlFor="kind" className="block text-sm font-medium text-ink-700 mb-1.5">
+            Product type
+          </label>
+          <select
+            id="kind"
+            name="kind"
+            defaultValue={initial?.kind || 'jewelry'}
+            className="input-base"
+          >
+            <option value="jewelry">Jewelry — one stock count per material</option>
+            <option value="charm">Charm — stock per material AND size (S/M/L)</option>
+          </select>
+          <p className="text-xs text-ink-500 mt-1">
+            {initial?.kind
+              ? 'Changing type auto-creates any missing variants; existing stock is never touched.'
+              : 'Charms are created with all 6 material/size combinations; jewelry with the 3 standard materials.'}
+          </p>
+        </div>
       </div>
       <div>
         <label htmlFor="description" className="block text-sm font-medium text-ink-700 mb-1.5">

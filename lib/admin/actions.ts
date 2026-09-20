@@ -4,6 +4,10 @@ import { revalidatePath } from 'next/cache';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { getSession } from '@/components/admin/AdminGuard';
 import { SITE_URL } from '@/lib/site';
+import {
+  bootstrapCharmVariants,
+  bootstrapJewelryVariants,
+} from '@/lib/admin/variant-bootstrap';
 
 export type AdminResult = { error?: string; success?: boolean; id?: string };
 
@@ -76,13 +80,30 @@ export async function createProductAction(formData: FormData): Promise<AdminResu
   const is_active = formData.get('is_active') === 'on';
   const is_personalizable = formData.get('is_personalizable') === 'on';
   const images = parseImagesField(formData.get('images'));
+  const kindRaw = (formData.get('kind') as string | null)?.trim();
+  const kind = kindRaw === 'charm' ? 'charm' : 'jewelry';
 
   const { data, error } = await client
     .from('products')
-    .insert({ name, slug, base_price, tagline, description, is_active, is_personalizable, images })
-    .select('id')
+    .insert({ name, slug, base_price, tagline, description, is_active, is_personalizable, images, kind })
+    .select('id, slug')
     .single();
   if (error) return { error: error.message };
+
+  // A new product is immediately sellable in every option: charms get the
+  // full 2×3 matrix, jewelry gets the three standard materials. Prices use
+  // the catalog defaults; stock starts at 0 until the inventory page is filled.
+  try {
+    if (kind === 'charm') {
+      await bootstrapCharmVariants(client, data.id, data.slug || slug);
+    } else {
+      await bootstrapJewelryVariants(client, data.id, data.slug || slug);
+    }
+  } catch (e: any) {
+    return {
+      error: `Product created, but auto-generating variants failed: ${e?.message || 'unknown error'}. Add them on the Inventory page.`,
+    };
+  }
 
   revalidatePath('/admin/products');
   revalidatePath('/shop');
@@ -96,6 +117,8 @@ export async function updateProductAction(id: string, formData: FormData): Promi
   const updates: Record<string, unknown> = {};
   const name = formData.get('name') as string | null;
   if (name) updates.name = name.trim();
+  const kindRaw = (formData.get('kind') as string | null)?.trim();
+  if (kindRaw === 'charm' || kindRaw === 'jewelry') updates.kind = kindRaw;
   const slug = formData.get('slug') as string | null;
   if (slug) updates.slug = slug.trim();
   const price = formData.get('base_price');
@@ -125,6 +148,23 @@ export async function updateProductAction(id: string, formData: FormData): Promi
 
   const { error } = await client.from('products').update(updates).eq('id', id);
   if (error) return { error: error.message };
+
+  // A kind switch (jewelry ↔ charm) bootstraps the missing variant shape
+  // for the new kind. Idempotent: never touches existing rows or stock.
+  if (updates.kind) {
+    try {
+      const effectiveSlug =
+        (typeof updates.slug === 'string' && updates.slug) || current?.slug || '';
+      if (updates.kind === 'charm') {
+        await bootstrapCharmVariants(client, id, effectiveSlug);
+      } else {
+        await bootstrapJewelryVariants(client, id, effectiveSlug);
+      }
+    } catch {
+      /* Variant generation is best-effort on edit; the matrix editor can
+         fill any gap and the product edit itself has already succeeded. */
+    }
+  }
 
   revalidatePath('/admin/products');
   if (typeof current?.slug === 'string' && current.slug) {
