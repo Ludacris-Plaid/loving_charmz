@@ -21,3 +21,6 @@ scripts/migrate/generated/
 
 # Freebuff thread workspace artifacts
 .freebuff/
+
+# Local data dumps (contain customer/order data — never commit)
+backups/
