@@ -65,9 +65,9 @@ export default async function ShopPage() {
             <ScrollReveal key={product.id} delay={Math.min(index * 70, 420)}>
               <Link
                 href={`/products/${product.slug}`}
-                className="group block"
+                className="group block h-full"
               >
-                <article className="surface-card inner-highlight overflow-hidden hover-lift">
+                <article className="surface-card inner-highlight overflow-hidden hover-lift flex h-full flex-col">
                   <div className="relative aspect-square overflow-hidden">
                     <Image
                       src={product.images?.[0] || images.shop[index % images.shop.length]}
