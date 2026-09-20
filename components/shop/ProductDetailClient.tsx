@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState, useTransition } from 'react';
+import { useMemo, useRef, useState, useTransition } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Container } from '@/components/ui/Container';
@@ -82,6 +82,27 @@ export default function ProductDetailClient({
   const [imageIndex, setImageIndex] = useState(0);
   const activeImage = gallery[Math.min(imageIndex, gallery.length - 1)];
 
+  // Gallery navigation: wrap-around prev/next shared by the overlay arrows,
+  // arrow keys (when the frame or a thumbnail has focus), and touch swipes.
+  const hasMultiplePhotos = gallery.length > 1;
+  const showPrevPhoto = () =>
+    setImageIndex((i) => (i - 1 + gallery.length) % gallery.length);
+  const showNextPhoto = () => setImageIndex((i) => (i + 1) % gallery.length);
+
+  const handleGalleryKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'ArrowLeft') {
+      e.preventDefault();
+      showPrevPhoto();
+    } else if (e.key === 'ArrowRight') {
+      e.preventDefault();
+      showNextPhoto();
+    }
+  };
+
+  // Swipe: track the touch start X on the main photo; a horizontal move of
+  // more than 40px on release flips the photo (left = next, right = prev).
+  const touchStartX = useRef<number | null>(null);
+
   const parsed = useMemo(() => parseDescription(product.description || ''), [product.description]);
 
   const stock = selected ? Number(selected.stock_quantity) : 0;
@@ -121,20 +142,66 @@ export default function ProductDetailClient({
       <div className="grid gap-12 lg:grid-cols-2">
         <div className="flex flex-col gap-3">
           {/* Main photo fills the whole card on desktop (no dead white space
-              below the square), and stays a neat square on phones. */}
-          <div className="surface-card relative overflow-hidden aspect-square lg:aspect-auto lg:flex-1">
+              below the square), and stays a neat square on phones. Focusable
+              so arrow keys flip photos; touch users swipe. */}
+          <div
+            role="group"
+            aria-roledescription="carousel"
+            aria-label={`${product.name} photos`}
+            tabIndex={0}
+            onKeyDown={handleGalleryKeyDown}
+            onTouchStart={(e) => {
+              touchStartX.current = e.touches[0].clientX;
+            }}
+            onTouchEnd={(e) => {
+              if (touchStartX.current === null || !hasMultiplePhotos) return;
+              const dx = e.changedTouches[0].clientX - touchStartX.current;
+              if (dx > 40) showPrevPhoto();
+              else if (dx < -40) showNextPhoto();
+              touchStartX.current = null;
+            }}
+            className="surface-card relative overflow-hidden aspect-square lg:aspect-auto lg:flex-1 outline-none focus-visible:ring-2 focus-visible:ring-plum-400"
+          >
             <Image
               key={activeImage}
               src={activeImage}
-              alt={product.name}
+              alt={`${product.name} — photo ${imageIndex + 1} of ${gallery.length}`}
               fill
               className="object-cover motion-base"
               priority
             />
+
+            {hasMultiplePhotos && (
+              <>
+                <button
+                  type="button"
+                  onClick={showPrevPhoto}
+                  aria-label="Previous photo"
+                  className="absolute left-3 top-1/2 -translate-y-1/2 flex h-10 w-10 items-center justify-center rounded-full bg-cream-50/85 text-plum-900 shadow-md backdrop-blur-sm transition hover:bg-cream-50 focus-visible:ring-2 focus-visible:ring-plum-400"
+                >
+                  <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  </svg>
+                </button>
+                <button
+                  type="button"
+                  onClick={showNextPhoto}
+                  aria-label="Next photo"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 flex h-10 w-10 items-center justify-center rounded-full bg-cream-50/85 text-plum-900 shadow-md backdrop-blur-sm transition hover:bg-cream-50 focus-visible:ring-2 focus-visible:ring-plum-400"
+                >
+                  <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+                <span className="absolute bottom-3 right-3 rounded-full bg-ink-900/60 px-2.5 py-1 text-[11px] font-medium text-cream-50">
+                  {imageIndex + 1} / {gallery.length}
+                </span>
+              </>
+            )}
           </div>
 
           {/* Thumbnails — one per product photo, click to swap the main view. */}
-          {gallery.length > 1 && (
+          {hasMultiplePhotos && (
             <div className="grid grid-cols-5 gap-3">
               {gallery.map((src, i) => (
                 <button
