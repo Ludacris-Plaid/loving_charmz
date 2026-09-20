@@ -16,10 +16,9 @@ export function SignupForm() {
   const handleSubmit = (formData: FormData) => {
     setError(null);
     startTransition(async () => {
-      try {
-        await signup(formData);
-      } catch (e) {
-        setError((e as Error).message || 'Sign up failed. Please try again.');
+      const res = await signup(formData);
+      if (res?.error) {
+        setError(res.error);
       }
     });
   };

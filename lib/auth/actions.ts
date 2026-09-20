@@ -31,23 +31,68 @@ function landingFor(userId: string, isAdminUser: boolean) {
   return isAdminUser ? '/admin' : '/account';
 }
 
-export async function signup(formData: FormData): Promise<void> {
+/**
+ * Maps raw Supabase auth errors onto shopper-friendly copy.
+ *
+ * Server-action errors are masked in production builds ("An error occurred in
+ * the Server Components render… digest …"), so the raw provider message would
+ * never reach the shopper anyway — throwing here only ever produced a generic
+ * error page. Returning the friendly message keeps the shopper on the form.
+ */
+function friendlyAuthError(message: string): string {
+  const m = message.toLowerCase();
+  if (m.includes('already registered') || m.includes('already exists')) {
+    return 'An account with that email already exists. Try signing in instead.';
+  }
+  if (m.includes('password') && (m.includes('at least') || m.includes('should be') || m.includes('weak') || m.includes('short'))) {
+    return 'That password is too weak — please use at least 8 characters.';
+  }
+  if (m.includes('database error saving new user')) {
+    return 'That username may already be taken — please choose another and try again.';
+  }
+  if (m.includes('rate limit') || m.includes('too many')) {
+    return 'Too many attempts — please wait a minute and try again.';
+  }
+  if (m.includes('valid email') || m.includes('invalid email')) {
+    return 'Please enter a valid email address.';
+  }
+  return 'We could not create your account. Please check your details and try again.';
+}
+
+export async function signup(formData: FormData): Promise<{ error?: string }> {
   const supabase = await createClient();
 
-  const data = {
-    email: formData.get('email') as string,
-    password: formData.get('password') as string,
-    options: {
-      data: {
-        username: formData.get('username') as string,
-      },
-    },
-  };
+  const email = ((formData.get('email') as string) || '').trim().toLowerCase();
+  const password = (formData.get('password') as string) || '';
+  const username = ((formData.get('username') as string) || '').trim();
 
-  const { data: signUpData, error } = await supabase.auth.signUp(data);
+  if (!email || !password || !username) {
+    return { error: 'Please fill in every field to create your account.' };
+  }
+
+  // Duplicate usernames only fail deep inside the profile-creation trigger as
+  // an opaque "Database error saving new user" — check up front so the shopper
+  // gets a clear, actionable message instead.
+  const { data: takenUsername } = await supabase
+    .from('profiles')
+    .select('id')
+    .eq('username', username)
+    .maybeSingle();
+  if (takenUsername) {
+    return { error: 'That username is already taken — please choose another.' };
+  }
+
+  const { data: signUpData, error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: {
+      data: { username },
+    },
+  });
 
   if (error) {
-    throw new Error(error.message);
+    console.error('[signup]', error.message);
+    return { error: friendlyAuthError(error.message) };
   }
 
   revalidatePath('/', 'layout');
