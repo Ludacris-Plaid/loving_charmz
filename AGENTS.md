@@ -115,13 +115,18 @@ Requires Docker. Local Supabase API runs on `http://127.0.0.1:54321`.
 - **SQL integration tests**: `supabase/tests/*.test.sql` (currently
   `settlement_effects.test.sql` for migration 00011). Plain psql — every test
   builds its own fixtures inside ONE transaction that always rolls back, so the
-  suite is safe even against the live project. Run with
+  suite is safe even against the live project. Run directly with
   `psql "$DB_URL" -X -v ON_ERROR_STOP=1 -f supabase/tests/settlement_effects.test.sql`.
-  In CI, `npm run test:db` (`scripts/test-branch.sh`) creates a **disposable
-  Supabase branch**, pushes migrations, runs the suite, and always deletes the
-  branch; workflow `.github/workflows/db-integration.yml` triggers on PRs
-  touching `supabase/**` and needs the `SUPABASE_ACCESS_TOKEN` +
-  `SUPABASE_PROJECT_REF` repo secrets (skips with a warning when unset).
+  `npm run test:db` (`scripts/test-db.sh`) runs the suite on a **disposable
+  database**: by default the Supabase CLI's local docker stack (fresh
+  containers, all migrations pushed, then discarded — free plan, no secrets;
+  needs Docker running), or `TEST_DB_MODE=branch` for a disposable **Supabase
+  cloud branch** (requires the Pro plan + `SUPABASE_ACCESS_TOKEN` and
+  `SUPABASE_PROJECT_REF`, which are set as repo secrets). Workflow
+  `.github/workflows/db-integration.yml` triggers on PRs touching
+  `supabase/**`. Supabase CLI quirk: global flags like `--project-ref` must
+  come AFTER the subcommand (`supabase branches create --project-ref …`), the
+  reverse ordering errors on current CLI versions.
 
 ## Production domain
 

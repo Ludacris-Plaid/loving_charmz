@@ -12,7 +12,7 @@
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "test:e2e:paypal": "node tests/e2e/paypal-checkout.mjs",
-    "test:db": "bash scripts/test-branch.sh",
+    "test:db": "bash scripts/test-db.sh",
     "test:smoke": "PLAYWRIGHT_BROWSERS_PATH=.playwright-cache node tests/prod/smoke.mjs",
     "db:seed": "tsx scripts/seed-analytics.ts",
     "db:seed:products": "npx tsx scripts/seed-products.ts",
