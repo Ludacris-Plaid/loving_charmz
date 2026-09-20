@@ -9,14 +9,13 @@ The tooling in `scripts/migrate/` was written for a data-preserving move and is 
 for a future one — see [Appendix: moving data from another project](#appendix-moving-data-from-another-project).
 For this setup only the schema, seed, env and verification steps below matter.
 
-**Status as of 2026-09-19.** `00001`–`00010` applied to `ivvsglfjlmejwmwofvuw` (catalog
+**Status as of 2026-09-19.** `00001`–`00011` applied to `ivvsglfjlmejwmwofvuw` (catalog
 seeded, accounts live, production running at **https://lovingcharmz.com**).
-`00011_settlement_side_effects.sql` is **new and not yet applied** — it adds the
-`order_settlements` guard table and the `apply_order_settlement_effects` function
-(discount usage counting + stock decrement at payment settlement). Apply with the
-push command below before relying on checkout settlement effects; until then
-`markPaymentConfirmed` logs a harmless "function not found" RPC error and checkout
-still works.
+`00011_settlement_side_effects.sql` was applied the same day and verified end-to-end on a
+live test order: settlement decrements variant stock (clamped at zero), increments the
+discount's `current_uses` (never past `max_uses`), and is idempotent per order — repeat
+calls return `false` and change nothing. Test fixtures were removed afterwards; the
+`markPaymentConfirmed` settlement path is fully live.
 
 Historical status (2026-09-13): `00001`–`00007` applied (16 tables,
 34 policies, 2 buckets). Gate check 16/17 — only `auth.at_least_one_admin` failed, which was
