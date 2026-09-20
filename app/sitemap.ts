@@ -33,6 +33,8 @@ const STATIC_ROUTES: StaticRoute[] = [
   { path: '/faq', changeFrequency: 'yearly', priority: 0.5 },
   { path: '/shipping', changeFrequency: 'yearly', priority: 0.4 },
   { path: '/refunds', changeFrequency: 'yearly', priority: 0.4 },
+  { path: '/privacy', changeFrequency: 'yearly', priority: 0.4 },
+  { path: '/terms', changeFrequency: 'yearly', priority: 0.4 },
   { path: '/cookies', changeFrequency: 'yearly', priority: 0.3 },
 ];
 

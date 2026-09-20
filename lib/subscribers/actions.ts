@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { checkRateLimit } from '@/lib/security/rate-limit';
 
 export type SubscribeResult = { ok?: boolean; error?: string };
 export type DeleteSubscriberResult = { ok?: boolean; error?: string };
@@ -20,6 +21,13 @@ export async function subscribeAction(email: string): Promise<SubscribeResult> {
   const trimmed = (email || '').trim().toLowerCase();
   if (!EMAIL_RE.test(trimmed)) {
     return { error: 'Please enter a valid email address.' };
+  }
+
+  // The popup writes through the service-role client, so this action is the
+  // only gate against flooding the subscribers table with junk rows.
+  const limiter = await checkRateLimit({ action: 'subscribe', limit: 3, windowSeconds: 60 });
+  if (!limiter.allowed) {
+    return { error: 'Too many attempts. Please try again in a minute.' };
   }
 
   const supabase = await createClient();
@@ -73,6 +81,13 @@ export async function unsubscribeAction(email: string): Promise<SubscribeResult>
   const trimmed = (email || '').trim().toLowerCase();
   if (!EMAIL_RE.test(trimmed)) {
     return { error: 'Please enter a valid email address.' };
+  }
+
+  // Unsubscribe deletes through the service-role client; keep it from being
+  // used as a per-address (or bulk) deletion oracle without bounds.
+  const limiter = await checkRateLimit({ action: 'unsubscribe', limit: 3, windowSeconds: 60 });
+  if (!limiter.allowed) {
+    return { error: 'Too many attempts. Please try again in a minute.' };
   }
 
   const admin = createAdminClient();

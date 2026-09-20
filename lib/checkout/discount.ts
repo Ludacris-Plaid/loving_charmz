@@ -1,6 +1,7 @@
 'use server';
 
 import { createClient } from '@/lib/supabase/server';
+import { checkRateLimit } from '@/lib/security/rate-limit';
 
 export type DiscountResult = {
   valid: boolean;
@@ -16,6 +17,14 @@ export type DiscountResult = {
  */
 export async function validateDiscountCode(code: string): Promise<DiscountResult> {
   if (!code.trim()) return { valid: false, error: 'Please enter a discount code.' };
+
+  // Throttle guessing: a small per-IP budget of code attempts per minute
+  // stops brute-forcing of codes through this endpoint (a fresh candidate
+  // is cheap to try, and every failure here is free information otherwise).
+  const limiter = await checkRateLimit({ action: 'discount-lookup', limit: 5, windowSeconds: 60 });
+  if (!limiter.allowed) {
+    return { valid: false, error: 'Too many attempts. Please wait a minute and try again.' };
+  }
 
   const supabase = await createClient();
   const { data, error } = await supabase

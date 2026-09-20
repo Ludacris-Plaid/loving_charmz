@@ -31,6 +31,8 @@ export function Footer() {
               <li><Link href="/faq" className="nav-link text-sm">FAQ</Link></li>
               <li><Link href="/shipping" className="nav-link text-sm">Shipping Policy</Link></li>
               <li><Link href="/refunds" className="nav-link text-sm">Refund Policy</Link></li>
+              <li><Link href="/privacy" className="nav-link text-sm">Privacy Policy</Link></li>
+              <li><Link href="/terms" className="nav-link text-sm">Terms of Service</Link></li>
             </ul>
           </div>
         </div>
