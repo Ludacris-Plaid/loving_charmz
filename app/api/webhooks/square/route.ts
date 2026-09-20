@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server';
 
 import { isWebhookConfigured, verifyAndParseWebhook } from '@/lib/payments';
 import { reconcileWebhookEvent } from '@/lib/payments/reconcile';
-import { getSiteUrl } from '@/lib/payments/site';
 
 export const dynamic = 'force-dynamic';
 
@@ -24,7 +23,15 @@ export async function POST(request: Request) {
   }
 
   const rawBody = await request.text();
-  const notificationUrl = `${(await getSiteUrl()).replace(/\/+$/, '')}/api/webhooks/square`;
+  // Square signs the exact URL it POSTs to. Apex 308-redirects to www on Vercel
+  // and Square does not follow redirects, so the subscription targets www while
+  // NEXT_PUBLIC_SITE_URL is the apex. Deriving the URL from the request's own
+  // host keeps the signature valid for whichever host Square actually delivers
+  // to (www today, apex if the redirect is ever removed, or a preview URL).
+  const requestUrl = new URL(request.url);
+  const forwardedHost = request.headers.get('x-forwarded-host') ?? requestUrl.host;
+  const forwardedProto = request.headers.get('x-forwarded-proto') ?? requestUrl.protocol.replace(/:$/, '');
+  const notificationUrl = `${forwardedProto}://${forwardedHost}/api/webhooks/square`;
 
   let verification;
   try {
