@@ -73,8 +73,9 @@ try {
   // 6. Create the order (card flow: order first, then card form appears)
   log('6/7 submitting order');
   await page.locator('button[type="submit"]').click();
-  // The card form mounts after the order is created.
-  await page.waitForSelector('iframe', { timeout: 30000 });
+  // The card form mounts after the order is created. Square's iframes are
+  // zero-height until rendered, so wait for attached, not visible.
+  await page.waitForSelector('iframe', { state: 'attached', timeout: 30000 });
 
   // 7. Pay with the sandbox card. Square renders its fields inside a nested
   // iframe pair; its inputs have stable ids. IMPORTANT: the app's own ZIP
