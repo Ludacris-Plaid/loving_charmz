@@ -37,12 +37,24 @@ export default function ProductDetailClient({
     () => availableMaterials(variants as unknown as VariantLike[]),
     [variants],
   );
-  const [material, setMaterial] = useState<string>(materials[0] || '');
+
+  // Open on a combination the customer can actually buy: the first in-stock
+  // variant wins over raw variant order (which is where stock usually sits).
+  const defaultSelection = useMemo(() => {
+    const active = (variants as unknown as VariantLike[]).filter((v) => v.is_active);
+    const stocked = active.find((v) => v.stock_quantity > 0);
+    if (stocked) return { material: stocked.material as string, size: stocked.size || '' };
+    return { material: materials[0] || '', size: '' };
+    // Runs once per product page load; selectors update these states after.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [variants]);
+  const [material, setMaterial] = useState<string>(defaultSelection.material);
+
   const sizes = useMemo(
     () => availableSizes(variants as unknown as VariantLike[], material),
     [variants, material],
   );
-  const [size, setSize] = useState<string>('');
+  const [size, setSize] = useState<string>(defaultSelection.size);
 
   // Keep the selected size valid whenever the material changes: if the new
   // material doesn't offer the current size, fall back to its first size.
