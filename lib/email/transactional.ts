@@ -209,6 +209,7 @@ export async function sendOrderConfirmation(params: {
 
   const { error } = await resend.emails.send({
     from: FROM_EMAIL,
+    replyTo: FROM_SUPPORT,
     to: params.to,
     subject: `Order #${shortId} confirmed — Loving Charmz`,
     html,
@@ -254,6 +255,7 @@ export async function sendShippingNotification(params: {
 
   const { error } = await resend.emails.send({
     from: FROM_EMAIL,
+    replyTo: FROM_SUPPORT,
     to: params.to,
     subject: `Order #${shortId} has shipped — Loving Charmz`,
     html,
