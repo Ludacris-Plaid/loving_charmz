@@ -5,11 +5,14 @@
  *
  *   node scripts/generate-icons.mjs        # or: npm run icons
  *
- * Outputs (all committed, all picked up by Next's file conventions):
- *   app/icon.svg       hand-authored source — never written by this script
- *   app/icon.png       192x192, rounded (Safari ignores SVG favicons)
- *   app/apple-icon.png 180x180, full bleed (iOS masks the corners itself)
- *   app/favicon.ico    16/32/48, legacy fallback at /favicon.ico
+ * Outputs (all committed):
+ *   app/icon.svg            hand-authored source — never written by this script
+ *   app/icon.png            192x192, rounded (Safari ignores SVG favicons)
+ *   app/apple-icon.png      180x180, full bleed (iOS masks the corners itself)
+ *   app/favicon.ico         16/32/48, legacy fallback at /favicon.ico
+ *   public/email/logo.png   256x256 for transactional email headers (email
+ *                           clients can't run Next's hashed asset pipeline, so
+ *                           the emails reference this stable URL)
  *
  * Rasterising uses sharp, which ships with Next for image optimisation. Text is
  * rendered with whatever serif the machine has (Georgia on macOS/Windows,
@@ -84,6 +87,10 @@ writeFileSync(join(ROOT, 'app', 'icon.png'), iconPng);
 writeFileSync(join(ROOT, 'app', 'apple-icon.png'), applePng);
 writeFileSync(join(ROOT, 'app', 'favicon.ico'), ico(icoPngs));
 
+const emailLogo = await render(mark, 256);
+writeFileSync(join(ROOT, 'public', 'email', 'logo.png'), emailLogo);
+
 console.log('Wrote app/icon.png (192x192)');
 console.log('Wrote app/apple-icon.png (180x180, full bleed)');
 console.log(`Wrote app/favicon.ico (${icoPngs.map((e) => e.size).join('/')}, ${icoPngs.reduce((n, e) => n + e.data.length, 0) + 6 + 16 * icoPngs.length} bytes)`);
+console.log('Wrote public/email/logo.png (256x256)');

@@ -78,6 +78,9 @@ type ShippingAddress = {
 
 async function shell(content: string): Promise<string> {
   const site = await siteOrigin();
+  // Deep-linking signed-in shoppers to My Orders beats the homepage; guests
+  // just see the sign-in wall first.
+  const accountHref = `${site}/account/orders`;
   return `<!DOCTYPE html>
 <html lang="en">
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
@@ -86,9 +89,10 @@ async function shell(content: string): Promise<string> {
 <tr><td align="center">
 <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#ffffff;border-radius:8px;overflow:hidden;">
 
-  <!-- Header -->
+  <!-- Header: logo mark + wordmark, both linking to the shop -->
   <tr><td style="background:#2d1b4e;padding:28px 32px;text-align:center;">
-    <h1 style="margin:0;font-size:22px;color:#e8d5f5;letter-spacing:3px;font-weight:normal;">LOVING CHARMZ</h1>
+    <a href="${site}/shop" style="text-decoration:none;"><img src="${site}/email/logo.png" width="72" height="72" alt="Loving Charmz logo" style="display:block;margin:0 auto 12px;border:0;"></a>
+    <a href="${site}/shop" style="text-decoration:none;"><h1 style="margin:0;font-size:22px;color:#e8d5f5;letter-spacing:3px;font-weight:normal;">LOVING CHARMZ</h1></a>
   </td></tr>
 
   <!-- Body -->
@@ -96,14 +100,21 @@ async function shell(content: string): Promise<string> {
 ${content}
   </td></tr>
 
-  <!-- Footer -->
+  <!-- Footer: links + studio note -->
   <tr><td style="background:#f5f0f7;padding:24px 32px;text-align:center;font-size:12px;color:#6b5b7b;">
     <p style="margin:0 0 8px;">Loving Charmz &mdash; Symbolic keepsake jewelry</p>
-    <p style="margin:0;">
+    <p style="margin:0 0 8px;">
       <a href="${site}" style="color:#6b5b7b;">lovingcharmz.com</a>
       &nbsp;&middot;&nbsp;
-      <a href="${site}/account/orders" style="color:#6b5b7b;">My Orders</a>
+      <a href="${site}/shop" style="color:#6b5b7b;">Shop</a>
+      &nbsp;&middot;&nbsp;
+      <a href="${accountHref}" style="color:#6b5b7b;">My Orders</a>
+      &nbsp;&middot;&nbsp;
+      <a href="${site}/faq" style="color:#6b5b7b;">FAQ</a>
+      &nbsp;&middot;&nbsp;
+      <a href="mailto:hello@lovingcharmz.com" style="color:#6b5b7b;">Contact</a>
     </p>
+    <p style="margin:0;color:#9b8fae;">Sent with care from the Loving Charmz studio.</p>
   </td></tr>
 
 </table>

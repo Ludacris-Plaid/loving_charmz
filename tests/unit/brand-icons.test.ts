@@ -5,9 +5,11 @@ import { describe, expect, it } from 'vitest';
 /**
  * The favicon ships as four files that must stay in sync: the hand-authored
  * vector (`app/icon.svg`) plus three raster fallbacks generated from it by
- * `npm run icons`. These tests fail loudly if a browser-facing file goes
- * missing, if the rasters and the vector disagree on size, or if `icon.svg` is
- * reshaped in a way that silently breaks the generator's background swap.
+ * `npm run icons` — and the email header logo is generated from the same
+ * source, so the whole set can never drift apart. These tests fail loudly if
+ * a browser-facing file goes missing, if the rasters and the vector disagree
+ * on size, or if `icon.svg` is reshaped in a way that silently breaks the
+ * generator's background swap.
  */
 const APP = join(process.cwd(), 'app');
 const read = (name: string) => readFileSync(join(APP, name));
@@ -16,6 +18,7 @@ const iconSvg = read('icon.svg').toString('utf8');
 const iconPng = read('icon.png');
 const applePng = read('apple-icon.png');
 const faviconIco = read('favicon.ico');
+const emailLogo = readFileSync(join(process.cwd(), 'public', 'email', 'logo.png'));
 
 function pngSize(buf: Buffer) {
   expect(buf.subarray(1, 4).toString('ascii')).toBe('PNG');
@@ -59,6 +62,12 @@ describe('brand icons', () => {
   it('ships a raster favicon at the sizes browsers and iOS expect', () => {
     expect(pngSize(iconPng)).toEqual({ width: 192, height: 192 });
     expect(pngSize(applePng)).toEqual({ width: 180, height: 180 });
+  });
+
+  it('renders the email header logo from the same vector source', () => {
+    // Referenced by every transactional email at /email/logo.png — same mark,
+    // larger raster, because email clients cannot run Next's asset pipeline.
+    expect(pngSize(emailLogo)).toEqual({ width: 256, height: 256 });
   });
 
   it('packs 16/32/48 PNG frames into favicon.ico', () => {

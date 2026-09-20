@@ -91,7 +91,7 @@ Requires Docker. Local Supabase API runs on `http://127.0.0.1:54321`.
 - Animations are **CSS-only** (no Framer Motion). See `globals.css` keyframes: `hero-line-in`, `ambient-float`, `reveal-up`, etc.
 - `prefers-reduced-motion` respected globally via CSS media query in `globals.css`
 - `design-brief.md` contains detailed visual direction (brand tokens, animation specs, layout expectations) — reference it for design decisions
-- Favicon: `app/icon.svg` is the hand-authored source of truth (the `LC` monogram on the plum gradient, same mark as `components/marketing/Logo.tsx`). `app/icon.png` (192, Safari ignores SVG favicons), `app/apple-icon.png` (180, full bleed — iOS applies its own corner mask) and `app/favicon.ico` (16/32/48, legacy) are generated from it by `npm run icons` and committed; `tests/unit/brand-icons.test.ts` guards that contract
+- Favicon: `app/icon.svg` is the hand-authored source of truth (the `LC` monogram on the plum gradient, same mark as `components/marketing/Logo.tsx`). `app/icon.png` (192, Safari ignores SVG favicons), `app/apple-icon.png` (180, full bleed — iOS applies its own corner mask) and `app/favicon.ico` (16/32/48, legacy) are generated from it by `npm run icons` and committed; `tests/unit/brand-icons.test.ts` guards that contract. The same script also emits `public/email/logo.png` (256) — the stable URL every transactional email references for its branded header, since email clients can't run Next's asset pipeline.
 - Mobile-first responsive layouts
 
 ## Architecture rules
