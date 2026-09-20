@@ -112,6 +112,16 @@ Requires Docker. Local Supabase API runs on `http://127.0.0.1:54321`.
 - `vitest.setup.ts` stubs `matchMedia` and `IntersectionObserver` globally
 - Tests use `@testing-library/react`, `@testing-library/jest-dom/vitest`, `@testing-library/user-event`
 - E2E: Playwright (`npm run test:e2e`)
+- **SQL integration tests**: `supabase/tests/*.test.sql` (currently
+  `settlement_effects.test.sql` for migration 00011). Plain psql — every test
+  builds its own fixtures inside ONE transaction that always rolls back, so the
+  suite is safe even against the live project. Run with
+  `psql "$DB_URL" -X -v ON_ERROR_STOP=1 -f supabase/tests/settlement_effects.test.sql`.
+  In CI, `npm run test:db` (`scripts/test-branch.sh`) creates a **disposable
+  Supabase branch**, pushes migrations, runs the suite, and always deletes the
+  branch; workflow `.github/workflows/db-integration.yml` triggers on PRs
+  touching `supabase/**` and needs the `SUPABASE_ACCESS_TOKEN` +
+  `SUPABASE_PROJECT_REF` repo secrets (skips with a warning when unset).
 
 ## Production domain
 
@@ -132,7 +142,7 @@ from `lib/site.ts`, never the request host, so previews never leak into the inde
 
 ## What does NOT exist yet (agent must not assume)
 
-- Integration tests (only unit tests exist)
+- Playwright E2E specs (the `test:e2e` config exists, no specs are written)
 
 ## Payments & checkout
 

@@ -1,0 +1,56 @@
+name: DB Integration Tests
+
+# Runs the SQL integration suite (supabase/tests/*.test.sql) against a
+# disposable Supabase branch: the branch is created fresh, receives the repo's
+# migrations via `supabase db push`, is tested, and is always deleted again.
+#
+# Required repository secrets:
+#   SUPABASE_ACCESS_TOKEN  — personal access token (supabase.com/dashboard/account/tokens)
+#   SUPABASE_PROJECT_REF   — base project ref, e.g. ivvsglfjlmejwmwofvuw
+# When either is missing the job skips with a warning instead of failing.
+
+on:
+  pull_request:
+    branches: [master]
+    paths:
+      - 'supabase/migrations/**'
+      - 'supabase/tests/**'
+      - 'scripts/test-branch.sh'
+      - '.github/workflows/db-integration.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: db-integration-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  settlement-effects:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check secrets are configured
+        id: guard
+        run: |
+          if [[ -n "$SUPABASE_ACCESS_TOKEN" && -n "$SUPABASE_PROJECT_REF" ]]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::SUPABASE_ACCESS_TOKEN and SUPABASE_PROJECT_REF secrets are not set — DB integration tests skipped."
+          fi
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+
+      - uses: actions/checkout@v4
+        if: steps.guard.outputs.enabled == 'true'
+
+      - uses: supabase/setup-cli@v1
+        if: steps.guard.outputs.enabled == 'true'
+        with:
+          version: latest
+
+      - name: Run settlement suite on a disposable branch
+        if: steps.guard.outputs.enabled == 'true'
+        run: bash scripts/test-branch.sh
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
