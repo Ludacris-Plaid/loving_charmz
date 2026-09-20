@@ -119,10 +119,10 @@ export default function ProductDetailClient({
       </nav>
 
       <div className="grid gap-12 lg:grid-cols-2">
-        <div className="space-y-3">
+        <div className="flex flex-col gap-3">
           {/* Main photo fills the whole card on desktop (no dead white space
               below the square), and stays a neat square on phones. */}
-          <div className="surface-card relative overflow-hidden aspect-square lg:aspect-auto">
+          <div className="surface-card relative overflow-hidden aspect-square lg:aspect-auto lg:flex-1">
             <Image
               key={activeImage}
               src={activeImage}
