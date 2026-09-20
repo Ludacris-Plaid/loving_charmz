@@ -76,6 +76,14 @@ type ShippingAddress = {
 /*  Shared email shell                                                 */
 /* ------------------------------------------------------------------ */
 
+/**
+ * Web font used for the "Charmz" wordmark on the site (.logo__charmz →
+ * --font-handwriting) and for brand accents in email. The <link> in the shell
+ * head loads it for Apple Mail, iOS Mail, and most modern clients; Outlook
+ * (Word engine) ignores web fonts and falls back to the cursive stack.
+ */
+const BRAND_FONT_STACK = "'Caveat', 'Segoe Script', 'Bradley Hand', cursive";
+
 async function shell(content: string): Promise<string> {
   const site = await siteOrigin();
   // Deep-linking signed-in shoppers to My Orders beats the homepage; guests
@@ -83,16 +91,23 @@ async function shell(content: string): Promise<string> {
   const accountHref = `${site}/account/orders`;
   return `<!DOCTYPE html>
 <html lang="en">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;600&display=swap" rel="stylesheet">
+<!--[if mso]><style>body,.charmz-script{font-family:Georgia,serif !important;}</style><![endif]-->
+</head>
 <body style="margin:0;padding:0;background:#faf8f5;font-family:Georgia,'Times New Roman',serif;color:#1a1a1a;">
 <table width="100%" cellpadding="0" cellspacing="0" style="background:#faf8f5;padding:32px 16px;">
 <tr><td align="center">
 <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#ffffff;border-radius:8px;overflow:hidden;">
 
   <!-- Header: logo mark + wordmark, both linking to the shop -->
-  <tr><td style="background:#2d1b4e;padding:28px 32px;text-align:center;">
-    <a href="${site}/shop" style="text-decoration:none;"><img src="${site}/email/logo.png" width="72" height="72" alt="Loving Charmz logo" style="display:block;margin:0 auto 12px;border:0;"></a>
-    <a href="${site}/shop" style="text-decoration:none;"><h1 style="margin:0;font-size:22px;color:#e8d5f5;letter-spacing:3px;font-weight:normal;">LOVING CHARMZ</h1></a>
+  <tr><td style="background:#2d1b4e;padding:26px 32px 24px;text-align:center;">
+    <a href="${site}/shop" style="text-decoration:none;"><img src="${site}/email/logo.png" width="72" height="72" alt="Loving Charmz logo" style="display:block;margin:0 auto 10px;border:0;"></a>
+    <a href="${site}/shop" style="text-decoration:none;">
+      <span style="display:block;margin:0 0 2px;font-size:11px;color:#e8d5f5;letter-spacing:5px;text-transform:uppercase;">Loving</span>
+      <span class="charmz-script" style="display:block;margin:0;font-size:34px;line-height:1.1;color:#ffffff;font-family:${BRAND_FONT_STACK};font-weight:600;">Charmz</span>
+    </a>
   </td></tr>
 
   <!-- Body -->

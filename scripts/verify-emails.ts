@@ -94,12 +94,13 @@ async function main() {
     }
     const { html = '' } = (await detail.json()) as { html?: string };
 
-    const links = [...new Set((html.match(/https?:\/\/[^"'\s<>]+/g) ?? []).filter((l) => !l.includes('resend')))];
+    const links = [...new Set((html.match(/https?:\/\/[^"'\s<>]+/g) ?? []).filter((l) => !l.includes('resend') && !l.includes('fonts.g')))];
     const bad = links.filter((l) => !l.startsWith(SITE));
     check(`"${m.subject}" links canonical`, bad.length === 0, bad.length ? bad.join(', ') : `${links.length} link(s)`);
 
     check(`"${m.subject}" logo embedded`, html.includes(`${SITE}/email/logo.png`));
-    check(`"${m.subject}" brand header`, html.includes('LOVING CHARMZ'));
+    check(`"${m.subject}" brand header`, html.includes('>Charmz</span>'));
+    check(`"${m.subject}" script font loaded`, html.includes('family=Caveat'));
   }
 
   // Content spot-checks on specific templates.

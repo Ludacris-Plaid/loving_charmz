@@ -25,7 +25,9 @@ export function CanadianBanner() {
             key={i}
             className="inline-flex items-center gap-3 text-xs font-medium tracking-wide sm:text-sm"
           >
-            <span className="font-display font-semibold text-cream-100">
+            <span
+              className="font-handwriting text-lg font-semibold leading-none text-cream-100 sm:text-xl"
+            >
               Proudly Canadian
             </span>
             <svg
