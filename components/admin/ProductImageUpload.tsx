@@ -36,6 +36,9 @@ export function ProductImageUpload({
   const inputRef = useRef<HTMLInputElement>(null);
   const dragSourceIndex = useRef<number | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
+  // Reorder feedback: index of the thumb currently hovered by a dragged
+  // image (highlighted with a ring), so the drop target is obvious.
+  const [reorderOver, setReorderOver] = useState<number | null>(null);
   const valueRef = useRef(value);
   useEffect(() => {
     valueRef.current = value;
@@ -141,19 +144,44 @@ export function ProductImageUpload({
     onChange(next);
   };
 
+  /** Swap the image at `idx` with its neighbour — the keyboard path. */
+  const move = (idx: number, dir: -1 | 1) => {
+    const to = idx + dir;
+    if (to < 0 || to >= value.length) return;
+    const next = [...value];
+    [next[idx], next[to]] = [next[to], next[idx]];
+    onChange(next);
+  };
+
   const onThumbDragStart = (idx: number) => (e: DragEvent<HTMLLIElement>) => {
     if (disabled) return;
     dragSourceIndex.current = idx;
-    e.dataTransfer.effectAllowed = 'move';
+    if (e.dataTransfer) e.dataTransfer.effectAllowed = 'move';
   };
 
-  const onThumbDragOver = (e: DragEvent<HTMLLIElement>) => {
+  const onThumbDragEnd = () => {
+    dragSourceIndex.current = null;
+    setReorderOver(null);
+  };
+
+  // A file dragged from the OS also fires dragover/drop on thumbnails —
+  // only treat it as a reorder when the drag does NOT carry files.
+  const isReorderDrag = (e: DragEvent) => {
+    const types = e.dataTransfer?.types;
+    return !types || !Array.from(types).includes('Files');
+  };
+
+  const onThumbDragOver = (idx: number) => (e: DragEvent<HTMLLIElement>) => {
+    if (!isReorderDrag(e)) return;
     e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
+    if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
+    setReorderOver(idx);
   };
 
   const onThumbDrop = (idx: number) => (e: DragEvent<HTMLLIElement>) => {
+    if (!isReorderDrag(e)) return;
     e.preventDefault();
+    setReorderOver(null);
     const from = dragSourceIndex.current;
     dragSourceIndex.current = null;
     if (from === null || from === idx || from >= value.length) return;
@@ -168,8 +196,8 @@ export function ProductImageUpload({
       <div className="flex items-center justify-between">
         <label className="block text-sm font-medium text-ink-700">Images</label>
         <span className="text-xs text-ink-500">
-          {value.length + pending.filter((p) => p.status === 'uploading').length}/{maxImages} · first image is the
-          cover
+          {value.length + pending.filter((p) => p.status === 'uploading').length}/{maxImages} · drag to reorder —
+          first image is the cover
         </span>
       </div>
 
@@ -183,9 +211,14 @@ export function ProductImageUpload({
               key={url}
               draggable={!disabled}
               onDragStart={onThumbDragStart(idx)}
-              onDragOver={onThumbDragOver}
+              onDragOver={onThumbDragOver(idx)}
+              onDragEnd={onThumbDragEnd}
               onDrop={onThumbDrop(idx)}
-              className="group relative aspect-square overflow-hidden rounded-md border border-cream-300 bg-cream-100 motion-base cursor-move"
+              className={`group relative aspect-square overflow-hidden rounded-md border bg-cream-100 motion-base cursor-move ${
+                reorderOver === idx
+                  ? 'border-plum-500 ring-2 ring-plum-500 ring-offset-1'
+                  : 'border-cream-300'
+              }`}
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
@@ -196,12 +229,34 @@ export function ProductImageUpload({
               {idx === 0 && (
                 <span className="absolute left-1.5 top-1.5 badge-mint text-[9px] py-0.5 px-1.5">Primary</span>
               )}
-              <div className="absolute inset-x-0 bottom-0 flex items-center justify-between gap-1 bg-gradient-to-t from-black/55 to-transparent px-1.5 py-1.5 opacity-0 group-hover:opacity-100 motion-base">
+              <div className="absolute inset-x-0 bottom-0 flex items-center gap-1 bg-gradient-to-t from-black/55 to-transparent px-1.5 py-1.5 opacity-0 group-hover:opacity-100 motion-base">
+                <button
+                  type="button"
+                  onClick={() => move(idx, -1)}
+                  disabled={idx === 0}
+                  className="flex h-5 w-5 items-center justify-center rounded-full bg-cream-50/90 text-plum-800 hover:bg-cream-50 disabled:opacity-30"
+                  aria-label={`Move image ${idx + 1} earlier`}
+                >
+                  <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  </svg>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => move(idx, 1)}
+                  disabled={idx === value.length - 1}
+                  className="flex h-5 w-5 items-center justify-center rounded-full bg-cream-50/90 text-plum-800 hover:bg-cream-50 disabled:opacity-30"
+                  aria-label={`Move image ${idx + 1} later`}
+                >
+                  <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
                 {idx !== 0 && (
                   <button
                     type="button"
                     onClick={() => setPrimary(idx)}
-                    className="rounded-pill bg-cream-50/90 px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-plum-800 hover:bg-cream-50"
+                    className="ml-1 rounded-pill bg-cream-50/90 px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-plum-800 hover:bg-cream-50"
                     aria-label={`Set image ${idx + 1} as primary`}
                   >
                     Set primary

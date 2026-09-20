@@ -119,4 +119,81 @@ describe('ProductImageUpload', () => {
     expect(screen.getByRole('alert').textContent).toMatch(/Only 2 more/);
     expect(uploadProductImageAction).not.toHaveBeenCalled();
   });
+
+  it('reorders images when one thumbnail is dropped on another', () => {
+    const onChange = vi.fn();
+    const urls = ['https://x/a.png', 'https://x/b.png', 'https://x/c.png'];
+    render(<ProductImageUpload value={urls} onChange={onChange} />);
+
+    const list = screen.getByRole('list', { name: /Uploaded product images/i });
+    const items = within(list).getAllByRole('listitem');
+
+    fireEvent.dragStart(items[2]!);
+    fireEvent.dragOver(items[0]!);
+    fireEvent.drop(items[0]!);
+
+    expect(onChange).toHaveBeenCalledWith(['https://x/c.png', 'https://x/a.png', 'https://x/b.png']);
+  });
+
+  it('highlights the hovered drop target during a reorder drag', () => {
+    const urls = ['https://x/a.png', 'https://x/b.png'];
+    const { container } = render(<ProductImageUpload value={urls} onChange={() => {}} />);
+
+    const list = screen.getByRole('list', { name: /Uploaded product images/i });
+    const items = within(list).getAllByRole('listitem');
+
+    fireEvent.dragStart(items[0]!);
+    fireEvent.dragOver(items[1]!);
+
+    expect(container.innerHTML).toMatch(/ring-2 ring-plum-500/);
+  });
+
+  it('ignores file drags from the operating system on thumbnails', () => {
+    const onChange = vi.fn();
+    const urls = ['https://x/a.png', 'https://x/b.png'];
+    const { container } = render(<ProductImageUpload value={urls} onChange={onChange} />);
+
+    const list = screen.getByRole('list', { name: /Uploaded product images/i });
+    const items = within(list).getAllByRole('listitem');
+    // jsdom has no DataTransfer constructor — a plain object with a Files
+    // type reproduces an OS file drag closely enough for the guard.
+    const fileDrag = { dataTransfer: { types: ['Files'] } } as unknown as DragEvent;
+
+    fireEvent.drop(items[0]!, fileDrag);
+    fireEvent.dragOver(items[0]!, fileDrag);
+    expect(onChange).not.toHaveBeenCalled();
+    expect(container.innerHTML).not.toMatch(/ring-2 ring-plum-500/);
+  });
+
+  it('moves an image earlier and later with the keyboard buttons', () => {
+    const onChange = vi.fn();
+    const urls = ['https://x/a.png', 'https://x/b.png', 'https://x/c.png'];
+    const { rerender } = render(<ProductImageUpload value={urls} onChange={onChange} />);
+
+    const list = () => screen.getByRole('list', { name: /Uploaded product images/i });
+    let items = within(list()).getAllByRole('listitem');
+
+    // Move image 2 earlier.
+    fireEvent.click(within(items[1]!).getByRole('button', { name: /Move image 2 earlier/ }));
+    expect(onChange).toHaveBeenLastCalledWith(['https://x/b.png', 'https://x/a.png', 'https://x/c.png']);
+
+    // From that new order, move image 1 later.
+    rerender(<ProductImageUpload value={['https://x/b.png', 'https://x/a.png', 'https://x/c.png']} onChange={onChange} />);
+    items = within(list()).getAllByRole('listitem');
+    fireEvent.click(within(items[0]!).getByRole('button', { name: /Move image 1 later/ }));
+    expect(onChange).toHaveBeenLastCalledWith(['https://x/a.png', 'https://x/b.png', 'https://x/c.png']);
+  });
+
+  it('disables the move buttons at the ends of the list', () => {
+    const urls = ['https://x/a.png', 'https://x/b.png'];
+    render(<ProductImageUpload value={urls} onChange={() => {}} />);
+
+    const list = screen.getByRole('list', { name: /Uploaded product images/i });
+    const items = within(list).getAllByRole('listitem');
+
+    expect(within(items[0]!).getByRole('button', { name: /Move image 1 earlier/ })).toBeDisabled();
+    expect(within(items[0]!).getByRole('button', { name: /Move image 1 later/ })).toBeEnabled();
+    expect(within(items[1]!).getByRole('button', { name: /Move image 2 earlier/ })).toBeEnabled();
+    expect(within(items[1]!).getByRole('button', { name: /Move image 2 later/ })).toBeDisabled();
+  });
 });
