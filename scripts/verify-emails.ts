@@ -99,8 +99,7 @@ async function main() {
     check(`"${m.subject}" links canonical`, bad.length === 0, bad.length ? bad.join(', ') : `${links.length} link(s)`);
 
     check(`"${m.subject}" logo embedded`, html.includes(`${SITE}/email/logo.png`));
-    check(`"${m.subject}" brand header`, html.includes('>Charmz</span>'));
-    check(`"${m.subject}" script font loaded`, html.includes('family=Caveat'));
+    check(`"${m.subject}" brand header`, html.includes(`${SITE}/email/wordmark.png`));
   }
 
   // Content spot-checks on specific templates.

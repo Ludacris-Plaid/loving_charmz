@@ -18,10 +18,17 @@
  * rendered with whatever serif the machine has (Georgia on macOS/Windows,
  * Liberation/Noto Serif on Linux), so the PNGs bake in one serif while the SVG
  * lets the viewer's browser choose — both read as the same monogram.
+ *
+ * The email wordmark (`public/email/wordmark.png`) is different: webmail
+ * clients (Gmail, Outlook, PrivateEmail…) strip web fonts, so "Charmz" can
+ * never rely on @font-face there. It is drawn as pure vector paths from the
+ * vendored Caveat variable font (same face as the site's --font-handwriting),
+ * then rasterised — every client renders identical pixels.
  */
 import { readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import * as fontkit from 'fontkit';
 import sharp from 'sharp';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -33,6 +40,39 @@ async function render(svg, size) {
     .resize(size, size)
     .png({ compressionLevel: 9 })
     .toBuffer();
+}
+
+/** Render a non-square SVG at its own declared width/height (density 72 = 1:1). */
+async function renderNatural(svg) {
+  return sharp(Buffer.from(svg), { density: 72 }).png({ compressionLevel: 9 }).toBuffer();
+}
+
+/**
+ * Lay out `text` in the given font and return an SVG whose glyphs are pure
+ * vector paths (y-axis flipped from font coords, positioned by pen advance).
+ * No font file is needed to view the result.
+ */
+function textToPathSvg(text, font, emPx, fill) {
+  const run = font.layout(text);
+  const s = emPx / font.unitsPerEm;
+  const width = run.advanceWidth * s;
+  const height = (font.ascent - font.descent) * s;
+  let penX = 0;
+  const paths = [];
+  for (let i = 0; i < run.glyphs.length; i++) {
+    const d = run.glyphs[i].path.toSVG();
+    if (d) {
+      const x = (penX + run.positions[i].xOffset) * s;
+      const y = font.ascent * s + run.positions[i].yOffset * s;
+      paths.push(`<path d="${d}" transform="translate(${x.toFixed(2)} ${y.toFixed(2)}) scale(${s.toFixed(5)} -${s.toFixed(5)})"/>`);
+    }
+    penX += run.positions[i].xAdvance;
+  }
+  return {
+    svg: `<svg xmlns="http://www.w3.org/2000/svg" width="${width.toFixed(2)}" height="${height.toFixed(2)}" viewBox="0 0 ${width.toFixed(2)} ${height.toFixed(2)}"><g fill="${fill}">${paths.join('')}</g></svg>`,
+    width: Math.round(width),
+    height: Math.round(height),
+  };
 }
 
 /**
@@ -90,7 +130,18 @@ writeFileSync(join(ROOT, 'app', 'favicon.ico'), ico(icoPngs));
 const emailLogo = await render(mark, 256);
 writeFileSync(join(ROOT, 'public', 'email', 'logo.png'), emailLogo);
 
+// Email wordmark: "Charmz" in Caveat 600 — the face of the site wordmark
+// (.logo__charmz / --font-handwriting). Baked at em=120 and displayed at
+// em=44 in the email header, ~2.7x oversampled so it stays crisp on retina.
+const caveat = fontkit.openSync(join(ROOT, 'public', 'fonts', 'Caveat[wght].ttf'));
+if (caveat.familyName !== 'Caveat') {
+  throw new Error(`public/fonts must contain Caveat, found "${caveat.familyName}"`);
+}
+const wordmark = textToPathSvg('Charmz', caveat.getVariation({ wght: 600 }), 120, '#ffffff');
+writeFileSync(join(ROOT, 'public', 'email', 'wordmark.png'), await renderNatural(wordmark.svg));
+
 console.log('Wrote app/icon.png (192x192)');
 console.log('Wrote app/apple-icon.png (180x180, full bleed)');
 console.log(`Wrote app/favicon.ico (${icoPngs.map((e) => e.size).join('/')}, ${icoPngs.reduce((n, e) => n + e.data.length, 0) + 6 + 16 * icoPngs.length} bytes)`);
 console.log('Wrote public/email/logo.png (256x256)');
+console.log(`Wrote public/email/wordmark.png (${wordmark.width}x${wordmark.height}) — display at 118x56 in email`);

@@ -19,6 +19,7 @@ const iconPng = read('icon.png');
 const applePng = read('apple-icon.png');
 const faviconIco = read('favicon.ico');
 const emailLogo = readFileSync(join(process.cwd(), 'public', 'email', 'logo.png'));
+const emailWordmark = readFileSync(join(process.cwd(), 'public', 'email', 'wordmark.png'));
 
 function pngSize(buf: Buffer) {
   expect(buf.subarray(1, 4).toString('ascii')).toBe('PNG');
@@ -68,6 +69,19 @@ describe('brand icons', () => {
     // Referenced by every transactional email at /email/logo.png — same mark,
     // larger raster, because email clients cannot run Next's asset pipeline.
     expect(pngSize(emailLogo)).toEqual({ width: 256, height: 256 });
+  });
+
+  it('ships the Caveat email wordmark at 2x+ oversampling with alpha', () => {
+    // "Charmz" in the email header is a pre-rendered PNG (webmail strips web
+    // fonts). Baked at em=120 from public/fonts/Caveat[wght].ttf, displayed at
+    // 118px wide — roughly 2.7x oversampled. Must stay transparent so it sits
+    // on the plum header band.
+    const { width, height } = pngSize(emailWordmark);
+    expect(width).toBeGreaterThanOrEqual(236); // 118 * 2
+    expect(width / height).toBeGreaterThan(1.9); // "Charmz" is a wide word
+    expect(width / height).toBeLessThan(2.4);
+    // PNG colour type byte: 6 = RGBA (alpha present), 2 = RGB (opaque).
+    expect(emailWordmark.readUInt8(25)).toBe(6);
   });
 
   it('packs 16/32/48 PNG frames into favicon.ico', () => {
