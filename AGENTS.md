@@ -123,6 +123,13 @@ redirects and email links use the domain explicitly rather than a code fallback.
 The old `loving-charmz.vercel.app` stays attached as a Vercel alias. The nightly
 production smoke (`.github/workflows/smoke.yml`) crawls the new domain.
 
+SEO: `app/sitemap.ts` serves `/sitemap.xml` — static marketing routes, all active
+product/collection slugs queried from Supabase per render, and the static story slugs
+from `stories/page.tsx`; a DB failure degrades to static-only instead of 500ing.
+`app/robots.ts` serves `/robots.txt` — storefront crawlable, `/admin`, `/account`,
+`/api`, cart/checkout and auth pages disallowed. Both advertise the canonical origin
+from `lib/site.ts`, never the request host, so previews never leak into the index.
+
 ## What does NOT exist yet (agent must not assume)
 
 - Integration tests (only unit tests exist)
