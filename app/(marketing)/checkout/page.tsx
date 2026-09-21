@@ -90,7 +90,12 @@ export default async function CheckoutPage({ searchParams }: Props) {
       )}
       <div className="grid lg:grid-cols-3 gap-10">
         <div className="lg:col-span-2">
-          <CheckoutForm defaultEmail={session.email || ''} methods={methods} totalAmount={totals.total} />
+          <CheckoutForm
+            defaultEmail={session.email || ''}
+            methods={methods}
+            totalAmount={totals.total}
+            subtotal={totals.subtotal}
+          />
         </div>
         <aside className="surface-card p-6 h-fit lg:sticky lg:top-24">
           <h2 className="font-display text-lg font-semibold text-plum-900 mb-4">Order review</h2>

@@ -4,6 +4,7 @@ import { useState, useEffect, useTransition, useCallback, useRef } from 'react';
 import { Input } from '@/components/ui/Input';
 import { createCheckoutAction } from '@/lib/checkout/actions';
 import { validateDiscountCode } from '@/lib/checkout/discount';
+import { FREE_SHIPPING_THRESHOLD } from '@/lib/checkout/pricing';
 import { getSquareClientConfig, type SquareClientConfig } from '@/lib/payments/config-client';
 import { quoteShippingAction } from '@/lib/shipping/quote';
 import { flatOption, type ShippingOption } from '@/lib/shipping/quote-options';
@@ -20,9 +21,11 @@ type Props = {
   defaultEmail: string;
   methods: PaymentMethodOption[];
   totalAmount: number;
+  /** Cart subtotal before shipping/tax — decides the free-shipping display. */
+  subtotal?: number;
 };
 
-export function CheckoutForm({ defaultEmail, methods, totalAmount }: Props) {
+export function CheckoutForm({ defaultEmail, methods, totalAmount, subtotal = 0 }: Props) {
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [discountInput, setDiscountInput] = useState('');
@@ -193,7 +196,11 @@ export function CheckoutForm({ defaultEmail, methods, totalAmount }: Props) {
           <p className="text-sm text-ink-500">Checking Canada Post rates…</p>
         ) : (
           <div className="space-y-2">
-            {shippingOptions.map((option) => (
+            {shippingOptions.map((option) => {
+              // The engine charges $0 for standard shipping over the threshold;
+              // the label must say the same thing the total says.
+              const displaysFree = option.isStandard && subtotal > FREE_SHIPPING_THRESHOLD;
+              return (
               <label
                 key={option.id}
                 className={`flex items-start gap-3 p-4 rounded-md border cursor-pointer motion-base ${
@@ -222,9 +229,18 @@ export function CheckoutForm({ defaultEmail, methods, totalAmount }: Props) {
                     </span>
                   )}
                 </span>
-                <span className="text-sm font-semibold text-plum-700">${option.price.toFixed(2)}</span>
+                <span className="text-sm font-semibold text-plum-700">
+                  {displaysFree ? (
+                    <>
+                      <span className="line-through text-ink-400 font-normal mr-1.5">${option.price.toFixed(2)}</span>FREE
+                    </>
+                  ) : (
+                    `$${option.price.toFixed(2)}`
+                  )}
+                </span>
               </label>
-            ))}
+              );
+            })}
             {shippingNote && <p className="text-xs text-ink-400">{shippingNote}</p>}
           </div>
         )}
