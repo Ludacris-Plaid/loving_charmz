@@ -61,7 +61,15 @@ export default async function HomePage() {
             <HeroHeadline raw={heroRaw ?? DEFAULT_HERO} />
 
             {(heroSub ?? DEFAULT_HERO_SUBHEADLINE) && (
-              <p className="hero-content mt-6 max-w-xl mx-auto text-center text-sm sm:text-base text-ink-600 leading-relaxed">
+              <p
+                className="hero-content mt-6 max-w-xl mx-auto text-center text-ink-600 leading-relaxed"
+                style={{
+                  fontFamily: 'var(--font-serif-accent)',
+                  fontSize: '1.25rem',
+                  lineHeight: 1.6,
+                  letterSpacing: '0.01em',
+                }}
+              >
                 {heroSub ?? DEFAULT_HERO_SUBHEADLINE}
               </p>
             )}

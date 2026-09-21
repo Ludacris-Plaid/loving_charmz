@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Inter, Playfair_Display, Caveat } from 'next/font/google';
+import { Inter, Playfair_Display, Caveat, Cormorant_Garamond } from 'next/font/google';
 import { SITE_URL } from '@/lib/site';
 import './globals.css';
 
@@ -21,6 +21,16 @@ const caveat = Caveat({
   display: 'swap',
 });
 
+// Cormorant Garamond — the elegant serif for quiet supporting lines
+// (hero subheadline). Pairs with Playfair Display without competing.
+const cormorant = Cormorant_Garamond({
+  subsets: ['latin'],
+  weight: ['500', '600'],
+  style: ['normal', 'italic'],
+  variable: '--font-serif-accent',
+  display: 'swap',
+});
+
 export const metadata: Metadata = {
   title: 'Loving Charmz — Symbolic jewelry for the bond that lasts',
   description:
@@ -36,7 +46,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${inter.variable} ${playfairDisplay.variable} ${caveat.variable}`}>{children}</body>
+      <body className={`${inter.variable} ${playfairDisplay.variable} ${caveat.variable} ${cormorant.variable}`}>{children}</body>
     </html>
   );
 }

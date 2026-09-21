@@ -63,6 +63,9 @@
   --font-display: "Playfair Display", Georgia, serif;
   /* Caveat — the script font of the "Charmz" wordmark (see .logo__charmz). */
   --font-handwriting: "Caveat", "Segoe Script", "Bradley Hand", cursive;
+  /* Cormorant Garamond — elegant serif for quiet supporting lines
+     (hero subheadline). Self-hosted via next/font (app/layout.tsx). */
+  --font-serif-accent: "Cormorant Garamond", Georgia, serif;
 
   --radius-sm: 0.5rem;
   --radius-md: 0.75rem;
