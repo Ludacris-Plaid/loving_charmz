@@ -55,7 +55,7 @@ export default async function HomePage() {
             <h1 className="font-display text-5xl sm:text-6xl lg:text-7xl font-semibold leading-[1.05] tracking-tight mt-8">
               <span className="block">
                 <span className="hero-word hero-word-1 text-plum-900">Symbolic</span>{' '}
-                <span className="hero-word hero-word-2 plum-gradient-text">jewelry</span>
+                <span className="hero-word hero-word-2 plum-gradient-text font-handwriting text-[1.14em]">jewelry</span>
               </span>
               <span className="block mt-2">
                 <span className="hero-word hero-word-3 text-plum-900">for the</span>{' '}
@@ -63,7 +63,7 @@ export default async function HomePage() {
               </span>
               <span className="block mt-2">
                 <span className="hero-word hero-word-5 text-ink-700">that</span>{' '}
-                <span className="hero-word hero-word-6 plum-gradient-text">lasts</span>
+                <span className="hero-word hero-word-6 plum-gradient-text font-handwriting text-[1.14em]">lasts</span>
               </span>
             </h1>
 
