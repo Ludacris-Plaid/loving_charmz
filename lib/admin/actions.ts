@@ -488,6 +488,35 @@ export async function updateCustomerNotesAction(
 }
 
 /* ------------------------------------------------------------------ */
+/*  Customers — direct one-to-one email                                */
+/* ------------------------------------------------------------------ */
+
+export async function emailCustomerAction(params: {
+  customerId: string;
+  subject: string;
+  body: string;
+}): Promise<AdminResult> {
+  const guard = await getAdminClient();
+  if (guard.kind === 'error') return { error: guard.error };
+  const client = guard.client;
+
+  const subject = params.subject.trim();
+  const body = params.body.trim();
+  if (!subject || !body) return { error: 'Subject and message are required.' };
+
+  // Resolve the recipient server-side from the profile — never trust a
+  // client-supplied address.
+  const { data: authUser } = await client.auth.admin.getUserById(params.customerId);
+  const email = authUser?.user?.email;
+  if (!email) return { error: 'This customer has no email address on file.' };
+
+  const { sendDirectCustomerEmail } = await import('@/lib/email/transactional');
+  const result = await sendDirectCustomerEmail({ to: email, subject, body });
+  if (result.error) return { error: `Email failed: ${result.error}` };
+  return { success: true };
+}
+
+/* ------------------------------------------------------------------ */
 /*  Shipping — tracking number                                          */
 /* ------------------------------------------------------------------ */
 

@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useTransition } from 'react';
 import { formatDate } from '@/lib/admin/analytics/format';
-import { updateCustomerNotesAction } from '@/lib/admin/actions';
+import { updateCustomerNotesAction, emailCustomerAction } from '@/lib/admin/actions';
 import { OrderModal } from './AdminOrdersTable';
 
 type OrderItem = {
@@ -86,6 +86,11 @@ function CustomerModal({
   const viewingOrder = orders.find((o) => o.id === viewingOrderId) || null;
   const [notes, setNotes] = useState(customer.admin_notes || '');
   const [notesState, setNotesState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const [emailOpen, setEmailOpen] = useState(false);
+  const [emailSubject, setEmailSubject] = useState('');
+  const [emailBody, setEmailBody] = useState('');
+  const [emailState, setEmailState] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
+  const [emailError, setEmailError] = useState<string | null>(null);
   const [, startTransition] = useTransition();
 
   const saveNotes = () => {
@@ -94,6 +99,30 @@ function CustomerModal({
       const res = await updateCustomerNotesAction(customer.id, notes);
       setNotesState(res.error ? 'error' : 'saved');
       if (!res.error) setTimeout(() => setNotesState('idle'), 2000);
+    });
+  };
+
+  const sendEmail = () => {
+    setEmailState('sending');
+    setEmailError(null);
+    startTransition(async () => {
+      const res = await emailCustomerAction({
+        customerId: customer.id,
+        subject: emailSubject,
+        body: emailBody,
+      });
+      if (res.error) {
+        setEmailState('error');
+        setEmailError(res.error);
+      } else {
+        setEmailState('sent');
+        setEmailSubject('');
+        setEmailBody('');
+        setTimeout(() => {
+          setEmailState('idle');
+          setEmailOpen(false);
+        }, 2500);
+      }
     });
   };
 
@@ -211,6 +240,70 @@ function CustomerModal({
               <p className="text-xs text-red-600 mt-1" role="alert">
                 Could not save — please try again.
               </p>
+            )}
+          </div>
+
+          {/* Direct email */}
+          <div className="rounded-xl border border-cream-200 bg-white p-4">
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-bold uppercase tracking-widest text-ink-400">
+                Email this customer
+              </p>
+              {!emailOpen && (
+                <button
+                  onClick={() => setEmailOpen(true)}
+                  className="rounded-pill px-4 py-1.5 text-xs font-medium uppercase tracking-wider border border-cream-300 bg-surface text-ink-700 hover:border-plum-500 hover:text-plum-700 motion-base"
+                  type="button"
+                >
+                  ✉ Write email
+                </button>
+              )}
+            </div>
+            {emailOpen && (
+              <div className="mt-3 space-y-2">
+                <input
+                  value={emailSubject}
+                  onChange={(e) => setEmailSubject(e.target.value)}
+                  placeholder="Subject"
+                  maxLength={150}
+                  className="w-full rounded-lg border border-cream-300 bg-cream-50 px-3 py-2 text-sm text-ink-800 placeholder:text-ink-400 focus:outline-none focus:ring-2 focus:ring-plum-500"
+                  aria-label="Email subject"
+                />
+                <textarea
+                  value={emailBody}
+                  onChange={(e) => setEmailBody(e.target.value)}
+                  rows={5}
+                  maxLength={5000}
+                  placeholder="Write your message — blank lines start new paragraphs. Sent from the Loving Charmz support address with the branded template."
+                  className="w-full rounded-lg border border-cream-300 bg-cream-50 px-3 py-2 text-sm text-ink-800 placeholder:text-ink-400 focus:outline-none focus:ring-2 focus:ring-plum-500 resize-y"
+                  aria-label="Email message"
+                />
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={sendEmail}
+                    disabled={emailState === 'sending' || !emailSubject.trim() || !emailBody.trim()}
+                    className="rounded-pill px-4 py-1.5 text-xs font-medium uppercase tracking-wider bg-plum-700 text-cream-50 hover:bg-plum-900 motion-base disabled:opacity-40"
+                    type="button"
+                  >
+                    {emailState === 'sending' ? 'Sending…' : emailState === 'sent' ? '✓ Sent' : 'Send email'}
+                  </button>
+                  <button
+                    onClick={() => {
+                      setEmailOpen(false);
+                      setEmailState('idle');
+                      setEmailError(null);
+                    }}
+                    className="text-xs text-ink-500 hover:text-ink-700"
+                    type="button"
+                  >
+                    Cancel
+                  </button>
+                  <span className="text-xs text-ink-400 ml-auto">to {customer.email}</span>
+                </div>
+                {emailState === 'error' && emailError && (
+                  <p className="text-xs text-red-600" role="alert">{emailError}</p>
+                )}
+              </div>
             )}
           </div>
 

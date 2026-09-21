@@ -285,3 +285,49 @@ export async function sendWelcomeEmail(params: {
 
   return error ? { error: error.message } : {};
 }
+
+/* ------------------------------------------------------------------ */
+/*  Direct one-to-one customer email (admin)                           */
+/* ------------------------------------------------------------------ */
+
+export async function sendDirectCustomerEmail(params: {
+  to: string;
+  subject: string;
+  body: string;
+}): Promise<{ error?: string }> {
+  const resend = getResendClient();
+
+  // Plain-text composition: paragraphs from blank lines, line breaks
+  // preserved. Escape everything — mom types text, never HTML.
+  const paragraphs = params.body
+    .replace(/\r\n/g, '\n')
+    .split(/\n{2,}/)
+    .map((p) => p.trim())
+    .filter(Boolean)
+    .map(
+      (p) =>
+        `<p style="margin:0 0 16px;color:#6b5b7b;font-size:14px;line-height:1.6;">${escapeHtml(p).replace(/\n/g, '<br>')}</p>`,
+    )
+    .join('');
+
+  const html = await shell(`
+    <h2 style="margin:0 0 16px;font-size:22px;color:#2d1b4e;">${escapeHtml(params.subject)}</h2>
+    ${paragraphs || '<p style="color:#6b5b7b;font-size:14px;">(no content)</p>'}
+    <p style="margin:24px 0 0;color:#6b5b7b;font-size:13px;">
+      — Loving Charmz<br>
+      <a href="${await siteOrigin()}" style="color:#2d1b4e;">lovingcharmz.com</a>
+    </p>
+  `);
+
+  const { error } = await resend.emails.send({
+    // Personal correspondence goes out under the support identity, matching
+    // the reply-to shoppers already see on their order emails.
+    from: FROM_SUPPORT,
+    replyTo: FROM_SUPPORT,
+    to: params.to,
+    subject: params.subject,
+    html,
+  });
+
+  return error ? { error: error.message } : {};
+}
