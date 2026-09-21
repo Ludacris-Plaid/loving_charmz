@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { Container } from '@/components/ui/Container';
+import { JsonLd } from '@/components/ui/JsonLd';
 import { createClient } from '@/lib/supabase/server';
 import { getProductBySlug } from '@/lib/supabase/queries/products';
 import { getCartCount } from '@/lib/cart/server';
@@ -71,10 +72,7 @@ export default async function ProductPage({ params }: Props) {
 
   return (
     <>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
-      />
+      <JsonLd data={structuredData} />
       <ProductDetailClient
         product={product}
         variants={variantsData || []}
