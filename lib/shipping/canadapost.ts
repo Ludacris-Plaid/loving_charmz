@@ -246,6 +246,14 @@ export type CpParcel = {
   heightCm?: number;
 };
 
+/**
+ * Default parcel dimensions for a charm order: a small padded bubble
+ * mailer. CP's shipment API mandates length/width/height for parcel
+ * shipments (error 9162 when absent), and the admin label flow collects
+ * only a weight — so absent dims fall back to these realistic values.
+ */
+export const DEFAULT_PARCEL_DIMENSIONS_CM = { length: 20, width: 15, height: 3 } as const;
+
 export type CpShipmentInput = {
   serviceCode: string; // DOM.EP etc.
   sender: CpAddress;
@@ -318,7 +326,13 @@ export function buildShipmentRequest(
         width: Math.min(999.9, input.parcel.widthCm),
         height: Math.min(999.9, input.parcel.heightCm),
       }
-    : undefined;
+    : // Mandatory for parcel shipments (CP error 9162) — default to the
+      // standard charm bubble mailer when the admin didn't specify size.
+      {
+        length: DEFAULT_PARCEL_DIMENSIONS_CM.length,
+        width: DEFAULT_PARCEL_DIMENSIONS_CM.width,
+        height: DEFAULT_PARCEL_DIMENSIONS_CM.height,
+      };
 
   const parcel: Record<string, unknown> = { weight: Math.max(0.001, input.parcel.weightKg) };
   if (dims) parcel.dimensions = dims;

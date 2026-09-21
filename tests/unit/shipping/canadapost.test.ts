@@ -57,6 +57,19 @@ describe('shipment request building (shipping/v1 JSON)', () => {
     expect(JSON.stringify(body)).not.toContain('M5H 2N2');
   });
 
+  it('defaults parcel dimensions to the charm mailer when absent (CP error 9162 guard)', () => {
+    const { parcel: _parcel, ...withoutDims } = sampleInput;
+    const body = buildShipmentRequest(
+      { ...withoutDims, parcel: { weightKg: 0.25 } } as typeof sampleInput,
+      { mode: 'non-contract' },
+    ) as Record<string, any>;
+    expect(body.deliverySpec.parcelCharacteristics.dimensions).toEqual({
+      length: 20,
+      width: 15,
+      height: 3,
+    });
+  });
+
   it('adds customer reference and CP delivery notifications when provided', () => {
     const body = buildShipmentRequest(sampleInput, { mode: 'non-contract' }) as Record<string, any>;
     expect(body.deliverySpec.references.customerRef1).toBe('1ADBF06C');
@@ -78,14 +91,20 @@ describe('shipment request building (shipping/v1 JSON)', () => {
     expect(dom.deliverySpec.customs).toBeUndefined();
   });
 
-  it('omits optional blocks when not provided', () => {
+  it('omits optional blocks when not provided (dimensions fall back — CP mandates them)', () => {
     const body = buildShipmentRequest(
       { ...sampleInput, email: undefined, reference: undefined, parcel: { weightKg: 0.4 } },
       { mode: 'non-contract' },
     ) as Record<string, any>;
     expect(body.deliverySpec.references).toBeUndefined();
     expect(body.deliverySpec.notification).toBeUndefined();
-    expect(body.deliverySpec.parcelCharacteristics.dimensions).toBeUndefined();
+    // Dimensions are mandatory for parcel shipments (error 9162), so a
+    // weight-only parcel gets the default bubble-mailer size.
+    expect(body.deliverySpec.parcelCharacteristics.dimensions).toEqual({
+      length: 20,
+      width: 15,
+      height: 3,
+    });
     expect(body.deliverySpec.parcelCharacteristics.weight).toBe(0.4);
   });
 
