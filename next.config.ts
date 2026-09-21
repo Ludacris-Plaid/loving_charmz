@@ -9,13 +9,20 @@ import type { NextConfig } from 'next';
  * and frames itself from the Square origin, so both are explicitly allowed —
  * `frame-ancestors 'none'` still applies to everyone else embedding US.
  */
+/**
+ * Dev builds get 'unsafe-eval' (React's dev-mode call-stack reconstruction and
+ * Turbopack's HMR need it). Production keeps the strict list — React never
+ * uses eval() in production, so shoppers get the tighter policy.
+ */
+const isDev = process.env.NODE_ENV === 'development';
+
 const contentSecurityPolicy = [
   "default-src 'self'",
   "base-uri 'self'",
   "form-action 'self'",
   "frame-ancestors 'none'",
   "object-src 'none'",
-  "script-src 'self' 'unsafe-inline' https://web.squarecdn.com https://sandbox.web.squarecdn.com",
+  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ''} https://web.squarecdn.com https://sandbox.web.squarecdn.com`,
   "style-src 'self' 'unsafe-inline' https://web.squarecdn.com https://sandbox.web.squarecdn.com",
   "img-src 'self' data: https://images.unsplash.com https://*.supabase.co",
   "font-src 'self' data:",

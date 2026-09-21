@@ -133,10 +133,14 @@ function downloadFile(content: string, filename: string, mime: string): void {
   URL.revokeObjectURL(url);
 }
 
+const DELETE_ALL_PHRASE = 'DELETE HISTORY';
+
 export function AdminHistoryTable({ orders }: Props) {
   const [data, setData] = useState(orders);
   const [pending, startTransition] = useTransition();
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [confirmingDeleteAll, setConfirmingDeleteAll] = useState(false);
+  const [confirmText, setConfirmText] = useState('');
 
   const handleDelete = useCallback((orderId: string) => {
     if (!confirm('Delete this order from history? This cannot be undone.')) return;
@@ -153,16 +157,18 @@ export function AdminHistoryTable({ orders }: Props) {
   }, []);
 
   const handleDeleteAll = useCallback(() => {
-    if (!confirm(`Delete ALL ${data.length} history orders? This cannot be undone.`)) return;
+    if (confirmText.trim().toUpperCase() !== DELETE_ALL_PHRASE) return;
     startTransition(async () => {
       const res = await deleteAllHistoryAction();
       if (res.success) {
         setData([]);
+        setConfirmingDeleteAll(false);
+        setConfirmText('');
       } else {
         alert(res.error || 'Failed to delete');
       }
     });
-  }, [data.length]);
+  }, [confirmText]);
 
   if (data.length === 0) {
     return (
@@ -191,14 +197,45 @@ export function AdminHistoryTable({ orders }: Props) {
           📝 Export TXT
         </button>
         <div className="flex-1" />
-        <button
-          onClick={handleDeleteAll}
-          disabled={pending}
-          className="px-4 py-2 text-sm font-medium text-red-600 border border-red-300 rounded-md hover:bg-red-50 disabled:opacity-50 motion-base"
-          type="button"
-        >
-          🗑️ Delete All
-        </button>
+        {confirmingDeleteAll ? (
+          <div className="flex flex-wrap items-center gap-2 rounded-md border border-red-300 bg-red-50 px-3 py-2">
+            <span className="text-xs font-medium text-red-700">
+              Type {DELETE_ALL_PHRASE} to permanently delete {data.length} order{data.length !== 1 ? 's' : ''}:
+            </span>
+            <input
+              value={confirmText}
+              onChange={(e) => setConfirmText(e.target.value)}
+              className="w-44 rounded border border-red-300 px-2 py-1 text-sm uppercase tracking-wider"
+              placeholder={DELETE_ALL_PHRASE}
+              autoFocus
+              aria-label={`Type ${DELETE_ALL_PHRASE} to confirm`}
+            />
+            <button
+              onClick={handleDeleteAll}
+              disabled={pending || confirmText.trim().toUpperCase() !== DELETE_ALL_PHRASE}
+              className="rounded bg-red-600 px-3 py-1 text-xs font-semibold text-white hover:bg-red-700 disabled:opacity-40"
+              type="button"
+            >
+              {pending ? 'Deleting…' : 'Delete forever'}
+            </button>
+            <button
+              onClick={() => { setConfirmingDeleteAll(false); setConfirmText(''); }}
+              className="text-xs text-ink-500 hover:text-ink-700"
+              type="button"
+            >
+              Cancel
+            </button>
+          </div>
+        ) : (
+          <button
+            onClick={() => setConfirmingDeleteAll(true)}
+            disabled={pending || data.length === 0}
+            className="px-4 py-2 text-sm font-medium text-red-600 border border-red-300 rounded-md hover:bg-red-50 disabled:opacity-50 motion-base"
+            type="button"
+          >
+            🗑️ Delete All
+          </button>
+        )}
       </div>
 
       {/* Table */}

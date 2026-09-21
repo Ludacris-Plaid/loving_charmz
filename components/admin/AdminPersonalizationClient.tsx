@@ -106,15 +106,27 @@ export function AdminPersonalizationClient({ rows, statusOptions }: Props) {
                     )}
                     {row.reference_image_url && (
                       <div>
-                        <p className="text-xs uppercase tracking-wider text-ink-500 mb-1">Reference</p>
-                        <a
-                          href={row.reference_image_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-plum-700 hover:text-plum-900 motion-base break-all"
-                        >
-                          {row.reference_image_url}
-                        </a>
+                        <p className="text-xs uppercase tracking-wider text-ink-500 mb-1">Reference image</p>
+                        <div className="space-y-2">
+                          {/* eslint-disable-next-line @next/next/no-img-element -- arbitrary customer-uploaded reference images on a dynamic Supabase host; next/image offers no optimisation benefit here */}
+                          <img
+                            src={row.reference_image_url}
+                            alt="Customer reference for this custom order"
+                            className="max-w-xs max-h-72 rounded-lg border border-cream-300 object-contain bg-cream-50"
+                            loading="lazy"
+                          />
+                          <div>
+                            <a
+                              href={row.reference_image_url}
+                              download
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="btn-outline inline-flex items-center gap-2 px-4 py-1.5 text-xs"
+                            >
+                              ⬇ Download image
+                            </a>
+                          </div>
+                        </div>
                       </div>
                     )}
 
