@@ -61,17 +61,31 @@ export type DiscountInfo = {
  * one is known; callers without an address yet (cart, pre-submit estimates)
  * omit it and get the Alberta default. Tax applies to the discounted
  * subtotal — the same treatment the CRA expects for point-of-sale discounts.
+ *
+ * `shippingOverride` lets callers replace the flat-rate rule with a live
+ * Canada Post quote (checkout) while keeping every other branch identical.
+ * Free-over-threshold still wins when the cart qualifies: the threshold
+ * policy applies to every shipping method, quoted or flat.
  */
 export function computeOrderTotals(
   lines: PricedLine[],
   discount?: DiscountInfo | null,
   taxRegion?: TaxRegion,
+  shippingOverride?: number | null,
 ): OrderTotals {
   const region = taxRegion ?? taxRegionForAddress({ country: 'CA', state: 'AB' });
   const subtotal = roundMoney(
     lines.reduce((sum, line) => sum + Number(line.unitPrice || 0) * Number(line.quantity || 0), 0),
   );
-  const shipping = subtotal > 0 && subtotal <= FREE_SHIPPING_THRESHOLD ? FLAT_SHIPPING_RATE : 0;
+  const freeShipping = subtotal > 0 && subtotal > FREE_SHIPPING_THRESHOLD;
+  const quoted =
+    subtotal > 0 &&
+    shippingOverride != null &&
+    Number.isFinite(shippingOverride) &&
+    shippingOverride >= 0
+      ? roundMoney(shippingOverride)
+      : null;
+  const shipping = freeShipping ? 0 : quoted ?? (subtotal > 0 ? FLAT_SHIPPING_RATE : 0);
   let discountAmount = 0;
   if (discount) {
     if (discount.type === 'percentage') {

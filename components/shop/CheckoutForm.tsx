@@ -1,10 +1,12 @@
 'use client';
 
-import { useState, useEffect, useTransition, useCallback } from 'react';
+import { useState, useEffect, useTransition, useCallback, useRef } from 'react';
 import { Input } from '@/components/ui/Input';
 import { createCheckoutAction } from '@/lib/checkout/actions';
 import { validateDiscountCode } from '@/lib/checkout/discount';
 import { getSquareClientConfig, type SquareClientConfig } from '@/lib/payments/config-client';
+import { quoteShippingAction } from '@/lib/shipping/quote';
+import { flatOption, type ShippingOption } from '@/lib/shipping/quote-options';
 import { SquareCardForm } from './SquareCardForm';
 
 type PaymentMethodOption = {
@@ -38,6 +40,11 @@ export function CheckoutForm({ defaultEmail, methods, totalAmount }: Props) {
   const [city, setCity] = useState('');
   const [state, setState] = useState('');
   const [zip, setZip] = useState('');
+  const [shippingOptions, setShippingOptions] = useState<ShippingOption[]>([flatOption()]);
+  const [selectedShipping, setSelectedShipping] = useState('flat');
+  const [shippingLoading, setShippingLoading] = useState(false);
+  const [shippingNote, setShippingNote] = useState<string | null>(null);
+  const quoteTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const available = methods.filter((method) => method.configured);
   const paymentsUnavailable = available.length === 0;
 
@@ -45,6 +52,36 @@ export function CheckoutForm({ defaultEmail, methods, totalAmount }: Props) {
   useEffect(() => {
     getSquareClientConfig().then(setSquareConfig);
   }, []);
+
+  // Live shipping quotes: once the postal code looks complete, fetch Canada
+  // Post rates for the address. Debounced so fast typing fires one request.
+  useEffect(() => {
+    const postal = zip.trim();
+    const looksComplete = country === 'CA' ? /^[A-Za-z]\d[A-Za-z]\s?\d[A-Za-z]\d$/.test(postal) : /^\d{5}(-\d{4})?$/.test(postal);
+    if (!looksComplete) return;
+
+    if (quoteTimer.current) clearTimeout(quoteTimer.current);
+    setShippingLoading(true);
+    quoteTimer.current = setTimeout(async () => {
+      try {
+        const res = await quoteShippingAction(postal, country);
+        setShippingOptions(res.options);
+        setSelectedShipping(res.options[0]?.id ?? 'flat');
+        setShippingNote(
+          res.options.length > 1 && res.options[0]?.isLive
+            ? 'Live Canada Post rates for your address'
+            : null,
+        );
+      } catch {
+        setShippingNote(null);
+      } finally {
+        setShippingLoading(false);
+      }
+    }, 600);
+    return () => {
+      if (quoteTimer.current) clearTimeout(quoteTimer.current);
+    };
+  }, [zip, country]);
 
   const handleApplyDiscount = () => {
     if (!discountInput.trim()) return;
@@ -68,6 +105,7 @@ export function CheckoutForm({ defaultEmail, methods, totalAmount }: Props) {
     if (discountData) {
       formData.set('discountCode', discountData.code);
     }
+    formData.set('shippingService', selectedShipping);
     
     // For embedded Square payments, we need to create the order first,
     // then show the card form
@@ -147,6 +185,44 @@ export function CheckoutForm({ defaultEmail, methods, totalAmount }: Props) {
             </select>
           </div>
         </div>
+      </section>
+
+      <section className="surface-card p-6">
+        <h2 className="font-display text-lg font-semibold text-plum-900 mb-4">Shipping method</h2>
+        {shippingLoading ? (
+          <p className="text-sm text-ink-500">Checking Canada Post rates…</p>
+        ) : (
+          <div className="space-y-2">
+            {shippingOptions.map((option) => (
+              <label
+                key={option.id}
+                className={`flex items-start gap-3 p-4 rounded-md border cursor-pointer motion-base ${
+                  selectedShipping === option.id ? 'border-plum-500 bg-plum-50/40' : 'border-cream-300 hover:border-plum-500'
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="shippingService"
+                  value={option.id}
+                  checked={selectedShipping === option.id}
+                  onChange={() => setSelectedShipping(option.id)}
+                  className="mt-0.5 accent-plum-700"
+                />
+                <span className="flex-1">
+                  <span className="block text-ink-800">{option.label}</span>
+                  {option.eta && (
+                    <span className="block text-xs text-ink-500 mt-1">
+                      {option.eta}
+                      {option.guaranteed ? ' · guaranteed' : ''}
+                    </span>
+                  )}
+                </span>
+                <span className="text-sm font-semibold text-plum-700">${option.price.toFixed(2)}</span>
+              </label>
+            ))}
+            {shippingNote && <p className="text-xs text-ink-400">{shippingNote}</p>}
+          </div>
+        )}
       </section>
 
       <section className="surface-card p-6">

@@ -40,7 +40,9 @@ describe('CheckoutForm', () => {
 
     expect(screen.getByRole('alert')).toHaveTextContent(/payments are not configured/i);
     expect(screen.getByRole('button', { name: /continue to payment/i })).toBeDisabled();
-    expect(screen.queryByRole('radio')).not.toBeInTheDocument();
+    // No payment-provider radios (shipping-method radios are separate).
+    expect(screen.queryByRole('radio', { name: /paypal/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('radio', { name: /credit card/i })).not.toBeInTheDocument();
   });
 
   it('only offers the configured providers', () => {
