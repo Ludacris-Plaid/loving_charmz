@@ -68,3 +68,62 @@ export function normaliseMessages(value: unknown): string[] {
     .filter(Boolean);
   return cleaned.length > 0 ? cleaned : DEFAULT_TICKER.messages;
 }
+
+/* ── Homepage headline (edited in the same admin tab) ─────────────────── */
+
+export const HERO_SLUG = 'homepage-hero';
+
+/**
+ * The homepage headline with the hard default expressed in the same
+ * mini-format mom edits: words wrapped in "quotes" render purple
+ * (the plum gradient), everything else stays plum. One line = one visual
+ * line of the headline. Quotes are never displayed — they are markup.
+ */
+export const DEFAULT_HERO = 'Symbolic "jewelry"\nfor the bond\nthat "lasts"';
+
+export type HeroWord = { text: string; purple: boolean };
+export type HeroLine = HeroWord[];
+
+export const HERO_MAX_LINES = 3;
+export const HERO_MAX_LINE_LENGTH = 80;
+
+/**
+ * Parses the headline mini-format into renderable lines of words.
+ *
+ *  - `"quoted words"` become purple words (quotes stripped)
+ *  - one input line = one headline line, capped at 3 lines / 80 chars
+ *  - an unclosed quote degrades gracefully: the quote mark is dropped
+ *    and the word stays regular
+ *  - empty/absent input falls back to the default headline
+ *
+ * The output is plain text tokens — rendering happens in React text
+ * nodes (components/ui/HeroHeadline.tsx), so there is no injection path.
+ */
+export function parseHeroHeadline(raw: string | null | undefined): HeroLine[] {
+  const source = typeof raw === 'string' && raw.trim() ? raw : DEFAULT_HERO;
+  const lines = source
+    .split('\n')
+    .map((l) => l.trim().slice(0, HERO_MAX_LINE_LENGTH))
+    .filter(Boolean)
+    .slice(0, HERO_MAX_LINES);
+
+  const parsed = lines.map((line) => {
+    const words: HeroWord[] = [];
+    // Alternate: a complete "quoted" run, then a run of unquoted text.
+    for (const m of line.matchAll(/"([^"]*)"|([^"]+)/g)) {
+      if (m[1] !== undefined) {
+        for (const w of m[1].trim().split(/\s+/).filter(Boolean)) {
+          words.push({ text: w, purple: true });
+        }
+      } else if (m[2]) {
+        for (const w of m[2].trim().split(/\s+/).filter(Boolean)) {
+          words.push({ text: w, purple: false });
+        }
+      }
+    }
+    return words;
+  }).filter((line) => line.length > 0);
+
+  if (parsed.length === 0) return parseHeroHeadline(DEFAULT_HERO);
+  return parsed;
+}

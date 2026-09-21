@@ -8,6 +8,7 @@ import {
   bootstrapCharmVariants,
   bootstrapJewelryVariants,
 } from '@/lib/admin/variant-bootstrap';
+import { HERO_MAX_LINES, HERO_MAX_LINE_LENGTH, HERO_SLUG } from '@/lib/ticker-config';
 
 export type AdminResult = { error?: string; success?: boolean; id?: string };
 
@@ -344,6 +345,17 @@ export async function upsertTickerAction(formData: FormData): Promise<AdminResul
   const theme = (TICKER_THEMES as readonly string[]).includes(themeRaw) ? themeRaw : 'plum';
   const is_published = formData.get('is_published') === 'on';
 
+  // Homepage headline travels in the same form (slug `homepage-hero`).
+  const heroRaw = ((formData.get('hero') as string | null) || '').trim();
+  const heroLines = heroRaw
+    .split('\n')
+    .map((l) => l.trim().slice(0, HERO_MAX_LINE_LENGTH))
+    .filter(Boolean)
+    .slice(0, HERO_MAX_LINES);
+  if (heroLines.length === 0) {
+    return { error: 'The homepage headline needs at least one line of text.' };
+  }
+
   const { error } = await client
     .from('content_blocks')
     .upsert(
@@ -359,6 +371,22 @@ export async function upsertTickerAction(formData: FormData): Promise<AdminResul
       { onConflict: 'slug' },
     );
   if (error) return { error: error.message };
+
+  const { error: heroErr } = await client
+    .from('content_blocks')
+    .upsert(
+      {
+        slug: HERO_SLUG,
+        title: 'Homepage headline',
+        body: heroLines.join('\n'),
+        image_url: null,
+        metadata: {},
+        is_published: true,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: 'slug' },
+    );
+  if (heroErr) return { error: heroErr.message };
 
   revalidatePath('/', 'layout');
   revalidatePath('/admin/content');

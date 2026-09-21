@@ -1,4 +1,4 @@
-import { getTickerConfig, TICKER_THEMES, DEFAULT_TICKER } from '@/lib/ticker';
+import { getTickerConfig, getHeroHeadline, TICKER_THEMES, DEFAULT_TICKER, DEFAULT_HERO } from '@/lib/ticker';
 import { AdminTickerClient } from '@/components/admin/AdminTickerClient';
 
 export const metadata = {
@@ -15,7 +15,7 @@ export const dynamic = 'force-dynamic';
  * within a minute (the storefront caches the ticker for 60s).
  */
 export default async function AdminContentPage() {
-  const config = await getTickerConfig();
+  const [config, hero] = await Promise.all([getTickerConfig(), getHeroHeadline()]);
 
   return (
     <div className="space-y-6">
@@ -38,6 +38,7 @@ export default async function AdminContentPage() {
           swatch: t.swatch,
         }))}
         fallback={DEFAULT_TICKER.messages}
+        initialHero={hero || DEFAULT_HERO}
       />
     </div>
   );

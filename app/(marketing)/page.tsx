@@ -6,6 +6,8 @@ import { ScrollReveal } from '@/components/ui/ScrollReveal';
 import { getProducts } from '@/lib/supabase/queries/products';
 import { getCollections } from '@/lib/supabase/queries/collections';
 import { getCatalogStats } from '@/lib/supabase/queries/stats';
+import { getHeroHeadline, DEFAULT_HERO } from '@/lib/ticker';
+import { HeroHeadline } from '@/components/ui/HeroHeadline';
 import { images } from '@/lib/images';
 import { capitalize, numberToWords } from '@/lib/numberToWords';
 
@@ -31,10 +33,13 @@ export const metadata = {
 };
 
 export default async function HomePage() {
-  const [products, collections, stats] = await Promise.all([
+  const [products, collections, stats, heroRaw] = await Promise.all([
     getProducts(8).catch(() => []),
     getCollections().catch(() => []),
     getCatalogStats().catch(() => ({ productCount: 0, collectionCount: 0, startingPrice: null })),
+    // Admin-editable headline (Ticker Bar tab). Falls back to the classic
+    // default on any failure — the hero is never blank.
+    getHeroHeadline().catch(() => null),
   ]);
   const featuredImage = images.pets.goldenRetriever;
 
@@ -52,20 +57,7 @@ export default async function HomePage() {
               {capitalize(numberToWords(stats.productCount))} keepsake pieces
             </span>
 
-            <h1 className="font-display text-5xl sm:text-6xl lg:text-7xl font-semibold leading-[1.05] tracking-tight mt-8">
-              <span className="block">
-                <span className="hero-word hero-word-1 text-plum-900">Symbolic</span>{' '}
-                <span className="hero-word hero-word-2 plum-gradient-text">jewelry</span>
-              </span>
-              <span className="block mt-2">
-                <span className="hero-word hero-word-3 text-plum-900">for the</span>{' '}
-                <span className="hero-word hero-word-4 text-plum-900">bond</span>
-              </span>
-              <span className="block mt-2">
-                <span className="hero-word hero-word-5 text-ink-700">that</span>{' '}
-                <span className="hero-word hero-word-6 plum-gradient-text">lasts</span>
-              </span>
-            </h1>
+            <HeroHeadline raw={heroRaw ?? DEFAULT_HERO} />
 
             <div className="hero-content mt-10 flex flex-col sm:flex-row items-center justify-center gap-3">
               <MagneticWrap strength={6}>

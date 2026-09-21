@@ -5,6 +5,7 @@ import { useState, useTransition } from 'react';
 import { upsertTickerAction } from '@/lib/admin/actions';
 import type { TickerConfig, TickerTheme } from '@/lib/ticker-config';
 import { CanadianBanner } from '@/components/ui/CanadianBanner';
+import { HeroHeadline } from '@/components/ui/HeroHeadline';
 
 type ThemeOption = { key: string; label: string; swatch: string };
 
@@ -12,10 +13,12 @@ type Props = {
   initialConfig: TickerConfig;
   themes: ThemeOption[];
   fallback: string[];
+  initialHero: string;
 };
 
 const MAX_MESSAGES = 5;
 const MAX_LENGTH = 140;
+const MAX_HERO_LINES = 3;
 
 /**
  * Ticker editor — one screen, one job.
@@ -24,10 +27,11 @@ const MAX_LENGTH = 140;
  * publish toggle, and a live preview that renders the real banner component
  * exactly as shoppers see it before anything is saved.
  */
-export function AdminTickerClient({ initialConfig, themes, fallback }: Props) {
+export function AdminTickerClient({ initialConfig, themes, fallback, initialHero }: Props) {
   const [messages, setMessages] = useState(initialConfig.messages.join('\n'));
   const [theme, setTheme] = useState<TickerTheme>(initialConfig.theme);
   const [published, setPublished] = useState(initialConfig.published);
+  const [hero, setHero] = useState(initialHero);
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -46,6 +50,7 @@ export function AdminTickerClient({ initialConfig, themes, fallback }: Props) {
     const formData = new FormData();
     formData.set('messages', messages);
     formData.set('theme', theme);
+    formData.set('hero', hero);
     if (published) formData.set('is_published', 'on');
 
     startTransition(async () => {
@@ -120,6 +125,35 @@ export function AdminTickerClient({ initialConfig, themes, fallback }: Props) {
                 {t.label}
               </button>
             ))}
+          </div>
+        </div>
+
+        {/* Homepage headline */}
+        <div className="border-t border-cream-200 pt-6">
+          <div className="mb-1.5 flex items-baseline justify-between">
+            <label htmlFor="hero" className="block text-sm font-medium text-ink-700">
+              Homepage headline
+            </label>
+            <span className={`text-xs ${hero.split('\n').filter((l) => l.trim()).length > MAX_HERO_LINES ? 'text-red-600' : 'text-ink-400'}`}>
+              up to {MAX_HERO_LINES} lines
+            </span>
+          </div>
+          <textarea
+            id="hero"
+            value={hero}
+            onChange={(e) => setHero(e.target.value)}
+            rows={3}
+            placeholder={'Symbolic "jewelry"\nfor the bond\nthat "lasts"'}
+            className="input-base resize-y"
+          />
+          <p className="mt-1.5 text-xs text-ink-500">
+            One line = one row of the big headline. Put words in{' '}
+            <span className="font-mono text-plum-700">&ldquo;quotes&rdquo;</span> to make them purple — e.g.{' '}
+            <span className="font-mono text-plum-700">that &quot;lasts&quot;</span>. The font stays exactly as it is.
+          </p>
+          {/* Live preview — the real headline component with the unsaved text */}
+          <div className="mt-3 overflow-x-auto rounded-lg border border-cream-300 bg-cream-50 px-4 py-8 text-center">
+            <HeroHeadline raw={hero} />
           </div>
         </div>
 
