@@ -42,6 +42,8 @@ export default async function AdminHistoryPage() {
           shipping_address: o.shipping_address || null,
           payment_method: o.payment_method || null,
           payment_status: o.payment_status || 'pending',
+          tracking_number: o.tracking_number || null,
+          tracking_carrier: o.tracking_carrier || null,
           updated_at: o.updated_at || o.created_at,
           created_at: o.created_at,
           items: (o.items || []).map((it: any) => ({

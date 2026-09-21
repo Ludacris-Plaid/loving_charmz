@@ -15,6 +15,7 @@ import { getSiteUrl } from '@/lib/payments/site';
 import { CURRENCY, computeOrderTotals, formatMoney, lineUnitPrice, type DiscountInfo } from './pricing';
 import { taxRegionForAddress } from './tax';
 import { readGuestCartToken } from '@/lib/cart/guest';
+import { captureSubscriberEmail } from '@/lib/subscribers/capture';
 import { validateDiscountCode } from './discount';
 
 export type CheckoutResult = { error?: string; orderId?: string; redirectUrl?: string };
@@ -124,6 +125,10 @@ export async function createCheckoutAction(formData: FormData): Promise<Checkout
   if (typeof option === 'string') return { error: option };
 
   const siteUrl = await getSiteUrl();
+
+  // The order's contact email joins the mailing list (guest or member,
+  // best-effort — must never block checkout).
+  await captureSubscriberEmail(email, 'checkout');
 
   const { data: order, error: orderErr } = await admin
     .from('orders')

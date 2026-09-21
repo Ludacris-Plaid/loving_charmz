@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { mergeGuestCartIntoMember } from '@/lib/cart/guest';
+import { captureSubscriberEmail } from '@/lib/subscribers/capture';
 import { SITE_URL } from '@/lib/site';
 
 function safeNext(value: FormDataEntryValue | null) {
@@ -104,6 +105,8 @@ export async function signup(formData: FormData): Promise<{ error?: string }> {
   } catch (e) {
     console.error('[signup] guest cart merge failed', e);
   }
+  // Every signup email joins the mailing list (fire-and-forget; never blocks signup).
+  await captureSubscriberEmail(email, 'signup');
   const next = safeNext(formData.get('next'));
   if (next) redirect(next);
   const userId = signUpData.user?.id;

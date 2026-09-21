@@ -114,7 +114,7 @@ function AddressBlock({ address }: { address: ShippingAddress }) {
 
 /* ── Order detail modal ──────────────────────────────────────────────── */
 
-function OrderModal({
+export function OrderModal({
   order,
   statusOptions,
   onClose,

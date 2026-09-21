@@ -3,6 +3,7 @@
 import { useState, useTransition, useCallback } from 'react';
 import { deleteHistoryOrderAction, deleteAllHistoryAction } from '@/lib/admin/actions';
 import { formatDate } from '@/lib/admin/analytics/format';
+import { OrderModal } from './AdminOrdersTable';
 
 type OrderItem = {
   id: string;
@@ -36,6 +37,8 @@ type Order = {
   shipping_address: ShippingAddress;
   payment_method: string | null;
   payment_status: string;
+  tracking_number: string | null;
+  tracking_carrier: string | null;
   updated_at: string;
   created_at: string;
   items: OrderItem[];
@@ -136,7 +139,9 @@ function downloadFile(content: string, filename: string, mime: string): void {
 const DELETE_ALL_PHRASE = 'DELETE HISTORY';
 
 export function AdminHistoryTable({ orders }: Props) {
+  const [viewingId, setViewingId] = useState<string | null>(null);
   const [data, setData] = useState(orders);
+  const viewingOrder = data.find((o) => o.id === viewingId) || null;
   const [pending, startTransition] = useTransition();
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [confirmingDeleteAll, setConfirmingDeleteAll] = useState(false);
@@ -271,7 +276,13 @@ export function AdminHistoryTable({ orders }: Props) {
                     {itemCount} item{itemCount !== 1 ? 's' : ''}
                   </td>
                   <td className="px-4 py-3 font-medium">${order.total.toFixed(2)}</td>
-                  <td className="px-4 py-3 text-right sticky right-0 bg-white z-10">
+                  <td className="px-4 py-3 text-right sticky right-0 bg-white z-10 space-x-2 whitespace-nowrap">
+                    <button
+                      onClick={() => setViewingId(order.id)}
+                      className="rounded-pill px-4 py-1.5 text-xs font-medium uppercase tracking-wider bg-plum-700 text-cream-50 hover:bg-plum-900 motion-base"
+                    >
+                      View
+                    </button>
                     <button
                       onClick={() => handleDelete(order.id)}
                       disabled={isDeleting || pending}
@@ -292,6 +303,14 @@ export function AdminHistoryTable({ orders }: Props) {
       <p className="text-xs text-ink-400">
         {data.length} order{data.length !== 1 ? 's' : ''} in history
       </p>
+
+      {viewingOrder && (
+        <OrderModal
+          order={viewingOrder}
+          statusOptions={[]}
+          onClose={() => setViewingId(null)}
+        />
+      )}
     </div>
   );
 }

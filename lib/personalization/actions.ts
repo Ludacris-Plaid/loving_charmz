@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
+import { captureSubscriberEmail } from '@/lib/subscribers/capture';
 
 export type PersonalizationResult = { error?: string; success?: boolean; id?: string };
 
@@ -47,6 +48,9 @@ export async function createPersonalizationRequestAction(formData: FormData): Pr
     .single();
 
   if (error) return { error: error.message };
+
+  // Custom-order requests double as mailing-list signups (best-effort).
+  await captureSubscriberEmail(user.email, 'custom_order');
 
   revalidatePath('/account/custom-orders');
   revalidatePath('/admin/personalization');

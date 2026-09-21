@@ -2,7 +2,7 @@ import { getTickerConfig, TICKER_THEMES, DEFAULT_TICKER } from '@/lib/ticker';
 import { AdminTickerClient } from '@/components/admin/AdminTickerClient';
 
 export const metadata = {
-  title: 'Admin · Content — Loving Charmz',
+  title: 'Admin · Ticker Bar — Loving Charmz',
 };
 
 export const dynamic = 'force-dynamic';

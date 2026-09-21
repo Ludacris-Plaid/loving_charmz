@@ -157,7 +157,15 @@ export function AdminProductsClient({ initialProducts }: Props) {
                       <span className="ml-1 badge-plum">Custom</span>
                     )}
                   </td>
-                  <td className="px-4 py-3 text-right space-x-2">
+                  <td className="px-4 py-3 text-right space-x-2 whitespace-nowrap">
+                    <a
+                      href={`/products/${p.slug}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs font-medium uppercase tracking-wider text-ink-600 hover:text-plum-700 motion-base"
+                    >
+                      View ↗
+                    </a>
                     <button
                       onClick={() => startEdit(p)}
                       className="text-xs font-medium uppercase tracking-wider text-plum-700 hover:text-plum-900 motion-base"

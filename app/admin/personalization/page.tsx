@@ -4,7 +4,7 @@ import { redirect } from 'next/navigation';
 import { getSession } from '@/components/admin/AdminGuard';
 
 export const metadata = {
-  title: 'Admin · Personalization — Loving Charmz',
+  title: 'Admin · Custom Orders — Loving Charmz',
 };
 
 export const dynamic = 'force-dynamic';
@@ -28,7 +28,7 @@ export default async function AdminPersonalizationPage() {
     <div className="space-y-6">
       <div>
         <span className="badge-plum">Custom</span>
-        <h1 className="font-display text-3xl font-semibold text-plum-900 mt-3">Personalization requests</h1>
+        <h1 className="font-display text-3xl font-semibold text-plum-900 mt-3">Custom order requests</h1>
         <p className="text-sm text-ink-600 mt-1">Triage, quote, and progress custom orders.</p>
       </div>
       <AdminPersonalizationClient
