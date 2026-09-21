@@ -1,4 +1,5 @@
 import { createAdminClient } from '@/lib/supabase/admin';
+import { RecentErrors } from '@/components/admin/RecentErrors';
 
 export const metadata = {
   title: 'Monitoring — Loving Charmz Admin',
@@ -87,35 +88,7 @@ export default async function MonitoringPage() {
       {/* Recent errors */}
       <div className="surface-card p-4">
         <p className="text-xs font-bold uppercase tracking-widest text-ink-400 mb-3">Recent errors</p>
-        {(!errors || errors.length === 0) ? (
-          <p className="text-sm text-ink-500">No errors recorded. 🎉</p>
-        ) : (
-          <div className="space-y-3">
-            {errors.map((err: any) => (
-              <div key={err.id} className="rounded-lg border border-red-200 bg-red-50 p-3">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium text-red-800 truncate">{err.message}</p>
-                    {err.path && (
-                      <p className="text-xs text-red-600 font-mono mt-0.5">{err.path}</p>
-                    )}
-                    {err.stack && (
-                      <pre className="text-xs text-red-600 mt-2 overflow-x-auto whitespace-pre-wrap max-h-24 overflow-y-auto">
-                        {err.stack}
-                      </pre>
-                    )}
-                  </div>
-                  <div className="shrink-0 text-right">
-                    <span className="badge-soft text-xs">{err.source}</span>
-                    <p className="text-xs text-ink-400 mt-1">
-                      {new Date(err.created_at).toLocaleString()}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
+        <RecentErrors errors={(errors || []) as any} />
       </div>
     </div>
   );
