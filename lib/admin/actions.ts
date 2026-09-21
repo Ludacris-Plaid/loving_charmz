@@ -462,6 +462,32 @@ export async function sendShippingNotificationAction(
 }
 
 /* ------------------------------------------------------------------ */
+/*  Customers — private admin notes                                     */
+/* ------------------------------------------------------------------ */
+
+export async function updateCustomerNotesAction(
+  customerId: string,
+  notes: string,
+): Promise<AdminResult> {
+  const guard = await getAdminClient();
+  if (guard.kind === 'error') return { error: guard.error };
+  const client = guard.client;
+
+  // Notes live in a dedicated admin-only table (00019): profiles RLS lets a
+  // customer update their own row, so the notes must not live there.
+  const { error } = await client
+    .from('customer_admin_notes')
+    .upsert(
+      { user_id: customerId, notes: notes.slice(0, 2000), updated_at: new Date().toISOString() },
+      { onConflict: 'user_id' }
+    );
+  if (error) return { error: error.message };
+
+  revalidatePath('/admin/customers');
+  return { success: true };
+}
+
+/* ------------------------------------------------------------------ */
 /*  Shipping — tracking number                                          */
 /* ------------------------------------------------------------------ */
 

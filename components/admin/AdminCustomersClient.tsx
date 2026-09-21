@@ -1,7 +1,8 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useTransition } from 'react';
 import { formatDate } from '@/lib/admin/analytics/format';
+import { updateCustomerNotesAction } from '@/lib/admin/actions';
 import { OrderModal } from './AdminOrdersTable';
 
 type OrderItem = {
@@ -55,6 +56,7 @@ type Customer = {
   last_sign_in_at: string | null;
   is_subscriber: boolean;
   custom_order_count: number;
+  admin_notes: string | null;
 };
 
 type Props = {
@@ -82,6 +84,18 @@ function CustomerModal({
 }) {
   const [viewingOrderId, setViewingOrderId] = useState<string | null>(null);
   const viewingOrder = orders.find((o) => o.id === viewingOrderId) || null;
+  const [notes, setNotes] = useState(customer.admin_notes || '');
+  const [notesState, setNotesState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const [, startTransition] = useTransition();
+
+  const saveNotes = () => {
+    setNotesState('saving');
+    startTransition(async () => {
+      const res = await updateCustomerNotesAction(customer.id, notes);
+      setNotesState(res.error ? 'error' : 'saved');
+      if (!res.error) setTimeout(() => setNotesState('idle'), 2000);
+    });
+  };
 
   const stats = useMemo(() => {
     const totalSpent = orders.reduce((sum, o) => sum + o.total, 0);
@@ -165,6 +179,39 @@ function CustomerModal({
                 </p>
               )}
             </div>
+          </div>
+
+          {/* Private admin notes */}
+          <div className="rounded-xl border border-cream-200 bg-white p-4">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-xs font-bold uppercase tracking-widest text-ink-400">
+                Private notes
+              </p>
+              <button
+                onClick={saveNotes}
+                disabled={notesState === 'saving' || notes === (customer.admin_notes || '')}
+                className="rounded-pill px-4 py-1.5 text-xs font-medium uppercase tracking-wider bg-plum-700 text-cream-50 hover:bg-plum-900 motion-base disabled:opacity-40"
+                type="button"
+              >
+                {notesState === 'saving' ? 'Saving…' : notesState === 'saved' ? '✓ Saved' : 'Save notes'}
+              </button>
+            </div>
+            <textarea
+              value={notes}
+              onChange={(e) => {
+                setNotes(e.target.value);
+                setNotesState('idle');
+              }}
+              rows={3}
+              maxLength={2000}
+              placeholder="Private reminders — gift deadlines, colour preferences, anything worth remembering. The customer never sees these."
+              className="w-full rounded-lg border border-cream-300 bg-cream-50 px-3 py-2 text-sm text-ink-800 placeholder:text-ink-400 focus:outline-none focus:ring-2 focus:ring-plum-500 resize-y"
+            />
+            {notesState === 'error' && (
+              <p className="text-xs text-red-600 mt-1" role="alert">
+                Could not save — please try again.
+              </p>
+            )}
           </div>
 
           {/* Purchase history */}

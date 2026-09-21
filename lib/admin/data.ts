@@ -41,6 +41,7 @@ export type AdminCustomer = {
   last_sign_in_at: string | null;
   is_subscriber: boolean;
   custom_order_count: number;
+  admin_notes: string | null;
 };
 
 export async function getAdminCustomers(): Promise<AdminCustomer[]> {
@@ -50,11 +51,13 @@ export async function getAdminCustomers(): Promise<AdminCustomer[]> {
     { data: users },
     { data: customOrders },
     { data: subscribers },
+    { data: adminNotes },
   ] = await Promise.all([
     admin.from('profiles').select('*').order('created_at', { ascending: false }),
     admin.auth.admin.listUsers(),
     admin.from('personalization_requests').select('user_id'),
     admin.from('subscribers').select('email'),
+    admin.from('customer_admin_notes').select('user_id, notes'),
   ]);
   if (profilesErr) throw new Error(profilesErr.message);
 
@@ -81,6 +84,11 @@ export async function getAdminCustomers(): Promise<AdminCustomer[]> {
     (subscribers || []).map((s) => (s.email || '').toLowerCase())
   );
 
+  // Private admin notes (customer_admin_notes, 00019).
+  const notesByUser = new Map(
+    (adminNotes || []).map((n) => [n.user_id, n.notes as string])
+  );
+
   return (profiles || []).map((p: any) => ({
     id: p.id,
     username: p.username,
@@ -92,6 +100,7 @@ export async function getAdminCustomers(): Promise<AdminCustomer[]> {
     last_sign_in_at: users?.users?.find((u) => u.id === p.id)?.last_sign_in_at || null,
     is_subscriber: Boolean(p.email && subscriberEmails.has(p.email.toLowerCase())),
     custom_order_count: customCounts[p.id] || 0,
+    admin_notes: notesByUser.get(p.id) || null,
   }));
 }
 
