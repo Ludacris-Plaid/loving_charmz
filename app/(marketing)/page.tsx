@@ -6,7 +6,7 @@ import { ScrollReveal } from '@/components/ui/ScrollReveal';
 import { getProducts } from '@/lib/supabase/queries/products';
 import { getCollections } from '@/lib/supabase/queries/collections';
 import { getCatalogStats } from '@/lib/supabase/queries/stats';
-import { getHeroHeadline, DEFAULT_HERO } from '@/lib/ticker';
+import { getHeroHeadline, getHeroSubheadline, DEFAULT_HERO, DEFAULT_HERO_SUBHEADLINE } from '@/lib/ticker';
 import { HeroHeadline } from '@/components/ui/HeroHeadline';
 import { images } from '@/lib/images';
 import { capitalize, numberToWords } from '@/lib/numberToWords';
@@ -33,13 +33,14 @@ export const metadata = {
 };
 
 export default async function HomePage() {
-  const [products, collections, stats, heroRaw] = await Promise.all([
+  const [products, collections, stats, heroRaw, heroSub] = await Promise.all([
     getProducts(8).catch(() => []),
     getCollections().catch(() => []),
     getCatalogStats().catch(() => ({ productCount: 0, collectionCount: 0, startingPrice: null })),
-    // Admin-editable headline (Ticker Bar tab). Falls back to the classic
-    // default on any failure — the hero is never blank.
+    // Admin-editable hero text (Homepage Design tab). Falls back to the
+    // classic defaults on any failure — the hero is never blank.
     getHeroHeadline().catch(() => null),
+    getHeroSubheadline().catch(() => null),
   ]);
   const featuredImage = images.pets.goldenRetriever;
 
@@ -58,6 +59,12 @@ export default async function HomePage() {
             </span>
 
             <HeroHeadline raw={heroRaw ?? DEFAULT_HERO} />
+
+            {(heroSub ?? DEFAULT_HERO_SUBHEADLINE) && (
+              <p className="hero-content mt-6 max-w-xl mx-auto text-center text-sm sm:text-base text-ink-600 leading-relaxed">
+                {heroSub ?? DEFAULT_HERO_SUBHEADLINE}
+              </p>
+            )}
 
             <div className="hero-content mt-10 flex flex-col sm:flex-row items-center justify-center gap-3">
               <MagneticWrap strength={6}>

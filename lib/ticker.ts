@@ -5,6 +5,7 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import {
   DEFAULT_TICKER,
   DEFAULT_HERO,
+  DEFAULT_HERO_SUBHEADLINE,
   TICKER_SLUG,
   HERO_SLUG,
   normaliseMessages,
@@ -74,5 +75,33 @@ export const getHeroHeadline = unstable_cache(
     }
   },
   ['hero-headline'],
+  { revalidate: 60, tags: ['hero'] },
+);
+
+/**
+ * Reads the hero subheadline (the quiet paragraph under the headline)
+ * from the same `homepage-hero` row's metadata. Empty string means mom
+ * cleared it — the paragraph simply doesn't render. Falls back to the
+ * default line on any failure.
+ */
+export const getHeroSubheadline = unstable_cache(
+  async (): Promise<string> => {
+    try {
+      const admin = createAdminClient();
+      const { data, error } = await admin
+        .from('content_blocks')
+        .select('metadata')
+        .eq('slug', HERO_SLUG)
+        .maybeSingle();
+
+      if (error || !data) return DEFAULT_HERO_SUBHEADLINE;
+      const metadata = (data.metadata && typeof data.metadata === 'object' ? data.metadata : {}) as Record<string, unknown>;
+      if (typeof metadata.subheadline !== 'string') return DEFAULT_HERO_SUBHEADLINE;
+      return metadata.subheadline.trim().slice(0, 220);
+    } catch {
+      return DEFAULT_HERO_SUBHEADLINE;
+    }
+  },
+  ['hero-subheadline'],
   { revalidate: 60, tags: ['hero'] },
 );

@@ -14,11 +14,13 @@ type Props = {
   themes: ThemeOption[];
   fallback: string[];
   initialHero: string;
+  initialSubheadline: string;
 };
 
 const MAX_MESSAGES = 5;
 const MAX_LENGTH = 140;
 const MAX_HERO_LINES = 3;
+const SUB_MAX_LENGTH = 220;
 
 /**
  * Ticker editor — one screen, one job.
@@ -27,11 +29,12 @@ const MAX_HERO_LINES = 3;
  * publish toggle, and a live preview that renders the real banner component
  * exactly as shoppers see it before anything is saved.
  */
-export function AdminTickerClient({ initialConfig, themes, fallback, initialHero }: Props) {
+export function AdminTickerClient({ initialConfig, themes, fallback, initialHero, initialSubheadline }: Props) {
   const [messages, setMessages] = useState(initialConfig.messages.join('\n'));
   const [theme, setTheme] = useState<TickerTheme>(initialConfig.theme);
   const [published, setPublished] = useState(initialConfig.published);
   const [hero, setHero] = useState(initialHero);
+  const [subheadline, setSubheadline] = useState(initialSubheadline);
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -51,6 +54,7 @@ export function AdminTickerClient({ initialConfig, themes, fallback, initialHero
     formData.set('messages', messages);
     formData.set('theme', theme);
     formData.set('hero', hero);
+    formData.set('subheadline', subheadline);
     if (published) formData.set('is_published', 'on');
 
     startTransition(async () => {
@@ -154,6 +158,33 @@ export function AdminTickerClient({ initialConfig, themes, fallback, initialHero
           {/* Live preview — the real headline component with the unsaved text */}
           <div className="mt-3 overflow-x-auto rounded-lg border border-cream-300 bg-cream-50 px-4 py-8 text-center">
             <HeroHeadline raw={hero} />
+            {subheadline.trim() && (
+              <p className="mt-6 max-w-xl mx-auto text-sm sm:text-base text-ink-600 leading-relaxed">
+                {subheadline.trim()}
+              </p>
+            )}
+          </div>
+
+          {/* Subheadline */}
+          <div className="mt-6">
+            <div className="mb-1.5 flex items-baseline justify-between">
+              <label htmlFor="subheadline" className="block text-sm font-medium text-ink-700">
+                Subheadline — the quiet line under the headline
+              </label>
+              <span className="text-xs text-ink-400">optional</span>
+            </div>
+            <textarea
+              id="subheadline"
+              value={subheadline}
+              onChange={(e) => setSubheadline(e.target.value)}
+              rows={2}
+              maxLength={SUB_MAX_LENGTH}
+              placeholder="Handcrafted symbolic jewelry for women who carry what matters…"
+              className="input-base resize-y"
+            />
+            <p className="mt-1.5 text-xs text-ink-500">
+              Plain text — no quotes markup here. Clear it entirely to hide the paragraph and let the headline speak alone.
+            </p>
           </div>
         </div>
 

@@ -8,7 +8,7 @@ import {
   bootstrapCharmVariants,
   bootstrapJewelryVariants,
 } from '@/lib/admin/variant-bootstrap';
-import { HERO_MAX_LINES, HERO_MAX_LINE_LENGTH, HERO_SLUG } from '@/lib/ticker-config';
+import { HERO_MAX_LINES, HERO_MAX_LINE_LENGTH, HERO_SLUG, HERO_SUB_MAX_LENGTH } from '@/lib/ticker-config';
 
 export type AdminResult = { error?: string; success?: boolean; id?: string };
 
@@ -345,7 +345,7 @@ export async function upsertTickerAction(formData: FormData): Promise<AdminResul
   const theme = (TICKER_THEMES as readonly string[]).includes(themeRaw) ? themeRaw : 'plum';
   const is_published = formData.get('is_published') === 'on';
 
-  // Homepage headline travels in the same form (slug `homepage-hero`).
+  // Homepage headline + subheadline travel in the same form (slug `homepage-hero`).
   const heroRaw = ((formData.get('hero') as string | null) || '').trim();
   const heroLines = heroRaw
     .split('\n')
@@ -355,6 +355,9 @@ export async function upsertTickerAction(formData: FormData): Promise<AdminResul
   if (heroLines.length === 0) {
     return { error: 'The homepage headline needs at least one line of text.' };
   }
+  const subheadline = ((formData.get('subheadline') as string | null) || '')
+    .trim()
+    .slice(0, HERO_SUB_MAX_LENGTH);
 
   const { error } = await client
     .from('content_blocks')
@@ -380,7 +383,7 @@ export async function upsertTickerAction(formData: FormData): Promise<AdminResul
         title: 'Homepage headline',
         body: heroLines.join('\n'),
         image_url: null,
-        metadata: {},
+        metadata: { subheadline },
         is_published: true,
         updated_at: new Date().toISOString(),
       },

@@ -81,6 +81,15 @@ export const HERO_SLUG = 'homepage-hero';
  */
 export const DEFAULT_HERO = 'Symbolic "jewelry"\nfor the bond\nthat "lasts"';
 
+/**
+ * The quiet paragraph under the hero headline. Empty string = hidden —
+ * mom can clear it if she wants the headline to speak alone.
+ */
+export const DEFAULT_HERO_SUBHEADLINE =
+  'Handcrafted symbolic jewelry for women who carry what matters — love, memory, and the bond with the pets who shaped us.';
+
+export const HERO_SUB_MAX_LENGTH = 220;
+
 export type HeroWord = { text: string; purple: boolean };
 export type HeroLine = HeroWord[];
 
