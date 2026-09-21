@@ -1,8 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
 
-const getUser = vi.fn();
-const insert = vi.fn();
-
 vi.mock('@/lib/supabase/server', () => ({
   createClient: () => ({
     auth: { getUser: () => ({ data: { user: null } }) },
@@ -10,6 +7,38 @@ vi.mock('@/lib/supabase/server', () => ({
 }));
 
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
+
+vi.mock('next/headers', () => ({
+  cookies: async () => ({
+    get: () => ({ value: undefined }),
+    set: vi.fn(),
+  }),
+}));
+
+vi.mock('@/lib/cart/guest', () => ({
+  ensureGuestCartToken: async () => 'guest-token-test',
+  readGuestCartToken: async () => 'guest-token-test',
+  findGuestCartByToken: async () => ({ id: 'guest-cart' }),
+  getOrCreateGuestCart: async () => ({ id: 'guest-cart' }),
+}));
+
+vi.mock('@/lib/supabase/admin', () => ({
+  createAdminClient: () => ({
+    from: () => {
+      const chain: any = {
+        select: () => chain,
+        insert: () => chain,
+        update: () => chain,
+        delete: () => chain,
+        eq: () => chain,
+        is: () => chain,
+        maybeSingle: async () => ({ data: null, error: null }),
+        single: async () => ({ data: { id: 'cart-item-1', quantity: 1 }, error: null }),
+      };
+      return chain;
+    },
+  }),
+}));
 
 describe('createPersonalizationRequestAction', () => {
   it('returns an error when not authenticated', async () => {
@@ -41,9 +70,9 @@ describe('updateEmailPreferencesAction', () => {
 });
 
 describe('addToCartAction', () => {
-  it('returns an error when not authenticated', async () => {
+  it('adds an item to the guest cart when not authenticated', async () => {
     const { addToCartAction } = await import('@/lib/cart/actions');
     const res = await addToCartAction('prod-1', null, 1);
-    expect(res.error).toMatch(/sign in/i);
+    expect(res.success).toBe(true);
   });
 });

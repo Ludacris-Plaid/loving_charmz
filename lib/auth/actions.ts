@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { mergeGuestCartIntoMember } from '@/lib/cart/guest';
 import { SITE_URL } from '@/lib/site';
 
 function safeNext(value: FormDataEntryValue | null) {
@@ -96,6 +97,13 @@ export async function signup(formData: FormData): Promise<{ error?: string }> {
   }
 
   revalidatePath('/', 'layout');
+  // Any guest cart built before signing up is folded into the new account.
+  try {
+    const userId = signUpData.user?.id;
+    if (userId) await mergeGuestCartIntoMember(userId);
+  } catch (e) {
+    console.error('[signup] guest cart merge failed', e);
+  }
   const next = safeNext(formData.get('next'));
   if (next) redirect(next);
   const userId = signUpData.user?.id;
@@ -118,6 +126,15 @@ export async function login(formData: FormData): Promise<void> {
   }
 
   revalidatePath('/', 'layout');
+  // Absorb the guest cart built while signed out into the member cart.
+  const mergedUserId = signInData.user?.id ?? null;
+  if (mergedUserId) {
+    try {
+      await mergeGuestCartIntoMember(mergedUserId);
+    } catch (e) {
+      console.error('[login] guest cart merge failed', e);
+    }
+  }
   const next = safeNext(formData.get('next'));
   if (next) redirect(next);
   const userId = signInData.user?.id ?? '';

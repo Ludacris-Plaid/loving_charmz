@@ -3,6 +3,12 @@
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 import { getCartCount as countServer } from '@/lib/cart/server';
+import {
+  ensureGuestCartToken,
+  findGuestCartByToken,
+  getOrCreateGuestCart,
+  readGuestCartToken,
+} from '@/lib/cart/guest';
 
 export type CartActionResult = { error?: string; success?: boolean; count?: number };
 
@@ -23,35 +29,53 @@ async function getOrCreateCart(supabase: Awaited<ReturnType<typeof createClient>
   return created;
 }
 
+/**
+ * Resolves the actor's cart: the member cart when signed in, otherwise the
+ * guest cart behind the cookie token (created on demand — Server Actions may
+ * set cookies). Returns null only when the caller has no cart at all.
+ */
+async function resolveCart(): Promise<
+  { kind: 'member'; cartId: string } | { kind: 'guest'; cartId: string } | null
+> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (user) {
+    const cart = await getOrCreateCart(supabase, user.id);
+    return { kind: 'member', cartId: cart.id };
+  }
+  const token = await ensureGuestCartToken();
+  const cart = await getOrCreateGuestCart(token);
+  return { kind: 'guest', cartId: cart.id };
+}
+
 export async function addToCartAction(
   productId: string,
   variantId: string | null,
   quantity: number = 1
 ): Promise<CartActionResult> {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return { error: 'Please sign in to add items to your cart.' };
+  const resolved = await resolveCart();
+  if (!resolved) return { error: 'Please sign in to add items to your cart.' };
 
-  const cart = await getOrCreateCart(supabase, user.id);
+  const admin = (await import('@/lib/supabase/admin')).createAdminClient();
 
-  const { data: existing } = await supabase
+  const { data: existing } = await admin
     .from('cart_items')
     .select('*')
-    .eq('cart_id', cart.id)
+    .eq('cart_id', resolved.cartId)
     .eq('product_id', productId)
     .eq('variant_id', variantId)
     .maybeSingle();
 
   if (existing) {
-    const { error } = await supabase
+    const { error } = await admin
       .from('cart_items')
       .update({ quantity: existing.quantity + quantity })
       .eq('id', existing.id);
     if (error) return { error: error.message };
   } else {
-    const { error } = await supabase
+    const { error } = await admin
       .from('cart_items')
-      .insert({ cart_id: cart.id, product_id: productId, variant_id: variantId, quantity });
+      .insert({ cart_id: resolved.cartId, product_id: productId, variant_id: variantId, quantity });
     if (error) return { error: error.message };
   }
 
@@ -61,15 +85,23 @@ export async function addToCartAction(
 }
 
 export async function updateCartItemAction(itemId: string, quantity: number): Promise<CartActionResult> {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return { error: 'Not authenticated' };
+  const resolved = await resolveCart();
+  if (!resolved) return { error: 'Not authenticated' };
+  const admin = (await import('@/lib/supabase/admin')).createAdminClient();
+
+  // Ownership check: the row must belong to the caller's cart.
+  const { data: item } = await admin
+    .from('cart_items')
+    .select('cart_id')
+    .eq('id', itemId)
+    .maybeSingle();
+  if (!item || item.cart_id !== resolved.cartId) return { error: 'Item not found in your cart.' };
 
   if (quantity <= 0) {
-    const { error } = await supabase.from('cart_items').delete().eq('id', itemId);
+    const { error } = await admin.from('cart_items').delete().eq('id', itemId);
     if (error) return { error: error.message };
   } else {
-    const { error } = await supabase.from('cart_items').update({ quantity }).eq('id', itemId);
+    const { error } = await admin.from('cart_items').update({ quantity }).eq('id', itemId);
     if (error) return { error: error.message };
   }
   revalidatePath('/cart');
@@ -78,11 +110,18 @@ export async function updateCartItemAction(itemId: string, quantity: number): Pr
 }
 
 export async function removeFromCartAction(itemId: string): Promise<CartActionResult> {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return { error: 'Not authenticated' };
+  const resolved = await resolveCart();
+  if (!resolved) return { error: 'Not authenticated' };
+  const admin = (await import('@/lib/supabase/admin')).createAdminClient();
 
-  const { error } = await supabase.from('cart_items').delete().eq('id', itemId);
+  const { data: item } = await admin
+    .from('cart_items')
+    .select('cart_id')
+    .eq('id', itemId)
+    .maybeSingle();
+  if (!item || item.cart_id !== resolved.cartId) return { error: 'Item not found in your cart.' };
+
+  const { error } = await admin.from('cart_items').delete().eq('id', itemId);
   if (error) return { error: error.message };
   revalidatePath('/cart');
   revalidatePath('/', 'layout');
@@ -90,12 +129,11 @@ export async function removeFromCartAction(itemId: string): Promise<CartActionRe
 }
 
 export async function clearCartAction(): Promise<CartActionResult> {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return { error: 'Not authenticated' };
+  const resolved = await resolveCart();
+  if (!resolved) return { error: 'Not authenticated' };
+  const admin = (await import('@/lib/supabase/admin')).createAdminClient();
 
-  const cart = await getOrCreateCart(supabase, user.id);
-  const { error } = await supabase.from('cart_items').delete().eq('cart_id', cart.id);
+  const { error } = await admin.from('cart_items').delete().eq('cart_id', resolved.cartId);
   if (error) return { error: error.message };
   revalidatePath('/cart');
   revalidatePath('/', 'layout');
@@ -129,4 +167,21 @@ export async function toggleWishlistAction(productId: string): Promise<CartActio
     revalidatePath('/', 'layout');
     return { success: true, wished: true };
   }
+}
+
+/** Count helper used by the header for both members and guests. */
+export async function currentCartCount(): Promise<number> {
+  const token = await readGuestCartToken();
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (user) return countServer();
+
+  const guestCart = await findGuestCartByToken(token);
+  if (!guestCart) return 0;
+  const admin = (await import('@/lib/supabase/admin')).createAdminClient();
+  const { data: items } = await admin
+    .from('cart_items')
+    .select('quantity')
+    .eq('cart_id', guestCart.id);
+  return (items || []).reduce((sum, i) => sum + Number(i.quantity || 0), 0);
 }

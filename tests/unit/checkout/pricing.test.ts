@@ -13,16 +13,18 @@ describe('computeOrderTotals', () => {
     const totals = computeOrderTotals([{ unitPrice: 40, quantity: 1 }]);
     expect(totals.subtotal).toBe(40);
     expect(totals.shipping).toBe(9.99);
-    expect(totals.tax).toBe(3.2);
-    expect(totals.total).toBe(53.19);
+    expect(totals.tax).toBe(2.0);
+    expect(totals.total).toBe(51.99);
+    expect(totals.taxLabel).toBe('GST');
   });
 
   it('drops shipping above the threshold', () => {
     const totals = computeOrderTotals([{ unitPrice: 60, quantity: 2 }]);
     expect(totals.subtotal).toBe(120);
     expect(totals.shipping).toBe(0);
-    expect(totals.tax).toBe(9.6);
-    expect(totals.total).toBe(129.6);
+    expect(totals.tax).toBe(6.0);
+    expect(totals.total).toBe(126.0);
+    expect(totals.taxLabel).toBe('GST');
   });
 
   it('does not round-trip through floats', () => {
@@ -32,7 +34,16 @@ describe('computeOrderTotals', () => {
   });
 
   it('charges nothing for an empty cart', () => {
-    expect(computeOrderTotals([])).toEqual({ subtotal: 0, shipping: 0, tax: 0, discount: 0, total: 0 });
+    expect(computeOrderTotals([])).toEqual({ subtotal: 0, shipping: 0, tax: 0, discount: 0, total: 0, taxLabel: 'GST' });
+  });
+
+  it('uses province-aware tax rates', () => {
+    const totalsAB = computeOrderTotals([{ unitPrice: 100, quantity: 1 }], null, { code: 'AB', name: 'Alberta', rate: 0.05, label: 'GST' });
+    const totalsON = computeOrderTotals([{ unitPrice: 100, quantity: 1 }], null, { code: 'ON', name: 'Ontario', rate: 0.13, label: 'HST' });
+    expect(totalsAB.tax).toBe(5.0);
+    expect(totalsAB.taxLabel).toBe('GST');
+    expect(totalsON.tax).toBe(13.0);
+    expect(totalsON.taxLabel).toBe('HST');
   });
 });
 

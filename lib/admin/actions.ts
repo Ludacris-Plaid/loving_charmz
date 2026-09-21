@@ -428,6 +428,98 @@ export async function sendShippingNotificationAction(
 }
 
 /* ------------------------------------------------------------------ */
+/*  Shipping — tracking number                                          */
+/* ------------------------------------------------------------------ */
+
+export async function shipOrderAction(
+  orderId: string,
+  trackingNumber: string,
+  carrier?: string,
+): Promise<AdminResult> {
+  const guard = await getAdminClient();
+  if (guard.kind === 'error') return { error: guard.error };
+  const client = guard.client;
+  if (!trackingNumber.trim()) return { error: 'Tracking number is required.' };
+  const { error } = await client
+    .from('orders')
+    .update({
+      status: 'shipped',
+      tracking_number: trackingNumber.trim(),
+      tracking_carrier: carrier?.trim() || null,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', orderId);
+  if (error) return { error: error.message };
+  revalidatePath('/admin/orders');
+  revalidatePath('/account/orders');
+  return { success: true };
+}
+
+/* ------------------------------------------------------------------ */
+/*  Refund — Square full refund                                         */
+/* ------------------------------------------------------------------ */
+
+export async function refundOrderAction(orderId: string): Promise<AdminResult> {
+  const guard = await getAdminClient();
+  if (guard.kind === 'error') return { error: guard.error };
+  const client = guard.client;
+
+  // 1. Load the order
+  const { data: order, error: orderErr } = await client
+    .from('orders')
+    .select('id, payment_status, total, payment_method')
+    .eq('id', orderId)
+    .maybeSingle();
+  if (orderErr || !order) return { error: 'Order not found.' };
+  if (order.payment_status !== 'paid') return { error: 'Only paid orders can be refunded.' };
+  if (order.payment_method !== 'card') return { error: 'Only Square card payments can be refunded through the admin. PayPal refunds must be handled in the PayPal dashboard.' };
+
+  // 2. Find the original payment id from the ledger
+  const { findLatestTransaction } = await import('@/lib/payments/ledger');
+  const tx = await findLatestTransaction(orderId, 'square');
+  const paymentId = tx?.provider_data?.payment_id as string | null;
+  if (!paymentId) return { error: 'No Square payment id found for this order.' };
+
+  // 3. Issue the refund via the Square SDK
+  try {
+    const { createSquareRefund } = await import('@/lib/payments/square');
+    const { getSquareConfig } = await import('@/lib/payments/config');
+    const config = getSquareConfig();
+    if (!config) return { error: 'Square is not configured.' };
+    const amountMinor = Math.round(Number(order.total) * 100);
+    const result = await createSquareRefund(config, {
+      paymentId,
+      amountMinor,
+      currency: 'CAD',
+      orderId,
+    });
+    if (!result.refundId) {
+      return { error: `Square refund failed: ${result.status}` };
+    }
+  } catch (e: any) {
+    return { error: `Square refund failed: ${e?.message || 'unknown error'}` };
+  }
+
+  // 4. Mark refunded in the ledger + order
+  const { markPaymentRefunded } = await import('@/lib/payments/ledger');
+  await markPaymentRefunded({
+    orderId,
+    provider: 'square',
+    reason: 'Admin-initiated full refund',
+  });
+
+  await client
+    .from('orders')
+    .update({ status: 'refunded', updated_at: new Date().toISOString() })
+    .eq('id', orderId);
+
+  revalidatePath('/admin/orders');
+  revalidatePath('/account/orders');
+  revalidatePath('/admin/analytics');
+  return { success: true };
+}
+
+/* ------------------------------------------------------------------ */
 /*  History deletion                                                    */
 /* ------------------------------------------------------------------ */
 

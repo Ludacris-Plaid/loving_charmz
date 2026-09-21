@@ -325,3 +325,44 @@ function moneyValue(money: Record<string, unknown>): { value: string; currency: 
 function asRecord(value: unknown): any {
   return value && typeof value === 'object' ? (value as Record<string, any>) : {};
 }
+
+/**
+ * Issues a full refund for a completed Square payment.
+ *
+ * The caller must verify the order exists and is paid before calling — this
+ * function trusts the caller on the amount. Square requires the original
+ * payment id; we store it in `payment_transactions.provider_data.payment_id`
+ * at settlement time.
+ */
+export async function createSquareRefund(
+  config: SquareConfig,
+  params: {
+    paymentId: string;
+    amountMinor: number;
+    currency: string;
+    orderId: string;
+  },
+): Promise<{ refundId: string | null; status: string; raw: unknown }> {
+  const { SquareClient, SquareEnvironment } = await import('square');
+  const client = new SquareClient({
+    token: config.accessToken,
+    environment: config.mode === 'live' ? SquareEnvironment.Production : SquareEnvironment.Sandbox,
+  });
+
+  const response = await client.refunds.refundPayment({
+    idempotencyKey: `lc-refund-${params.orderId}`,
+    paymentId: params.paymentId,
+    amountMoney: {
+      amount: BigInt(params.amountMinor),
+      currency: params.currency as never,
+    },
+    reason: 'Refund initiated by store owner',
+  });
+
+  const refund = response.refund;
+  return {
+    refundId: refund?.id ?? null,
+    status: refund?.status ?? 'UNKNOWN',
+    raw: refund,
+  };
+}

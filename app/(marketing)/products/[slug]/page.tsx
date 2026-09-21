@@ -6,6 +6,7 @@ import { getProductBySlug } from '@/lib/supabase/queries/products';
 import { getCartCount } from '@/lib/cart/server';
 import ProductDetailClient from '@/components/shop/ProductDetailClient';
 import { images } from '@/lib/images';
+import { SITE_URL } from '@/lib/site';
 
 type Props = {
   params: Promise<{ slug: string }>;
@@ -18,6 +19,12 @@ export async function generateMetadata({ params }: Props) {
   return {
     title: `${product.name} — Loving Charmz`,
     description: product.description || product.tagline || '',
+    openGraph: {
+      title: product.name,
+      description: product.description || product.tagline || '',
+      url: `${SITE_URL}/products/${slug}`,
+      images: product.images?.[0] ? [{ url: product.images[0], width: 800, height: 800 }] : [],
+    },
   };
 }
 
@@ -40,13 +47,41 @@ export default async function ProductPage({ params }: Props) {
 
   const imageUrl = product.images?.[0] || images.shop[(product.name.length + product.id.length) % images.shop.length];
 
+  // Product + Offer structured data for Google rich results
+  const structuredData = {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name: product.name,
+    description: product.description || product.tagline || '',
+    image: imageUrl,
+    url: `${SITE_URL}/products/${slug}`,
+    brand: {
+      '@type': 'Brand',
+      name: 'Loving Charmz',
+    },
+    offers: {
+      '@type': 'AggregateOffer',
+      priceCurrency: 'CAD',
+      lowPrice: product.base_price,
+      highPrice: Math.max(product.base_price, ...((variantsData || []).map(v => product.base_price + Number(v.price_adjustment || 0)))),
+      availability: 'https://schema.org/InStock',
+      url: `${SITE_URL}/products/${slug}`,
+    },
+  };
+
   return (
-    <ProductDetailClient
-      product={product}
-      variants={variantsData || []}
-      imageUrl={imageUrl}
-      initialCartCount={cartCount}
-      isLoggedIn={Boolean(user)}
-    />
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+      />
+      <ProductDetailClient
+        product={product}
+        variants={variantsData || []}
+        imageUrl={imageUrl}
+        initialCartCount={cartCount}
+        isLoggedIn={Boolean(user)}
+      />
+    </>
   );
 }

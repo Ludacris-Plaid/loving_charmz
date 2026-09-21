@@ -6,10 +6,11 @@
  * the shopper is charged an amount that does not match the order total.
  */
 
+import { taxRegionForAddress, type TaxRegion } from './tax';
+
 export const CURRENCY = 'CAD';
 export const FREE_SHIPPING_THRESHOLD = 50;
 export const FLAT_SHIPPING_RATE = 9.99;
-export const TAX_RATE = 0.08;
 
 export type PricedLine = {
   unitPrice: number;
@@ -22,6 +23,8 @@ export type OrderTotals = {
   tax: number;
   discount: number;
   total: number;
+  /** "GST", "HST", "GST/PST"… for receipts, emails and summaries. */
+  taxLabel: string;
 };
 
 /** Round to whole cents, avoiding float artifacts like 12.344999999. */
@@ -53,7 +56,18 @@ export type DiscountInfo = {
   value: number;
 };
 
-export function computeOrderTotals(lines: PricedLine[], discount?: DiscountInfo | null): OrderTotals {
+/**
+ * Computes order totals. The tax region comes from the shipping address when
+ * one is known; callers without an address yet (cart, pre-submit estimates)
+ * omit it and get the Alberta default. Tax applies to the discounted
+ * subtotal — the same treatment the CRA expects for point-of-sale discounts.
+ */
+export function computeOrderTotals(
+  lines: PricedLine[],
+  discount?: DiscountInfo | null,
+  taxRegion?: TaxRegion,
+): OrderTotals {
+  const region = taxRegion ?? taxRegionForAddress({ country: 'CA', state: 'AB' });
   const subtotal = roundMoney(
     lines.reduce((sum, line) => sum + Number(line.unitPrice || 0) * Number(line.quantity || 0), 0),
   );
@@ -66,7 +80,7 @@ export function computeOrderTotals(lines: PricedLine[], discount?: DiscountInfo 
       discountAmount = Math.min(roundMoney(discount.value), subtotal);
     }
   }
-  const tax = roundMoney((subtotal - discountAmount) * TAX_RATE);
+  const tax = roundMoney((subtotal - discountAmount) * region.rate);
   const total = roundMoney(subtotal - discountAmount + shipping + tax);
-  return { subtotal, shipping, tax, discount: discountAmount, total };
+  return { subtotal, shipping, tax, discount: discountAmount, total, taxLabel: region.label };
 }

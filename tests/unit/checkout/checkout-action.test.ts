@@ -118,6 +118,9 @@ vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
 vi.mock('next/headers', () => ({
   headers: async () => new Headers({ host: 'shop.test', 'x-forwarded-proto': 'https' }),
 }));
+vi.mock('@/lib/cart/guest', () => ({
+  readGuestCartToken: async () => null,
+}));
 
 const fetchMock = vi.fn();
 
@@ -207,7 +210,7 @@ describe('createCheckoutAction with a configured provider', () => {
       payment_status: 'awaiting_payment',
       subtotal: 60,
       shipping_cost: 0,
-      total: 64.80,
+      total: 63.00,
     });
 
     expect(db.state.orderItems).toHaveLength(1);
@@ -219,7 +222,7 @@ describe('createCheckoutAction with a configured provider', () => {
       provider: 'paypal',
       provider_transaction_id: 'PAYPAL-ORDER-1',
       status: 'requires_action',
-      amount: 64.80,
+      amount: 63.00,
     });
 
     // The cart is not emptied until the payment is actually captured.
@@ -291,16 +294,16 @@ describe('createCheckoutAction with a configured provider', () => {
     expect(result.error).toBeUndefined();
     expect(db.state.orders).toHaveLength(1);
     // Canonical uppercase code stored, discount applied off the $60 subtotal.
-    expect(db.state.orders[0]).toMatchObject({ discount_code: 'WELCOME10', discount: 6 });
+    expect(db.state.orders[0]).toMatchObject({ discount_code: 'WELCOME10', discount: 6, total: 56.70 });
   });
 
-  it('requires a signed-in shopper', async () => {
+  it('rejects guest checkout when there is no cart', async () => {
     db.state.user = null;
 
     const { createCheckoutAction } = await import('@/lib/checkout/actions');
     const result = await createCheckoutAction(checkoutForm());
 
-    expect(result.error).toMatch(/sign in/i);
+    expect(result.error).toMatch(/empty/i);
     expect(db.state.orders).toHaveLength(0);
   });
 

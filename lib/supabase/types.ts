@@ -82,6 +82,8 @@ export interface Order {
   shipping_address: Record<string, unknown> | null;
   payment_method: string | null;
   payment_status: string;
+  tracking_number: string | null;
+  tracking_carrier: string | null;
   created_at: string;
   updated_at: string;
   items?: OrderItem[];

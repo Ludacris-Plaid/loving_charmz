@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useTransition, useCallback, useRef, useEffect } from 'react';
-import { updateOrderStatusAction } from '@/lib/admin/actions';
+import { updateOrderStatusAction, shipOrderAction, refundOrderAction } from '@/lib/admin/actions';
 import { formatDate } from '@/lib/admin/analytics/format';
 
 type OrderItem = {
@@ -36,6 +36,8 @@ type Order = {
   shipping_address: ShippingAddress;
   payment_method: string | null;
   payment_status: string;
+  tracking_number: string | null;
+  tracking_carrier: string | null;
   updated_at: string;
   created_at: string;
   items: OrderItem[];
@@ -126,6 +128,11 @@ function OrderModal({
   const [error, setError] = useState<string | null>(null);
   const [, startTransition] = useTransition();
   const backdropRef = useRef<HTMLDivElement>(null);
+
+  const [trackingInput, setTrackingInput] = useState('');
+  const [carrierInput, setCarrierInput] = useState('');
+  const [shipBusy, setShipBusy] = useState(false);
+  const [refundBusy, setRefundBusy] = useState(false);
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -288,6 +295,61 @@ function OrderModal({
             </dl>
           </div>
 
+          {/* Tracking number */}
+          {currentStatus === 'processing' && (
+            <div className="rounded-xl border border-cream-200 bg-white p-4">
+              <p className="text-xs font-bold uppercase tracking-widest text-ink-400 mb-3">
+                📦 Ship Order
+              </p>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <input
+                  type="text"
+                  placeholder="Tracking number"
+                  value={trackingInput}
+                  onChange={(e) => setTrackingInput(e.target.value)}
+                  className="flex-1 rounded-lg border border-cream-300 bg-cream-50 px-3 py-2 text-sm text-ink-800 placeholder:text-ink-400 focus:outline-none focus:ring-2 focus:ring-plum-500"
+                />
+                <input
+                  type="text"
+                  placeholder="Carrier (optional)"
+                  value={carrierInput}
+                  onChange={(e) => setCarrierInput(e.target.value)}
+                  className="w-40 rounded-lg border border-cream-300 bg-cream-50 px-3 py-2 text-sm text-ink-800 placeholder:text-ink-400 focus:outline-none focus:ring-2 focus:ring-plum-500"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!trackingInput.trim()) return;
+                    setShipBusy(true);
+                    startTransition(async () => {
+                      const res = await shipOrderAction(order.id, trackingInput, carrierInput);
+                      if (res.error) setError(res.error);
+                      else { setCurrentStatus('shipped'); setTrackingInput(''); setCarrierInput(''); }
+                      setShipBusy(false);
+                    });
+                  }}
+                  disabled={shipBusy || !trackingInput.trim()}
+                  className="rounded-pill px-4 py-2 text-xs font-medium uppercase tracking-wider bg-plum-700 text-cream-50 hover:bg-plum-900 motion-base disabled:opacity-50"
+                >
+                  {shipBusy ? 'Shipping...' : 'Ship & Notify'}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Tracking display */}
+          {order.tracking_number && (
+            <div className="rounded-xl border border-mint-200 bg-mint-50 p-4">
+              <p className="text-xs font-bold uppercase tracking-widest text-mint-700 mb-1">
+                Tracking
+              </p>
+              <p className="text-sm text-ink-800">
+                {order.tracking_carrier && <span className="font-medium">{order.tracking_carrier}</span>}
+                {' '}<span className="font-mono">{order.tracking_number}</span>
+              </p>
+            </div>
+          )}
+
           {/* Status controls */}
           <div>
             <p className="text-xs font-bold uppercase tracking-widest text-ink-400 mb-3">
@@ -317,6 +379,35 @@ function OrderModal({
               ))}
             </div>
           </div>
+
+          {/* Refund */}
+          {currentStatus !== 'refunded' && order.payment_status === 'paid' && order.payment_method === 'card' && (
+            <div className="rounded-xl border border-red-200 bg-red-50 p-4">
+              <p className="text-xs font-bold uppercase tracking-widest text-red-600 mb-2">
+                Refund
+              </p>
+              <p className="text-xs text-red-500 mb-3">
+                This will issue a full refund of ${order.total.toFixed(2)} through Square.
+              </p>
+              <button
+                type="button"
+                onClick={() => {
+                  if (!confirm('Issue a full refund for this order?')) return;
+                  setRefundBusy(true);
+                  startTransition(async () => {
+                    const res = await refundOrderAction(order.id);
+                    if (res.error) setError(res.error);
+                    else { setCurrentStatus('refunded'); }
+                    setRefundBusy(false);
+                  });
+                }}
+                disabled={refundBusy}
+                className="rounded-pill px-4 py-2 text-xs font-medium uppercase tracking-wider border border-red-300 bg-white text-red-700 hover:bg-red-100 motion-base disabled:opacity-50"
+              >
+                {refundBusy ? 'Refunding...' : 'Issue Refund'}
+              </button>
+            </div>
+          )}
 
           {/* Timestamps */}
           <div className="flex justify-between text-xs text-ink-400 border-t border-cream-200 pt-4">

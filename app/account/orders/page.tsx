@@ -75,6 +75,13 @@ export default async function OrdersPage() {
                   </p>
                   <p className="font-semibold text-plum-700">${Number(order.total).toFixed(2)}</p>
                 </div>
+                {order.tracking_number && (
+                  <div className="mt-3 rounded-lg bg-mint-50 border border-mint-200 px-3 py-2 text-sm">
+                    <span className="font-medium text-mint-800">Tracking:</span>{' '}
+                    {order.tracking_carrier && <span className="text-ink-700">{order.tracking_carrier} </span>}
+                    <span className="font-mono text-ink-800">{order.tracking_number}</span>
+                  </div>
+                )}
               </li>
             );
           })}

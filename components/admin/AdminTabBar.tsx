@@ -17,6 +17,7 @@ const adminNavItems = [
   { href: '/admin/content', label: 'Content' },
   { href: '/admin/discounts', label: 'Discounts' },
   { href: '/admin/analytics', label: 'Analytics' },
+  { href: '/admin/monitoring', label: 'Errors' },
 ];
 
 export function AdminTabBar() {

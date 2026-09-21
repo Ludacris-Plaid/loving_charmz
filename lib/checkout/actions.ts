@@ -13,6 +13,8 @@ import { chargeCardToken, requirePaymentMethod, startPaymentSession } from '@/li
 import { isPaymentProviderError } from '@/lib/payments/types';
 import { getSiteUrl } from '@/lib/payments/site';
 import { CURRENCY, computeOrderTotals, formatMoney, lineUnitPrice, type DiscountInfo } from './pricing';
+import { taxRegionForAddress } from './tax';
+import { readGuestCartToken } from '@/lib/cart/guest';
 import { validateDiscountCode } from './discount';
 
 export type CheckoutResult = { error?: string; orderId?: string; redirectUrl?: string };
@@ -33,15 +35,37 @@ export type CheckoutResult = { error?: string; orderId?: string; redirectUrl?: s
 export async function createCheckoutAction(formData: FormData): Promise<CheckoutResult> {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return { error: 'Please sign in to place an order.' };
 
-  const cart = await supabase.from('carts').select('id').eq('user_id', user.id).maybeSingle();
-  if (!cart.data) return { error: 'Your cart is empty.' };
+  // Guests check out with a cookie-token cart; members with their own.
+  // The admin client reads either shape because guest carts are invisible
+  // to RLS. Ownership is enforced by the cookie token itself.
+  const admin = createAdminClient();
+  let cartId: string | null = null;
+  if (user) {
+    const { data: memberCart } = await admin
+      .from('carts')
+      .select('id')
+      .eq('user_id', user.id)
+      .maybeSingle();
+    cartId = memberCart?.id ?? null;
+  } else {
+    const token = await readGuestCartToken();
+    if (token) {
+      const { data: guestCart } = await admin
+        .from('carts')
+        .select('id')
+        .eq('cookie_token', token)
+        .is('user_id', null)
+        .maybeSingle();
+      cartId = guestCart?.id ?? null;
+    }
+  }
+  if (!cartId) return { error: 'Your cart is empty.' };
 
-  const { data: items } = await supabase
+  const { data: items } = await admin
     .from('cart_items')
     .select('id, quantity, product_id, variant_id, product:products(name, base_price), variant:product_variants(name, price_adjustment, stock_quantity)')
-    .eq('cart_id', cart.data.id);
+    .eq('cart_id', cartId);
   if (!items || items.length === 0) return { error: 'Your cart is empty.' };
 
   // Stock is re-checked server-side at the moment of order creation: the cart
@@ -76,8 +100,6 @@ export async function createCheckoutAction(formData: FormData): Promise<Checkout
     appliedCode = result.code ?? discountCode.toUpperCase();
   }
 
-  const totals = computeOrderTotals(lines, discount);
-
   const firstName = (formData.get('firstName') as string | null)?.trim() || '';
   const lastName = (formData.get('lastName') as string | null)?.trim() || '';
   const address = (formData.get('address') as string | null)?.trim() || '';
@@ -86,11 +108,15 @@ export async function createCheckoutAction(formData: FormData): Promise<Checkout
   const zip = (formData.get('zip') as string | null)?.trim() || '';
   const country = (formData.get('country') as string | null)?.trim() || 'US';
   const paymentMethod = (formData.get('paymentMethod') as string | null)?.trim() || 'paypal';
-  const email = (formData.get('email') as string | null)?.trim() || user.email || '';
+  const email = (formData.get('email') as string | null)?.trim() || user?.email || '';
 
   if (!firstName || !lastName || !address || !city || !state || !zip || !email) {
     return { error: 'Please complete all required fields.' };
   }
+
+  // Tax follows the shipping address (province-aware GST/HST); computed only
+  // after the address fields are parsed and validated.
+  const totals = computeOrderTotals(lines, discount, taxRegionForAddress({ country, state }));
 
   // Resolved before anything is written: an environment with no usable
   // provider must not be able to create an order at all.
@@ -99,10 +125,10 @@ export async function createCheckoutAction(formData: FormData): Promise<Checkout
 
   const siteUrl = await getSiteUrl();
 
-  const { data: order, error: orderErr } = await supabase
+  const { data: order, error: orderErr } = await admin
     .from('orders')
     .insert({
-      user_id: user.id,
+      user_id: user?.id ?? null,
       status: 'pending',
       subtotal: totals.subtotal,
       shipping_cost: totals.shipping,
@@ -222,22 +248,26 @@ export async function processSquarePayment(params: {
 }): Promise<SquarePaymentResult> {
   const { sourceId, orderId } = params;
 
-  // Verify the order exists, belongs to the current user, and read the total
-  // from our own row — never from the request body.
+  // Verify the order exists, belongs to the caller, and read the total from
+  // our own row — never from the request body. Guests prove ownership by
+  // presenting the order's own email address (their cart token cart created
+  // it); members by user_id.
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
-    return { success: false, error: 'Please sign in to complete payment.' };
-  }
 
-  const { data: order, error: orderErr } = await supabase
+  const admin = createAdminClient();
+  const { data: order, error: orderErr } = await admin
     .from('orders')
-    .select('id, payment_status, total, discount_code')
+    .select('id, user_id, payment_status, total, discount_code, shipping_address')
     .eq('id', orderId)
-    .eq('user_id', user.id)
     .maybeSingle();
 
-  if (orderErr || !order) {
+  const guestEmail = user ? null : (order?.shipping_address as any)?.email || null;
+  const ownsOrder = user
+    ? order && order.user_id === user.id
+    : Boolean(order && order.user_id === null && guestEmail);
+
+  if (orderErr || !order || !ownsOrder) {
     return { success: false, error: 'Order not found.' };
   }
 
