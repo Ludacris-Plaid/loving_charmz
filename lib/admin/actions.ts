@@ -312,21 +312,55 @@ export async function updatePersonalizationAction(id: string, formData: FormData
   return { success: true };
 }
 
-export async function upsertContentBlockAction(formData: FormData): Promise<AdminResult> {
+const TICKER_SLUG = 'ticker';
+const TICKER_THEMES = ['plum', 'plumMint', 'cream', 'rosewood', 'pine'] as const;
+
+/**
+ * Saves the ticker configuration (the scrolling banner under the header).
+ *
+ * Stored in the `content_blocks` row with slug `ticker`: messages as a JSON
+ * array in `metadata.messages`, the colour theme key in `metadata.theme`, and
+ * the master on/off switch in `is_published`. Emojis are first-class — the
+ * body is plain UTF-8 text rendered directly into the banner.
+ */
+export async function upsertTickerAction(formData: FormData): Promise<AdminResult> {
   const guard = await getAdminClient();
   if (guard.kind === 'error') return { error: guard.error };
   const client = guard.client;
-  const slug = (formData.get('slug') as string | null)?.trim();
-  if (!slug) return { error: 'Slug is required' };
-  const title = (formData.get('title') as string | null)?.trim() || null;
-  const body = (formData.get('body') as string | null)?.trim() || null;
-  const image_url = (formData.get('image_url') as string | null)?.trim() || null;
+
+  const raw = (formData.get('messages') as string | null) ?? '';
+  const messages = raw
+    .split('\n')
+    .map((m) => m.trim().slice(0, 140))
+    .filter(Boolean);
+  if (messages.length === 0) {
+    return { error: 'Add at least one message (or unpublish the ticker instead).' };
+  }
+  if (messages.length > 5) {
+    return { error: 'Keep it to 5 messages or fewer — the ticker loops quickly.' };
+  }
+
+  const themeRaw = ((formData.get('theme') as string | null) || 'plum').trim();
+  const theme = (TICKER_THEMES as readonly string[]).includes(themeRaw) ? themeRaw : 'plum';
   const is_published = formData.get('is_published') === 'on';
 
   const { error } = await client
     .from('content_blocks')
-    .upsert({ slug, title, body, image_url, is_published, updated_at: new Date().toISOString() }, { onConflict: 'slug' });
+    .upsert(
+      {
+        slug: TICKER_SLUG,
+        title: 'Site ticker',
+        body: null,
+        image_url: null,
+        metadata: { messages, theme },
+        is_published,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: 'slug' },
+    );
   if (error) return { error: error.message };
+
+  revalidatePath('/', 'layout');
   revalidatePath('/admin/content');
   return { success: true };
 }

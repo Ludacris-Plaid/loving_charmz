@@ -6,15 +6,18 @@ import { NavigationProgress } from '@/components/ui/NavigationProgress';
 import { CanadianBanner } from '@/components/ui/CanadianBanner';
 import { ClientPopups } from '@/components/ui/ClientPopups';
 import { Suspense } from 'react';
+import { getTickerConfig } from '@/lib/ticker';
 
-export default function MarketingLayout({ children }: { children: ReactNode }) {
+export default async function MarketingLayout({ children }: { children: ReactNode }) {
+  const tickerConfig = await getTickerConfig();
+
   return (
     <>
       <Suspense fallback={null}>
         <NavigationProgress />
       </Suspense>
       <Header />
-      <CanadianBanner />
+      {tickerConfig.published && <CanadianBanner config={tickerConfig} />}
       <HeaderScroll />
       <main className="min-h-[60vh]">{children}</main>
       <Footer />
