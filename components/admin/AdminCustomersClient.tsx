@@ -231,7 +231,17 @@ function CustomerModal({
 
 export function AdminCustomersClient({ customers, orders }: Props) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [query, setQuery] = useState('');
   const selected = customers.find((c) => c.id === selectedId) || null;
+
+  const normalizedQuery = query.trim().toLowerCase();
+  const filtered = normalizedQuery
+    ? customers.filter((c) =>
+        `@${c.username}`.toLowerCase().includes(normalizedQuery) ||
+        (c.display_name || '').toLowerCase().includes(normalizedQuery) ||
+        (c.email || '').toLowerCase().includes(normalizedQuery)
+      )
+    : customers;
 
   return (
     <>
@@ -240,7 +250,41 @@ export function AdminCustomersClient({ customers, orders }: Props) {
           No customers yet.
         </div>
       ) : (
-        <div className="surface-card overflow-x-auto">
+        <div className="space-y-4">
+          {/* Search — matches username, display name, or email */}
+          {customers.length > 5 && (
+            <div className="relative max-w-sm">
+              <input
+                type="search"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search name or email…"
+                aria-label="Search customers by name or email"
+                className="w-full rounded-lg border border-cream-300 bg-surface px-4 py-2.5 pr-10 text-sm text-ink-800 placeholder:text-ink-400 focus:outline-none focus:ring-2 focus:ring-plum-500"
+              />
+              {query ? (
+                <button
+                  onClick={() => setQuery('')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-ink-400 hover:text-ink-700"
+                  aria-label="Clear search"
+                  type="button"
+                >
+                  ✕
+                </button>
+              ) : (
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-ink-400" aria-hidden>
+                  🔍
+                </span>
+              )}
+            </div>
+          )}
+
+          {filtered.length === 0 ? (
+            <div className="text-center py-12 surface-card text-sm text-ink-500">
+              No customers match “{query}”.
+            </div>
+          ) : (
+          <div className="surface-card overflow-x-auto">
           <table className="w-full">
             <thead>
               <tr className="bg-cream-100 text-left text-xs uppercase tracking-wider text-ink-500">
@@ -251,7 +295,7 @@ export function AdminCustomersClient({ customers, orders }: Props) {
               </tr>
             </thead>
             <tbody>
-              {customers.map((c) => (
+              {filtered.map((c) => (
                 <tr key={c.id} className="border-t border-cream-200 text-sm">
                   <td className="px-4 py-3 font-medium text-ink-800">
                     @{c.username}
@@ -276,6 +320,8 @@ export function AdminCustomersClient({ customers, orders }: Props) {
               ))}
             </tbody>
           </table>
+          </div>
+          )}
         </div>
       )}
 
