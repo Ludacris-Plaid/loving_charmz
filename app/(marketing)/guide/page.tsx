@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { Container } from '@/components/ui/Container';
+import { GuideNav } from '@/components/guide/GuideNav';
 
 export const metadata = {
   title: 'How To Run The Shop — The Loving Charmz Guide',
@@ -150,21 +151,11 @@ export default function GuidePage() {
           guide. Keep it next to the computer.
         </Tip>
 
-        <H3>What is in this guide</H3>
-        <nav className="surface-card p-5 my-4 grid sm:grid-cols-2 gap-x-6">
-          {CHAPTERS.map((c) => (
-            <a
-              key={c.id}
-              href={`#${c.id}`}
-              className="py-1.5 text-plum-700 hover:text-plum-900 hover:underline motion-base text-sm"
-            >
-              {c.label}
-            </a>
-          ))}
-        </nav>
+        <H3>Search and find your way around</H3>
+        <GuideNav chapters={[...CHAPTERS]} />
 
         {/* ============ START ============ */}
-        <div id="start">
+        <div id="start" data-chapter="start">
           <H>Start here: five things to know before anything else</H>
           <UList>
             <LI>
@@ -201,7 +192,7 @@ export default function GuidePage() {
         </div>
 
         {/* ============ SIGNING IN ============ */}
-        <div id="signing-in">
+        <div id="signing-in" data-chapter="signing-in">
           <H>1. Signing in</H>
           <P>
             Think of the admin area as a private room behind the shop. Your key is your
@@ -272,7 +263,7 @@ export default function GuidePage() {
         </div>
 
         {/* ============ GETTING AROUND ============ */}
-        <div id="getting-around">
+        <div id="getting-around" data-chapter="getting-around">
           <H>2. Getting around the admin area</H>
           <P>
             Once signed in, look at the <strong>left side</strong> of the screen (on a
@@ -327,7 +318,7 @@ export default function GuidePage() {
         </div>
 
         {/* ============ MORNING ============ */}
-        <div id="morning">
+        <div id="morning" data-chapter="morning">
           <H>3. Your morning routine (5 minutes, with coffee)</H>
           <P>
             If you only ever learn one chapter of this guide, learn this one. This is
@@ -377,7 +368,7 @@ export default function GuidePage() {
         </div>
 
         {/* ============ ORDERS ============ */}
-        <div id="orders">
+        <div id="orders" data-chapter="orders">
           <H>4. Orders: what they are and what to do with them</H>
           <P>
             When a customer buys something, the order appears in{' '}
@@ -514,7 +505,7 @@ export default function GuidePage() {
         </div>
 
         {/* ============ PRODUCTS ============ */}
-        <div id="products">
+        <div id="products" data-chapter="products">
           <H>5. Adding a new product (a new piece of jewellery)</H>
           <P>
             This is the longest chapter — do it once together with your wonderful loving son, and the
@@ -601,7 +592,7 @@ export default function GuidePage() {
         </div>
 
         {/* ============ PICTURES ============ */}
-        <div id="pictures">
+        <div id="pictures" data-chapter="pictures">
           <H>6. Pictures: uploading from your computer</H>
           <P>
             Every picture on the site comes from a file on your computer. The website
@@ -659,7 +650,7 @@ export default function GuidePage() {
         </div>
 
         {/* ============ COLLECTIONS ============ */}
-        <div id="collections">
+        <div id="collections" data-chapter="collections">
           <H>7. Collections (grouping pieces together)</H>
           <P>
             A collection is a shelf in your shop — like &ldquo;Cuffs&rdquo; or
@@ -713,7 +704,7 @@ export default function GuidePage() {
         </div>
 
         {/* ============ INVENTORY ============ */}
-        <div id="inventory">
+        <div id="inventory" data-chapter="inventory">
           <H>8. Stock (inventory): the numbers behind each piece</H>
           <P>
             Every product is sold in up to six versions: <strong>brass or stainless
@@ -775,7 +766,7 @@ export default function GuidePage() {
         </div>
 
         {/* ============ MAILING LIST ============ */}
-        <div id="mailing-list">
+        <div id="mailing-list" data-chapter="mailing-list">
           <H>9. The mailing list (who signed up for emails)</H>
           <P>
             When someone types their email into the welcome pop-up on the shop, their
@@ -828,7 +819,7 @@ export default function GuidePage() {
         </div>
 
         {/* ============ DISCOUNTS ============ */}
-        <div id="discounts">
+        <div id="discounts" data-chapter="discounts">
           <H>10. Discount codes (coupons)</H>
           <P>
             A discount code is a secret word customers type at checkout to get money
@@ -887,7 +878,7 @@ export default function GuidePage() {
         </div>
 
         {/* ============ CUSTOM ORDERS ============ */}
-        <div id="custom-orders">
+        <div id="custom-orders" data-chapter="custom-orders">
           <H>11. Custom orders (engraving and personal requests)</H>
           <P>
             When a customer asks for something one-of-a-kind, their request appears in{' '}
@@ -924,7 +915,7 @@ export default function GuidePage() {
         </div>
 
         {/* ============ CUSTOMERS ============ */}
-        <div id="customers">
+        <div id="customers" data-chapter="customers">
           <H>12. Customers</H>
           <P>
             This is the list of everyone with a shop account. Use it to look someone
@@ -972,7 +963,7 @@ export default function GuidePage() {
         </div>
 
         {/* ============ HOMEPAGE DESIGN ============ */}
-        <div id="content">
+        <div id="content" data-chapter="content">
           <H>13. Homepage design (the ticker and the big headline)</H>
           <P>
             This tab controls the two most visible pieces of words on the whole shop:
@@ -1051,7 +1042,7 @@ export default function GuidePage() {
         </div>
 
         {/* ============ SHIPPING & CANADA POST ============ */}
-        <div id="shipping">
+        <div id="shipping" data-chapter="shipping">
           <H>14. Shipping &amp; Canada Post</H>
           <P>
             The shop is connected to Canada Post directly. That gives you three
@@ -1087,7 +1078,7 @@ export default function GuidePage() {
         </div>
 
         {/* ============ WEBSITE PAGES ============ */}
-        <div id="collections-page">
+        <div id="collections-page" data-chapter="collections-page">
           <H>15. The website&rsquo;s pages (a map)</H>
           <P>
             For when a customer asks &ldquo;where do I find…&rdquo; — here is what
@@ -1106,7 +1097,7 @@ export default function GuidePage() {
         </div>
 
         {/* ============ NUMBERS ============ */}
-        <div id="numbers">
+        <div id="numbers" data-chapter="numbers">
           <H>16. The Numbers page (analytics)</H>
           <P>
             Click <strong>Analytics</strong> to see how the shop is doing: money taken,
@@ -1124,7 +1115,7 @@ export default function GuidePage() {
         </div>
 
         {/* ============ SITE TRAFFIC ============ */}
-        <div id="site-traffic">
+        <div id="site-traffic" data-chapter="site-traffic">
           <H>17. Site traffic (who is visiting)</H>
           <P>
             Click <strong>Site Traffic</strong> to see how many people are visiting the
@@ -1151,7 +1142,7 @@ export default function GuidePage() {
         </div>
 
         {/* ============ STUCK ============ */}
-        <div id="stuck">
+        <div id="stuck" data-chapter="stuck">
           <H>18. When things go wrong</H>
           <P>
             Print this chapter. Ninety percent of scares end in the first two lines
@@ -1196,7 +1187,7 @@ export default function GuidePage() {
         </div>
 
         {/* ============ EMERGENCY CARD ============ */}
-        <div id="emergency">
+        <div id="emergency" data-chapter="emergency">
           <H>Emergency card (cut out and keep by the phone)</H>
           <div className="surface-card p-6 my-4 space-y-4 text-ink-800">
             <p className="font-display text-xl font-semibold text-plum-900">
