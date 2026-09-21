@@ -76,11 +76,18 @@ export default async function OrdersPage() {
                   </p>
                   <p className="font-semibold text-plum-700">${Number(order.total).toFixed(2)}</p>
                 </div>
-                {order.tracking_number && (
+                {order.tracking_number ? (
                   <TrackingPanel
                     pin={order.tracking_number}
                     carrier={order.tracking_carrier || null}
                   />
+                ) : (
+                  /* Not shipped yet: say so, so the missing panel reads as
+                     "on its way" rather than "broken". */
+                  <p className="mt-3 rounded-lg bg-cream-100 border border-cream-300 px-3 py-2 text-xs text-ink-600">
+                    📦 We&apos;re preparing your order for shipment. A Canada Post tracking
+                    number will appear here — and be emailed to you — the moment it ships.
+                  </p>
                 )}
               </li>
             );
