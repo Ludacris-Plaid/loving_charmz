@@ -14,22 +14,29 @@ import 'server-only';
  * All calls are XML-over-REST with HTTP Basic auth, per the Canada Post
  * developer docs (canadapost-postescanada.ca → Developer Program).
  *
- * Credentials (env):
- *  - CP_API_KEY        "username:password" from the Developer Program
+ * Credentials (env) — Canada Post issues one key:secret pair per service.
+ * The values go in as a single CP_API_KEY="key:secret" per family so the
+ * config stays a flat map (see resolveAuths):
+ *  - CP_RATING_KEY="key:secret"      Get Rates at checkout
+ *  - CP_SHIPPING_KEY="key:secret"    label creation + manifests
+ *  - CP_TRACKING_KEY="key:secret"    live tracking lookups
+ *  - CP_API_KEY (legacy fallback)    one key for all families
  *  - CP_CUSTOMER_NUMBER 10-digit mailed-by customer number
  *  - CP_MODE           "non-contract" (default) | "contract"
  *  - CP_ENV            "sandbox" (default) | "production"
  *  - CP_ORIGIN_POSTAL  6-char origin postal code (e.g. T2T1N6)
  *  - CP_SHIPPING_POINT_ID  optional 4-char deposit site number (contract)
  *
- * Without CP_API_KEY + CP_CUSTOMER_NUMBER the module reports
+ * Without at least a tracking key (or CP_API_KEY) the module reports
  * `isConfigured: false` and every admin action returns a friendly message
  * instead of attempting calls.
  */
 
 export type CpConfig = {
-  apiKey: string; // raw "user:password"
-  authHeader: string; // pre-encoded Basic header value
+  /** Pre-encoded Basic header values per API family. */
+  ratingAuth: string | null;
+  shippingAuth: string | null;
+  trackingAuth: string | null;
   customerNumber: string;
   mode: 'non-contract' | 'contract';
   baseUrl: string; // ct.soa-gw (sandbox) or soa-gw (production)
@@ -37,10 +44,39 @@ export type CpConfig = {
   shippingPointId?: string;
 };
 
+function basicAuth(user: string, secret: string): string {
+  return `Basic ${Buffer.from(`${user}:${secret}`).toString('base64')}`;
+}
+
+/**
+ * Resolves per-service auth headers. Accepts either the per-service
+ * key/secret pairs (what the Developer Program mailbox actually shows) or
+ * the legacy single CP_API_KEY="user:password" for all families.
+ */
+function resolveAuths() {
+  const toAuth = (v: string | undefined): string | null => {
+    const pair = v?.trim();
+    return pair && pair.includes(':')
+      ? basicAuth(pair.split(':')[0], pair.split(':').slice(1).join(':'))
+      : null;
+  };
+
+  const ratingAuth = toAuth(process.env.CP_RATING_KEY);
+  const shippingAuth = toAuth(process.env.CP_SHIPPING_KEY);
+  const trackingAuth = toAuth(process.env.CP_TRACKING_KEY);
+  const legacyAuth = toAuth(process.env.CP_API_KEY);
+
+  return {
+    ratingAuth: ratingAuth ?? legacyAuth,
+    shippingAuth: shippingAuth ?? legacyAuth,
+    trackingAuth: trackingAuth ?? legacyAuth,
+  };
+}
+
 export function getCpConfig(): CpConfig | null {
-  const apiKey = process.env.CP_API_KEY?.trim();
+  const { ratingAuth, shippingAuth, trackingAuth } = resolveAuths();
   const customerNumber = process.env.CP_CUSTOMER_NUMBER?.trim();
-  if (!apiKey || !customerNumber || !apiKey.includes(':')) return null;
+  if ((!trackingAuth && !shippingAuth && !ratingAuth) || !customerNumber) return null;
 
   const env = (process.env.CP_ENV || 'sandbox').toLowerCase();
   const mode = (process.env.CP_MODE || 'non-contract').toLowerCase() === 'contract'
@@ -48,8 +84,9 @@ export function getCpConfig(): CpConfig | null {
     : 'non-contract';
 
   return {
-    apiKey,
-    authHeader: `Basic ${Buffer.from(apiKey).toString('base64')}`,
+    ratingAuth,
+    shippingAuth,
+    trackingAuth,
     customerNumber,
     mode,
     baseUrl: env === 'production'
@@ -129,12 +166,16 @@ function parseErrorBody(body: string): { code: string | null; description: strin
 async function cpFetch(
   cfg: CpConfig,
   url: string,
-  init: { method: 'GET' | 'POST' | 'DELETE'; accept: string; contentType?: string; body?: string },
+  init: { method: 'GET' | 'POST' | 'DELETE'; accept: string; contentType?: string; body?: string; auth?: string | null },
 ): Promise<{ status: number; body: string }> {
+  // Per-service auth when the caller names it; otherwise the first available
+  // header (a single shared key sets all three to the same value).
+  const auth = init.auth ?? cfg.trackingAuth ?? cfg.shippingAuth ?? cfg.ratingAuth;
+  if (!auth) throw new CanadaPostError('Canada Post credentials are not configured.');
   const res = await fetch(url, {
     method: init.method,
     headers: {
-      Authorization: cfg.authHeader,
+      Authorization: auth,
       Accept: init.accept,
       'Accept-Language': 'en-CA',
       ...(init.contentType ? { 'Content-Type': init.contentType } : {}),
@@ -295,6 +336,7 @@ export async function createNcShipment(
     accept: NC_V4,
     contentType: NC_V4,
     body: buildNcShipmentXml(input),
+    auth: cfg.shippingAuth,
   });
   assertOk(status, body);
 
@@ -349,6 +391,7 @@ export async function createContractShipment(
     accept: SHIPMENT_V8,
     contentType: SHIPMENT_V8,
     body: buildContractShipmentXml(input, groupId),
+    auth: cfg.shippingAuth,
   });
   assertOk(status, body);
 
@@ -393,6 +436,7 @@ ${el('postal-zip-code', cfg.originPostal)}
     accept: MANIFEST_V8,
     contentType: MANIFEST_V8,
     body: xml,
+    auth: cfg.shippingAuth,
   });
   assertOk(status, body);
 
@@ -416,6 +460,7 @@ export async function voidShipment(
   const { status, body } = await cpFetch(cfg, href, {
     method: 'DELETE',
     accept: SHIPMENT_V8,
+    auth: cfg.shippingAuth,
   });
   // 204 = voided; some environments answer 200 with a body.
   if (status !== 204 && status !== 200) assertOk(status, body);
@@ -451,7 +496,7 @@ export async function getLabelPdf(
 
   // Fetch the actual PDF.
   const pdf = await fetch(artifactHref!, {
-    headers: { Authorization: cfg.authHeader, Accept: 'application/pdf' },
+    headers: { Authorization: cfg.shippingAuth ?? cfg.trackingAuth ?? cfg.ratingAuth ?? '', Accept: 'application/pdf' },
     cache: 'no-store',
   });
   if (!pdf.ok) {
@@ -523,6 +568,7 @@ export async function getTrackingSummary(
   const { status, body } = await cpFetch(cfg, url, {
     method: 'GET',
     accept: TRACK_V2,
+    auth: cfg.trackingAuth,
   });
   assertOk(status, body);
   return parseTrackingSummary(body);

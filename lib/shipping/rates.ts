@@ -122,7 +122,7 @@ export async function getShippingRates(options: {
     const res = await fetch(`${cfg.baseUrl}/rs/ship/price`, {
       method: 'POST',
       headers: {
-        Authorization: cfg.authHeader,
+        Authorization: cfg.ratingAuth ?? cfg.shippingAuth ?? cfg.trackingAuth ?? '',
         Accept: RATE_V4,
         'Content-Type': RATE_V4,
         'Accept-Language': 'en-CA',
