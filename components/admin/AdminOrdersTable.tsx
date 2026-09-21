@@ -325,14 +325,19 @@ export function OrderModal({
                     startTransition(async () => {
                       const res = await shipOrderAction(order.id, trackingInput, carrierInput);
                       if (res.error) setError(res.error);
-                      else { setCurrentStatus('shipped'); setTrackingInput(''); setCarrierInput(''); }
+                      else {
+                        setCurrentStatus('shipped');
+                        setTrackingInput('');
+                        setCarrierInput('');
+                        setError(res.emailSent === false ? 'Order marked shipped, but the email could not be sent. Use "Send shipping email" or check the customer address.' : null);
+                      }
                       setShipBusy(false);
                     });
                   }}
                   disabled={shipBusy || !trackingInput.trim()}
                   className="rounded-pill px-4 py-2 text-xs font-medium uppercase tracking-wider bg-plum-700 text-cream-50 hover:bg-plum-900 motion-base disabled:opacity-50"
                 >
-                  {shipBusy ? 'Shipping...' : 'Ship & Notify'}
+                  {shipBusy ? 'Shipping...' : 'Ship & Notify (emails tracking)'}
                 </button>
               </div>
             </div>

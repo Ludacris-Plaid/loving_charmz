@@ -524,7 +524,7 @@ export async function shipOrderAction(
   orderId: string,
   trackingNumber: string,
   carrier?: string,
-): Promise<AdminResult> {
+): Promise<AdminResult & { emailSent?: boolean }> {
   const guard = await getAdminClient();
   if (guard.kind === 'error') return { error: guard.error };
   const client = guard.client;
@@ -539,9 +539,30 @@ export async function shipOrderAction(
     })
     .eq('id', orderId);
   if (error) return { error: error.message };
+
+  // Ship & Notify means both: the branded shipping email with the tracking
+  // number goes out automatically (best-effort — a failed send never blocks
+  // the status change; the customer panel always shows the PIN too).
+  let emailSent = false;
+  const { data: order } = await client
+    .from('orders')
+    .select('shipping_address')
+    .eq('id', orderId)
+    .maybeSingle();
+  const email = (order?.shipping_address as any)?.email;
+  if (email) {
+    const { sendShippingNotification } = await import('@/lib/email/transactional');
+    const { error: emailErr } = await sendShippingNotification({
+      to: email,
+      orderId,
+      trackingNumber: trackingNumber.trim(),
+    });
+    emailSent = !emailErr;
+  }
+
   revalidatePath('/admin/orders');
   revalidatePath('/account/orders');
-  return { success: true };
+  return { success: true, emailSent };
 }
 
 /* ------------------------------------------------------------------ */
