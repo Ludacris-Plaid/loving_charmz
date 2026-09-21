@@ -54,7 +54,7 @@ export function SquareCardForm({
   return (
     <div className="space-y-4">
       <p className="text-xs text-ink-500">
-        Enter your card details below. For Canadian cards, the postal code field will appear automatically.
+        Enter your card details below. The postal code field appears automatically and adapts to the card&apos;s country (Postal Code for Canadian cards, ZIP for US cards).
       </p>
       <PaymentForm
         applicationId={applicationId}
@@ -62,7 +62,6 @@ export function SquareCardForm({
         cardTokenizeResponseReceived={handleTokenize}
       >
         <CreditCard
-          postalCode="postalCode"
           includeInputLabels={true}
           buttonProps={{
             isLoading: processing,
