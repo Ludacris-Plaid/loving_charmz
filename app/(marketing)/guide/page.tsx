@@ -19,10 +19,12 @@ const CHAPTERS = [
   { id: 'discounts', label: '10. Discount codes' },
   { id: 'custom-orders', label: '11. Custom orders' },
   { id: 'customers', label: '12. Customers' },
-  { id: 'content', label: '13. Content blocks' },
-  { id: 'collections-page', label: '14. Website pages' },
-  { id: 'numbers', label: '15. Numbers page' },
-  { id: 'stuck', label: '16. When things go wrong' },
+  { id: 'content', label: '13. Homepage design' },
+  { id: 'shipping', label: '14. Shipping & Canada Post' },
+  { id: 'collections-page', label: '15. Website pages' },
+  { id: 'numbers', label: '16. Numbers page' },
+  { id: 'site-traffic', label: '17. Site traffic' },
+  { id: 'stuck', label: '18. When things go wrong' },
   { id: 'emergency', label: 'Emergency card' },
 ];
 
@@ -284,12 +286,14 @@ export default function GuidePage() {
             <LI><strong>Inventory</strong> — how many of each piece you have left.</LI>
             <LI><strong>Orders</strong> — what customers bought.</LI>
             <LI><strong>History</strong> — completed and cancelled orders.</LI>
-            <LI><strong>Customers</strong> — who has an account.</LI>
-            <LI><strong>Mailing list</strong> — who signed up for emails (the pop-up).</LI>
-            <LI><strong>Personalization</strong> — custom-order requests.</LI>
-            <LI><strong>Content</strong> — text blocks on the website.</LI>
+            <LI><strong>Customers</strong> — who has an account, with notes and a quick email button.</LI>
+            <LI><strong>Mailing list</strong> — who signed up for emails (the pop-up, plus every customer automatically).</LI>
+            <LI><strong>Send email</strong> — write to the whole mailing list.</LI>
+            <LI><strong>Custom Orders</strong> — personalization requests.</LI>
+            <LI><strong>Homepage Design</strong> — the ticker banner and the big homepage headline.</LI>
             <LI><strong>Discounts</strong> — coupon codes.</LI>
             <LI><strong>Analytics</strong> — the Numbers page (sales totals).</LI>
+            <LI><strong>Site Traffic</strong> — who is visiting, and any errors (last 24 hours).</LI>
           </UList>
           <P>
             To go somewhere, <strong>click its name</strong>. To go back, use the same
@@ -351,7 +355,9 @@ export default function GuidePage() {
             <Step n="5">
               Glance at <strong>Inventory</strong>. If anything shows <strong>0</strong>
               in stock, it cannot be bought — customers see &ldquo;sold out&rdquo;.
-              Follow chapter 8 when you have made or received more.
+              Follow chapter 8 when you have made or received more. (The shop emails
+              you automatically the moment a version sells out, so nothing slips by
+              if you skip a morning.)
             </Step>
           </OList>
           <P>
@@ -429,10 +435,50 @@ export default function GuidePage() {
               box.
             </Step>
           </OList>
+          <H3>Shipping an order (two ways)</H3>
+          <P>
+            When a Processing order is packed and ready, you have two ways to ship it —
+            both live in the Manage modal:
+          </P>
+          <UList>
+            <LI>
+              <strong>Canada Post label (recommended)</strong> — the{' '}
+              <strong>Create label</strong> box prints a real postage label from your
+              computer. Pick the service (Regular Parcel is the everyday one;
+              Xpresspost is faster), check the parcel weight in kg (the default 0.25 kg
+              suits a charm order), and click <strong>Create label</strong>. The label
+              appears as a <strong>⬇ Label PDF</strong> button — click it, and the
+              shipping label prints. The tracking number, the &ldquo;Your order has
+              shipped&rdquo; email to the customer, and their order page&rsquo;s live
+              Canada Post tracker all happen <em>automatically</em>. The label cost is
+              billed to the credit card on your Canada Post profile.
+            </LI>
+            <LI>
+              <strong>Ship &amp; Notify</strong> — if you already have a tracking
+              number (say, you stamped the parcel at the post office yourself), type it
+              into the <strong>Ship Order</strong> box and press{' '}
+              <strong>Ship &amp; Notify (emails tracking)</strong>. One click marks the
+              order Shipped <em>and</em> emails the customer their tracking number.
+            </LI>
+          </UList>
           <Tip>
-            <strong>Mailing something today?</strong> Open the order → copy the address
-            → paste it into your shipping label → change status to <strong>Shipped</strong>{' '}
-            → close the modal. Under two minutes, start to finish.
+            Either way, the customer gets a branded email with their tracking number
+            the moment you ship, and can watch the parcel move on their own My Orders
+            page. You never need to remember a separate &ldquo;send email&rdquo; step.
+          </Tip>
+          <H3>Refunds (with a safety lock)</H3>
+          <P>
+            In the Manage modal of a paid card order there is a red <strong>Refund</strong>{' '}
+            box. Pressing <strong>Issue Refund</strong> is not enough on purpose: the
+            website asks you to <strong>type the word REFUND</strong> first, and the
+            button stays grey until the word matches. This is a seatbelt — a full refund
+            goes back to the customer&rsquo;s card immediately and cannot be undone.
+          </P>
+          <Tip>
+            <strong>Mailing something today?</strong> Open the order → click{' '}
+            <strong>Create label</strong> → print the PDF → stick it on → done. The
+            email, the tracking, everything else is automatic. Under two minutes,
+            start to finish.
           </Tip>
           <Tip>
             A customer can see their own order status when they sign in. Marking{' '}
@@ -440,6 +486,18 @@ export default function GuidePage() {
             them it is on its way.
           </Tip>
           <TROUBLE>
+            <QA
+              q="Create label says an error about dimensions"
+              a="This was an old problem that is fixed — the website now always tells Canada Post the parcel size (a standard small bubble mailer) even when you only enter a weight. If you ever see it again, phone your wonderful loving son with the exact message."
+            />
+            <QA
+              q="Create label says 'Order not found'"
+              a="Also an old problem, also fixed. If it ever reappears, it now shows the real reason — take a screenshot and phone your wonderful loving son."
+            />
+            <QA
+              q="The shipping email failed"
+              a="The order still shows Shipped with its tracking number — only the email was missed. There is a 'Send shipping email' option on the order; use it, or phone your wonderful loving son if you cannot find it."
+            />
             <QA
               q="The order says 'Awaiting payment'"
               a="The customer started paying but the payment did not finish (they may have closed the window, or the card was declined). Give it a few hours. If it is still awaiting payment the next day, contact the customer and suggest they try again — you do NOT need to do anything technical."
@@ -833,10 +891,11 @@ export default function GuidePage() {
           <H>11. Custom orders (engraving and personal requests)</H>
           <P>
             When a customer asks for something one-of-a-kind, their request appears in{' '}
-            <strong>Personalization</strong> — including any photo they attached.
+            <strong>Custom Orders</strong> — including any photo they attached, which
+            you can view and download right from the request.
           </P>
           <OList>
-            <Step n="1">Click <strong>Personalization</strong> in the left-hand list.</Step>
+            <Step n="1">Click <strong>Custom Orders</strong> in the left-hand list.</Step>
             <Step n="2">
               Each card shows the customer, what they asked for, and the reference
               photo if they added one.
@@ -868,53 +927,168 @@ export default function GuidePage() {
         <div id="customers">
           <H>12. Customers</H>
           <P>
-            This is the list of everyone with a shop account: their name and email.
-            Use it to look someone up if they phone with a question about an order.
-          </P>
-          <UList>
-            <LI>Click <strong>Customers</strong> in the left-hand list.</LI>
-            <LI>Use the search box to find someone by name or email.</LI>
-            <LI>
-              You cannot and should not delete customers here. If someone asks to be
-              removed from the shop entirely, that is a job for your wonderful loving son.
-            </LI>
-          </UList>
-        </div>
-
-        {/* ============ CONTENT BLOCKS ============ */}
-        <div id="content">
-          <H>13. Content blocks (words on the website)</H>
-          <P>
-            Certain word blocks on the site — like homepage sections — are stored as
-            &ldquo;content blocks&rdquo; so you can edit them without touching code.
+            This is the list of everyone with a shop account. Use it to look someone
+            up when they phone, to jog your memory about a custom order, or to send a
+            quick note.
           </P>
           <OList>
-            <Step n="1">Click <strong>Content</strong> in the left-hand list.</Step>
+            <Step n="1">Click <strong>Customers</strong> in the left-hand list.</Step>
             <Step n="2">
-              Each block has a <strong>name</strong> telling you where it shows. Click{' '}
-              <strong>Edit</strong> on the one you want.
+              <strong>Search</strong> by name or email in the search box at the top —
+              the list shrinks as you type.
             </Step>
             <Step n="3">
-              Change the words. Keep the tone warm and simple. Press{' '}
-              <strong>Save</strong>, then visit the public page to see your change.
+              Click a customer&rsquo;s row to open their <strong>profile card</strong>:
+              their contact details, their full order history, and everything else the
+              shop knows about them in one place.
             </Step>
           </OList>
-          <Warn>
-            Change <strong>one block at a time</strong> and look at the website after
-            each save. If you edit five blocks in a row, you will not know which change
-            you liked.
-          </Warn>
+          <H3>Private notes (your memory, kept on the customer)</H3>
+          <P>
+            Each customer has a <strong>Notes</strong> box only you can see — customers
+            never see it. Perfect for &ldquo;prefers brass, allergic to nickel&rdquo;
+            or &ldquo;wants first pick of the memorial collection&rdquo;. It saves as
+            soon as you click away, like the stock boxes.
+          </P>
+          <H3>Emailing a customer directly</H3>
+          <OList>
+            <Step n="1">Open their profile card.</Step>
+            <Step n="2">
+              Click <strong>Email customer</strong>. A small window opens with their
+              address already filled in.
+            </Step>
+            <Step n="3">
+              Type a subject and message and press send — it arrives from the
+              shop&rsquo;s hello@lovingcharmz.com address, branded and proper. The
+              customer replies straight to your inbox.
+            </Step>
+          </OList>
           <Tip>
-            Saved a change and the page did not update? Hold Ctrl and tap R to refresh
-            — computers show old copies sometimes. Still unchanged after a refresh?
-            Un-tick and re-tick nothing, touch nothing else — just ring your wonderful
-            loving son and tell him which block it was.
+            Every customer is also added to the mailing list automatically when they
+            sign up — no double bookkeeping. And you cannot delete customers here; if
+            someone asks to be removed entirely, that is a job for your wonderful
+            loving son.
+          </Tip>
+        </div>
+
+        {/* ============ HOMEPAGE DESIGN ============ */}
+        <div id="content">
+          <H>13. Homepage design (the ticker and the big headline)</H>
+          <P>
+            This tab controls the two most visible pieces of words on the whole shop:
+            the <strong>ticker banner</strong> that scrolls under the header on every
+            page, and the <strong>big headline</strong> at the top of the homepage.
+            Changes go live on the website within about a minute.
+          </P>
+          <H3>The ticker banner</H3>
+          <OList>
+            <Step n="1">Click <strong>Homepage Design</strong> in the left-hand list.</Step>
+            <Step n="2">
+              <strong>Messages — one per line.</strong> Type what the banner should say.
+              Emojis are welcome and encouraged — ✨ 🎁 💌 🇨🇦 all work. Each line
+              becomes one message in the scrolling rotation (up to 5), and
+              &ldquo;Proudly Canadian 🇨🇦&rdquo; always leads.
+            </Step>
+            <Step n="3">
+              <strong>Colour theme.</strong> Click one of the colour swatches to re-skin
+              the banner — Plum, Plum &amp; Mint, Cream, Rosewood, or Pine. They all
+              come from the shop&rsquo;s own palette, so every choice looks native.
+            </Step>
+            <Step n="4">
+              <strong>Show the ticker on the site.</strong> The master on/off switch.
+              Untick it and the banner disappears everywhere (handy for a quiet sale
+              period); tick it again to bring it back. Nothing is lost either way.
+            </Step>
+          </OList>
+          <H3>The big homepage headline</H3>
+          <P>
+            Below the ticker settings is the <strong>Homepage headline</strong> box —
+            the giant elegant text at the top of the shop&rsquo;s front page. One line
+            in the box = one row of the headline (up to three lines).
+          </P>
+          <P>
+            The one piece of magic: <strong>put words in &ldquo;quotes&rdquo; to make
+            them purple.</strong> For example:{' '}
+            <em>Symbolic &ldquo;jewelry&rdquo; / for the bond / that &ldquo;lasts&rdquo;</em>{' '}
+            renders with <em>jewelry</em> and <em>lasts</em> in the brand&rsquo;s purple
+            gradient, and everything else in plum. The font never changes — only the
+            colour of the words you quote.
+          </P>
+          <H3>The subheadline (the quiet line under the headline)</H3>
+          <P>
+            The <strong>Subheadline</strong> box is the small elegant paragraph under
+            the big headline. It is plain text — no quote tricks — and{' '}
+            <strong>clearing it completely hides it</strong>, letting the headline
+            speak alone. It comes set to a warm brand sentence you can keep, rewrite,
+            or erase.
+          </P>
+          <Tip>
+            Everything on this tab has a <strong>live preview</strong> — you see the
+            banner and the headline exactly as shoppers will <em>before</em> you save.
+            Play freely; nothing goes live until you press{' '}
+            <strong>Save changes</strong>.
+          </Tip>
+          <Warn>
+            Change one thing at a time and look at the real homepage after each save
+            (hold Ctrl and tap R if it looks unchanged — the site can take up to a
+            minute to show new words). If you edit everything at once and dislike the
+            result, you will not know which change to undo.
+          </Warn>
+          <TROUBLE>
+            <QA
+              q="I saved but the homepage looks the same"
+              a="Give it up to a minute — the website shows new words within sixty seconds. Then hold Ctrl and tap R to refresh. Still old? Confirm you actually pressed Save changes (a green confirmation appears), then phone your wonderful loving son."
+            />
+            <QA
+              q="My quoted word did not turn purple"
+              a="The quotes must be the straight kind typed with the keyboard (&quot;) — not curly word-processor quotes. Retype the quotes right in the box and save again. Also check the word is on its own correctly spelled line."
+            />
+            <QA
+              q="I deleted the headline by accident"
+              a="Nothing permanent — the website needs at least one line, so it refuses a fully empty headline. Type it back (the preview shows it as you type), or press Save changes with the original text restored. Your wonderful loving son has the original saved forever if you want it back word-for-word."
+            />
+          </TROUBLE>
+        </div>
+
+        {/* ============ SHIPPING & CANADA POST ============ */}
+        <div id="shipping">
+          <H>14. Shipping &amp; Canada Post</H>
+          <P>
+            The shop is connected to Canada Post directly. That gives you three
+            superpowers, all automatic:
+          </P>
+          <UList>
+            <LI>
+              <strong>Live shipping prices at checkout.</strong> Customers see real
+              Canada Post prices for their address — Regular Parcel, Xpresspost,
+              Priority — instead of a flat guess. Free shipping over $50 applies to
+              the standard Regular Parcel service; express upgrades always charge
+              their listed price, and the checkout says so plainly on each option.
+            </LI>
+            <LI>
+              <strong>Print-at-home postage labels.</strong> Chapter 4 showed the
+              button; the label cost is billed to the credit card on your Canada Post
+              profile. The parcel size defaults to a small charm bubble mailer, so you
+              only ever pick the service and check the weight.
+            </LI>
+            <LI>
+              <strong>Live tracking for customers.</strong> Once an order is shipped,
+              the customer&rsquo;s own My Orders page shows the parcel moving across
+              Canada in real time — latest scan, location, expected delivery day — plus
+              the tracking emails. Guests (customers without accounts) get everything
+              by email instead.
+            </LI>
+          </UList>
+          <Tip>
+            If Canada Post ever reports an error when creating a label, read the red
+            message aloud to your wonderful loving son — it now speaks plainly, and
+            nine times out of ten it is a weight or address detail fixed in seconds.
           </Tip>
         </div>
 
         {/* ============ WEBSITE PAGES ============ */}
         <div id="collections-page">
-          <H>14. The website&rsquo;s pages (a map)</H>
+          <H>15. The website&rsquo;s pages (a map)</H>
           <P>
             For when a customer asks &ldquo;where do I find…&rdquo; — here is what
             lives at each web address. You do not edit these; they maintain themselves.
@@ -933,7 +1107,7 @@ export default function GuidePage() {
 
         {/* ============ NUMBERS ============ */}
         <div id="numbers">
-          <H>15. The Numbers page (analytics)</H>
+          <H>16. The Numbers page (analytics)</H>
           <P>
             Click <strong>Analytics</strong> to see how the shop is doing: money taken,
             number of orders, and which pieces sell best. It is read-only — there is
@@ -949,9 +1123,36 @@ export default function GuidePage() {
           </Tip>
         </div>
 
+        {/* ============ SITE TRAFFIC ============ */}
+        <div id="site-traffic">
+          <H>17. Site traffic (who is visiting)</H>
+          <P>
+            Click <strong>Site Traffic</strong> to see how many people are visiting the
+            shop, which pages they look at most, and whether they are on phones or
+            computers. It is read-only — a window, not a lever.
+          </P>
+          <UList>
+            <LI><strong>Total views</strong> and <strong>unique pages</strong> — the day&rsquo;s foot traffic.</LI>
+            <LI><strong>Devices</strong> — phones vs computers (most shops are mostly phones).</LI>
+            <LI><strong>Top pages</strong> — which pages get the visits.</LI>
+            <LI>
+              <strong>Errors (24h)</strong> — any technical hiccup from the last day.
+              Each error has a <strong>Copy</strong> button (grabs the full details to
+              paste to your wonderful loving son) and a <strong>Delete</strong> button
+              (clears it once you have dealt with it). Anything older than a day
+              tidies itself away every night automatically.
+            </LI>
+          </UList>
+          <Tip>
+            Errors here are usually harmless probes by robots. The one worth a phone
+            call: the same error repeating many times in a day. Screenshot it, or hit
+            Copy and text it over.
+          </Tip>
+        </div>
+
         {/* ============ STUCK ============ */}
         <div id="stuck">
-          <H>16. When things go wrong</H>
+          <H>18. When things go wrong</H>
           <P>
             Print this chapter. Ninety percent of scares end in the first two lines
             below.
@@ -1020,8 +1221,12 @@ export default function GuidePage() {
               </LI>
               <LI>
                 <strong>New order today?</strong> Orders → click <strong>Manage</strong> →
-                copy the address → paste into shipping label → change status to
-                <strong>Shipped</strong>.
+                <strong>Create label</strong> → print the PDF → stick it on. Tracking
+                email goes out by itself.
+              </LI>
+              <LI>
+                <strong>Refunding?</strong> Manage → Refund box → type REFUND → press
+                Issue Refund. Cannot be undone — check twice.
               </LI>
               <LI>
                 <strong>Order is done?</strong> Mark it <strong>Completed</strong> in the
@@ -1030,6 +1235,10 @@ export default function GuidePage() {
               <LI>
                 <strong>Made more stock?</strong> Inventory → click the number → type
                 the new one → click outside the box.
+              </LI>
+              <LI>
+                <strong>Words on the site to change?</strong> Homepage Design → ticker
+                or headline → Save changes. Live within a minute.
               </LI>
               <LI>
                 <strong>Need the email list?</strong> Mailing list → Download CSV.
