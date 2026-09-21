@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { sendAbandonedCartEmails } from '@/lib/email/abandoned-cart';
 
+export const runtime = 'nodejs';
+
 /**
  * Vercel Cron endpoint — runs every hour to send abandoned cart emails.
  *
