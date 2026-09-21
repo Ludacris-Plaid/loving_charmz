@@ -134,6 +134,8 @@ export function OrderModal({
   const [carrierInput, setCarrierInput] = useState('');
   const [shipBusy, setShipBusy] = useState(false);
   const [refundBusy, setRefundBusy] = useState(false);
+  const [refundConfirming, setRefundConfirming] = useState(false);
+  const [refundConfirmText, setRefundConfirmText] = useState('');
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -393,32 +395,61 @@ export function OrderModal({
             </div>
           </div>
 
-          {/* Refund */}
+          {/* Refund — type-to-confirm, mirroring the History clear-all guard */}
           {currentStatus !== 'refunded' && order.payment_status === 'paid' && order.payment_method === 'card' && (
             <div className="rounded-xl border border-red-200 bg-red-50 p-4">
               <p className="text-xs font-bold uppercase tracking-widest text-red-600 mb-2">
                 Refund
               </p>
               <p className="text-xs text-red-500 mb-3">
-                This will issue a full refund of ${order.total.toFixed(2)} through Square.
+                This will issue a full refund of ${order.total.toFixed(2)} through Square. This cannot be undone.
               </p>
-              <button
-                type="button"
-                onClick={() => {
-                  if (!confirm('Issue a full refund for this order?')) return;
-                  setRefundBusy(true);
-                  startTransition(async () => {
-                    const res = await refundOrderAction(order.id);
-                    if (res.error) setError(res.error);
-                    else { setCurrentStatus('refunded'); }
-                    setRefundBusy(false);
-                  });
-                }}
-                disabled={refundBusy}
-                className="rounded-pill px-4 py-2 text-xs font-medium uppercase tracking-wider border border-red-300 bg-white text-red-700 hover:bg-red-100 motion-base disabled:opacity-50"
-              >
-                {refundBusy ? 'Refunding...' : 'Issue Refund'}
-              </button>
+              {refundConfirming ? (
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-xs font-medium text-red-700">Type REFUND to confirm:</span>
+                  <input
+                    value={refundConfirmText}
+                    onChange={(e) => setRefundConfirmText(e.target.value)}
+                    className="w-28 rounded border border-red-300 px-2 py-1 text-sm uppercase tracking-wider"
+                    placeholder="REFUND"
+                    autoFocus
+                    aria-label="Type REFUND to confirm the refund"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (refundConfirmText.trim().toUpperCase() !== 'REFUND') return;
+                      setRefundBusy(true);
+                      startTransition(async () => {
+                        const res = await refundOrderAction(order.id);
+                        if (res.error) setError(res.error);
+                        else { setCurrentStatus('refunded'); setRefundConfirming(false); }
+                        setRefundBusy(false);
+                      });
+                    }}
+                    disabled={refundBusy || refundConfirmText.trim().toUpperCase() !== 'REFUND'}
+                    className="rounded-pill px-4 py-2 text-xs font-medium uppercase tracking-wider bg-red-600 text-white hover:bg-red-700 motion-base disabled:opacity-40"
+                  >
+                    {refundBusy ? 'Refunding...' : 'Issue Refund'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setRefundConfirming(false); setRefundConfirmText(''); }}
+                    className="text-xs text-ink-500 hover:text-ink-700"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setRefundConfirming(true)}
+                  disabled={refundBusy}
+                  className="rounded-pill px-4 py-2 text-xs font-medium uppercase tracking-wider border border-red-300 bg-white text-red-700 hover:bg-red-100 motion-base disabled:opacity-50"
+                >
+                  {refundBusy ? 'Refunding...' : 'Issue Refund'}
+                </button>
+              )}
             </div>
           )}
 

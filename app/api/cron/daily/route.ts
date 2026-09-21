@@ -3,13 +3,15 @@ import { sendAbandonedCartEmails } from '@/lib/email/abandoned-cart';
 import { flushStockAlerts } from '@/lib/email/stock-alerts';
 
 /**
- * Daily maintenance cron — all scheduled email jobs in one endpoint.
+ * Daily maintenance cron — all scheduled maintenance jobs in one endpoint.
  *
  * Currently runs:
  *  1. Abandoned cart reminders (member carts idle 1–24h, max 1 email/cart/24h)
  *  2. Sold-out stock alerts (drains the stock_alerts queue into a digest
  *     email to the owner; normally flushed in real time after settlement,
  *     this is the safety net for anything missed)
+ *  3. Error-log pruning (deletes error_events older than 24h so the admin
+ *     Site Traffic tab only shows the last day's issues)
  *
  * Secured by CRON_SECRET — only Vercel's cron infrastructure (or someone
  * holding the secret) may run it. Every job is idempotent, so extra triggers
@@ -38,6 +40,7 @@ export async function GET(request: NextRequest) {
   // failures are easier to attribute.
   let abandonedCarts: Awaited<ReturnType<typeof sendAbandonedCartEmails>> | null = null;
   let stockAlerts: { flushed: number } | null = null;
+  let prunedErrors: number | null = null;
 
   try {
     abandonedCarts = await sendAbandonedCartEmails();
@@ -51,10 +54,27 @@ export async function GET(request: NextRequest) {
     errors.push(`stock-alerts: ${error?.message || 'failed'}`);
   }
 
+  // Prune error events older than 24h — keeps the admin tab to the last day.
+  try {
+    const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    const { createAdminClient } = await import('@/lib/supabase/admin');
+    const admin = createAdminClient();
+    const { data, error: delErr } = await admin
+      .from('error_events')
+      .delete()
+      .lt('created_at', cutoff)
+      .select('id');
+    if (delErr) throw new Error(delErr.message);
+    prunedErrors = data?.length ?? 0;
+  } catch (error: any) {
+    errors.push(`error-pruning: ${error?.message || 'failed'}`);
+  }
+
   return NextResponse.json({
     ok: errors.length === 0,
     abandonedCarts,
     stockAlerts,
+    prunedErrors,
     errors,
     timestamp: new Date().toISOString(),
   });

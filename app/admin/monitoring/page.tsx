@@ -2,7 +2,7 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { RecentErrors } from '@/components/admin/RecentErrors';
 
 export const metadata = {
-  title: 'Monitoring — Loving Charmz Admin',
+  title: 'Site Traffic — Loving Charmz Admin',
 };
 
 export default async function MonitoringPage() {
@@ -36,8 +36,8 @@ export default async function MonitoringPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="font-display text-2xl font-semibold text-plum-900">Monitoring</h1>
-        <p className="text-sm text-ink-600 mt-1">Recent errors and visitor traffic.</p>
+        <h1 className="font-display text-2xl font-semibold text-plum-900">Site Traffic</h1>
+        <p className="text-sm text-ink-600 mt-1">Visitor traffic and the last 24 hours of errors.</p>
       </div>
 
       {/* Traffic summary */}
@@ -51,7 +51,7 @@ export default async function MonitoringPage() {
           <p className="text-2xl font-bold text-plum-900">{Object.keys(viewsByPath).length}</p>
         </div>
         <div className="surface-card p-4">
-          <p className="text-xs font-bold uppercase tracking-widest text-ink-400 mb-1">Errors</p>
+          <p className="text-xs font-bold uppercase tracking-widest text-ink-400 mb-1">Errors (24h)</p>
           <p className="text-2xl font-bold text-red-700">{(errors || []).length}</p>
         </div>
       </div>

@@ -663,3 +663,18 @@ export async function deleteAllHistoryAction(): Promise<AdminResult> {
   revalidatePath('/admin/history');
   return { success: true };
 }
+
+/* ------------------------------------------------------------------ */
+/*  Monitoring — delete a single error event                            */
+/* ------------------------------------------------------------------ */
+
+export async function deleteErrorEventAction(id: string): Promise<AdminResult> {
+  const guard = await getAdminClient();
+  if (guard.kind === 'error') return { error: guard.error };
+
+  const { error } = await guard.client.from('error_events').delete().eq('id', id);
+  if (error) return { error: error.message };
+
+  revalidatePath('/admin/monitoring');
+  return { success: true };
+}

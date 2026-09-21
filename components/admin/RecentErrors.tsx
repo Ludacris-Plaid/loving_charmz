@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useTransition } from 'react';
+import { deleteErrorEventAction } from '@/lib/admin/actions';
 
 type ErrorEvent = {
   id: string;
@@ -15,14 +16,20 @@ type ErrorEvent = {
 
 /**
  * Renders the recent-errors list for the admin monitoring page with a
- * copy button per error. The clipboard payload is the full structured
- * error — message, source, path, digest, user agent, timestamp, stack —
- * ready to paste into a bug report or hand to a developer.
+ * copy button and a delete button per error. The clipboard payload is the
+ * full structured error — message, source, path, digest, user agent,
+ * timestamp, stack — ready to paste into a bug report or hand to a
+ * developer. Delete removes the row immediately (admin-gated server
+ * action); the daily cron also prunes events older than 24h.
  */
 export function RecentErrors({ errors }: { errors: ErrorEvent[] }) {
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [deletedIds, setDeletedIds] = useState<Set<string>>(new Set());
+  const [pending, startTransition] = useTransition();
 
-  if (errors.length === 0) {
+  const visible = errors.filter((e) => !deletedIds.has(e.id));
+
+  if (visible.length === 0) {
     return <p className="text-sm text-ink-500">No errors recorded. 🎉</p>;
   }
 
@@ -47,9 +54,21 @@ export function RecentErrors({ errors }: { errors: ErrorEvent[] }) {
     }
   };
 
+  const deleteError = (id: string) => {
+    if (!confirm('Delete this error record?')) return;
+    startTransition(async () => {
+      const res = await deleteErrorEventAction(id);
+      if (res.success) {
+        setDeletedIds((prev) => new Set(prev).add(id));
+      } else {
+        alert(res.error || 'Failed to delete');
+      }
+    });
+  };
+
   return (
     <div className="space-y-3">
-      {errors.map((err) => (
+      {visible.map((err) => (
         <div key={err.id} className="rounded-lg border border-red-200 bg-red-50 p-3">
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0 flex-1">
@@ -75,6 +94,15 @@ export function RecentErrors({ errors }: { errors: ErrorEvent[] }) {
                 aria-label={`Copy error details: ${err.message}`}
               >
                 {copiedId === err.id ? '✓ Copied' : 'Copy'}
+              </button>
+              <button
+                onClick={() => deleteError(err.id)}
+                disabled={pending}
+                className="rounded-pill px-3 py-1 text-xs font-medium uppercase tracking-wider border border-red-300 bg-white text-red-700 hover:bg-red-100 motion-base disabled:opacity-50"
+                type="button"
+                aria-label={`Delete error: ${err.message}`}
+              >
+                Delete
               </button>
             </div>
           </div>
