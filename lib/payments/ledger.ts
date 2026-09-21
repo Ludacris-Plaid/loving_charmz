@@ -1,5 +1,6 @@
 import 'server-only';
 
+import { after } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import type { PaymentProviderId } from './types';
 
@@ -179,6 +180,18 @@ export async function markPaymentConfirmed(params: {
   if (updateError) return { ok: false, error: updateError.message };
 
   await applySettlementEffects(params.orderId);
+
+  // Sold-out alerts: settlement decrements stock; if a variant just hit zero,
+  // email the owner. Runs after the response is sent (never blocks or fails
+  // the shopper's payment return).
+  after(async () => {
+    try {
+      const { flushStockAlerts } = await import('@/lib/email/stock-alerts');
+      await flushStockAlerts();
+    } catch (error) {
+      console.error('[ledger] stock alert flush failed', error);
+    }
+  });
 
   const transaction = await findLatestTransaction(params.orderId, params.provider);
   if (transaction) {
