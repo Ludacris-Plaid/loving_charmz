@@ -1,21 +1,19 @@
 import 'server-only';
 
-import { CanadaPostError, escXml, getCpConfig } from './canadapost';
+import { CanadaPostError, cpJson, getCpConfig } from './canadapost';
 
 /**
- * Canada Post Get Rates (rate-v4) — live shipping quotes at checkout.
+ * Canada Post Get Rates (rating/v1) — live shipping quotes at checkout.
  *
- * POST {base}/rs/ship/price with a mailing-scenario document; returns one
- * quote per eligible service (price, taxes included, transit time, delivery
- * date). The "due" amount is the full landed cost (base + fuel surcharge +
- * taxes), which is what a shopper expects to see.
+ * POST {gateway}/rating/v1/prices with a mailing-scenario JSON body;
+ * returns one quote per eligible service (price incl. taxes, transit time,
+ * delivery date). The "due" amount is the full landed cost (base +
+ * surcharges + taxes), which is what a shopper expects to see.
  *
  * Semantics shared with the rest of the CP client:
  *  - not configured  → { available: false } (checkout falls back to flat rate)
  *  - CP unreachable/empty → { available: true, quotes: [] } (same fallback)
  */
-
-const RATE_V4 = 'application/vnd.cpc.ship.rate-v4+xml';
 
 export type CpRateQuote = {
   serviceCode: string;
@@ -33,71 +31,75 @@ export type CpRatesResult =
   | { available: false }
   | { available: true; quotes: CpRateQuote[] };
 
-function textOf(xml: string, tag: string): string | null {
-  const m = xml.match(new RegExp(`<[^>]*:?${tag}(?:\\s[^>]*)?>([\\s\\S]*?)</[^>]*:?${tag}>`));
-  return m ? m[1].trim() : null;
-}
+const GATEWAY_RATING =
+  'https://api.canadapost-postescanada.ca/prod/devportal-portaildesdeveloppeurs/rating/v1';
 
-/** Parse every <price-quote> block into a usable quote. */
-export function parsePriceQuotes(xml: string): CpRateQuote[] {
-  const quotes: CpRateQuote[] = [];
-  const re = /<price-quote>([\s\S]*?)<\/price-quote>/g;
-  let m: RegExpExecArray | null;
-  while ((m = re.exec(xml))) {
-    const block = m[1];
-    const code = textOf(block, 'service-code');
-    const name = textOf(block, 'service-name');
-    const dueRaw = textOf(block, 'due');
-    if (!code || dueRaw === null) continue;
-    const due = Number(dueRaw);
-    if (!Number.isFinite(due) || due < 0) continue;
-    quotes.push({
-      serviceCode: code,
-      serviceName: name || code,
-      due: Math.round(due * 100) / 100,
-      expectedDeliveryDate: textOf(block, 'expected-delivery-date'),
-      transitDays: textOf(block, 'expected-transit-time')
-        ? Number(textOf(block, 'expected-transit-time'))
-        : null,
-      guaranteed: textOf(block, 'guaranteed-delivery') === 'true',
-    });
-  }
-  return quotes;
-}
+type RawQuote = {
+  serviceCode?: string;
+  serviceName?: string;
+  priceDetails?: {
+    due?: number;
+    base?: number;
+  };
+  serviceStandard?: {
+    guaranteedDelivery?: boolean;
+    expectedTransitTime?: number;
+    expectedDeliveryDate?: string;
+  };
+};
 
-export function buildRateRequestXml(options: {
-  customerNumber?: string;
+export type RateRequestInput = {
+  quoteType: 'counter' | 'commercial';
   originPostal: string;
   destPostal: string;
   destCountry: 'CA' | 'US' | string;
   weightKg: number;
   services?: string[];
-}): string {
-  const { customerNumber, originPostal, destPostal, destCountry, weightKg, services } = options;
+};
+
+/** Build the mailing-scenario body for POST /rating/v1/prices. */
+export function buildRateRequest(input: RateRequestInput): Record<string, unknown> {
+  const { quoteType, originPostal, destPostal, destCountry, weightKg, services } = input;
   const isCa = destCountry === 'CA';
   const isUs = destCountry === 'US';
   const destination = isCa
-    ? `<domestic><postal-code>${escXml(destPostal.replace(/\s/g, '').toUpperCase())}</postal-code></domestic>`
+    ? { domestic: { postalCode: destPostal.replace(/\s/g, '').toUpperCase() } }
     : isUs
-      ? `<united-states><zip-code>${escXml(destPostal.replace(/\s/g, ''))}</zip-code></united-states>`
-      : `<international><country-code>${escXml(destCountry)}</country-code></international>`;
+      ? { unitedStates: { zipCode: destPostal.replace(/\s/g, '') } }
+      : { international: { countryCode: destCountry } };
 
-  const serviceCodes = services?.length
-    ? `<services>${services.map((s) => `<service-code>${escXml(s)}</service-code>`).join('')}</services>`
-    : '';
+  const body: Record<string, unknown> = {
+    quoteType,
+    originPostalCode: originPostal.replace(/\s/g, '').toUpperCase(),
+    destination,
+    parcelCharacteristics: { weight: Math.max(0.001, weightKg) },
+  };
+  if (services?.length) body.services = services;
 
-  return `<?xml version="1.0" encoding="utf-8"?>
-<mailing-scenario xmlns="http://www.canadapost.ca/ws/ship/rate-v4">
-${customerNumber ? `<customer-number>${escXml(customerNumber)}</customer-number>` : ''}
-<parcel-characteristics>
-<weight>${weightKg.toFixed(3)}</weight>
-</parcel-characteristics>
-<origin-postal-code>${escXml(originPostal)}</origin-postal-code>
-<destination>
-${destination}
-</destination>
-${serviceCodes}
-</mailing-scenario>`;
+  return body;
+}
+
+/** Parse the priceQuotes array into usable quotes. */
+export function parsePriceQuotes(payload: RawQuote[] | null): CpRateQuote[] {
+  const items = Array.isArray(payload) ? payload : [];
+  const quotes: CpRateQuote[] = [];
+  for (const q of items) {
+    const code = q?.serviceCode;
+    const due = q?.priceDetails?.due;
+    if (!code || typeof due !== 'number' || !Number.isFinite(due) || due < 0) continue;
+    quotes.push({
+      serviceCode: code,
+      serviceName: q.serviceName || code,
+      due: Math.round(due * 100) / 100,
+      expectedDeliveryDate: q.serviceStandard?.expectedDeliveryDate ?? null,
+      transitDays:
+        typeof q.serviceStandard?.expectedTransitTime === 'number'
+          ? q.serviceStandard.expectedTransitTime
+          : null,
+      guaranteed: q.serviceStandard?.guaranteedDelivery === true,
+    });
+  }
+  return quotes;
 }
 
 export async function getShippingRates(options: {
@@ -109,39 +111,29 @@ export async function getShippingRates(options: {
   const cfg = getCpConfig();
   if (!cfg?.originPostal) return { available: false };
 
-  const xml = buildRateRequestXml({
-    customerNumber: cfg.customerNumber,
-    originPostal: cfg.originPostal,
-    destPostal: options.destPostal,
-    destCountry: options.destCountry,
-    weightKg: Math.max(0.001, options.weightKg),
-    services: options.services,
-  });
-
   try {
-    const res = await fetch(`${cfg.baseUrl}/rs/ship/price`, {
+    // OAuth Bearer via the shared client; 5s budget so a slow Canada Post
+    // can never hang checkout — the caller falls back to the flat rate.
+    const { data } = await cpJson<RawQuote[]>(cfg, 'rating', `${GATEWAY_RATING}/prices`, {
       method: 'POST',
-      headers: {
-        Authorization: cfg.ratingAuth ?? cfg.shippingAuth ?? cfg.trackingAuth ?? '',
-        Accept: RATE_V4,
-        'Content-Type': RATE_V4,
-        'Accept-Language': 'en-CA',
-      },
-      body: xml,
-      cache: 'no-store',
-      // Checkout must stay snappy: 5s budget, then fall back to flat rate.
-      signal: AbortSignal.timeout(5000),
+      body: buildRateRequest({
+        quoteType: cfg.quoteType,
+        originPostal: cfg.originPostal,
+        destPostal: options.destPostal,
+        destCountry: options.destCountry,
+        weightKg: options.weightKg,
+        services: options.services,
+      }),
+      timeoutMs: 5000,
     });
-    const body = await res.text();
-    if (!res.ok) {
-      // Business-rule errors (bad postal, no eligible service) → no quotes,
-      // which the caller treats as "use the fallback".
-      console.error('[canadapost] rates HTTP', res.status, body.slice(0, 300));
+    return { available: true, quotes: parsePriceQuotes(data) };
+  } catch (e) {
+    if (e instanceof CanadaPostError) {
+      // Business-rule errors (bad postal, no eligible service) and auth gaps
+      // (Rating product not yet subscribed) both degrade to the flat rate.
+      console.error('[canadapost] rates request declined:', e.message);
       return { available: true, quotes: [] };
     }
-    return { available: true, quotes: parsePriceQuotes(body) };
-  } catch (e) {
-    if (e instanceof CanadaPostError) throw e;
     // Network/timeout — degrade to flat rate rather than blocking checkout.
     console.error('[canadapost] rates request failed:', e instanceof Error ? e.message : e);
     return { available: true, quotes: [] };

@@ -1,12 +1,14 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-  buildNcShipmentXml,
-  escXml,
+  buildShipmentRequest,
+  isDomesticService,
+  normalizePostal,
   parseLinks,
   parseTrackingSummary,
   type CpShipmentInput,
 } from '@/lib/shipping/canadapost';
+import { buildRateRequest, parsePriceQuotes } from '@/lib/shipping/rates';
 
 const sampleInput: CpShipmentInput = {
   serviceCode: 'DOM.EP',
@@ -32,112 +34,234 @@ const sampleInput: CpShipmentInput = {
   reference: '1ADBF06C',
 };
 
-describe('Canada Post XML builders', () => {
-  it('escapes XML-special characters in addresses', () => {
-    expect(escXml("O'Brien & Sons <Ltd>")).toBe("O&apos;Brien &amp; Sons &lt;Ltd&gt;");
-  });
-
+describe('shipment request building (shipping/v1 JSON)', () => {
   it('builds a non-contract shipment with service, addresses, and parcel', () => {
-    const xml = buildNcShipmentXml(sampleInput);
-    expect(xml).toContain('<service-code>DOM.EP</service-code>');
-    expect(xml).toContain('<company>Loving Charmz</company>');
-    expect(xml).toContain('<postal-zip-code>T2T1N6</postal-zip-code>');
-    expect(xml).toContain('<name>Jane Buyer</name>');
-    expect(xml).toContain('<postal-zip-code>M5H2N2</postal-zip-code>');
-    expect(xml).toContain('<weight>0.250</weight>');
-    expect(xml).toContain('<length>10.0</length>');
+    const body = buildShipmentRequest(sampleInput, { mode: 'non-contract' }) as Record<string, any>;
+    const spec = body.deliverySpec;
+
+    expect(spec.serviceCode).toBe('DOM.EP');
+    expect(spec.sender.company).toBe('Loving Charmz');
+    expect(spec.sender.addressDetails.postalZipCode).toBe('T2T1N6');
+    expect(spec.destination.name).toBe('Jane Buyer');
+    expect(spec.destination.addressDetails.postalZipCode).toBe('M5H2N2');
+    expect(spec.parcelCharacteristics.weight).toBe(0.25);
+    expect(spec.parcelCharacteristics.dimensions).toEqual({ length: 10, width: 8, height: 4 });
+    // Non-contract labels settle immediately — no manifest follows.
+    expect(body.transmitShipment).toBe(true);
+    expect(body.groupId).toBeUndefined();
   });
 
-  it('normalizes postal codes by removing spaces', () => {
-    const xml = buildNcShipmentXml(sampleInput);
-    expect(xml).not.toContain('T2T 1N6');
-    expect(xml).toContain('T2T1N6');
+  it('normalizes postal codes by removing spaces and uppercasing', () => {
+    expect(normalizePostal(' m5h 2n2 ', 'CA')).toBe('M5H2N2');
+    const body = buildShipmentRequest(sampleInput, { mode: 'non-contract' }) as Record<string, any>;
+    expect(JSON.stringify(body)).not.toContain('M5H 2N2');
   });
 
-  it('adds customer reference and tracking notifications when provided', () => {
-    const xml = buildNcShipmentXml(sampleInput);
-    expect(xml).toContain('<customer-ref-1>1ADBF06C</customer-ref-1>');
-    expect(xml).toContain('<email>jane@example.com</email>');
-    expect(xml).toContain('<on-delivery>true</on-delivery>');
+  it('adds customer reference and CP delivery notifications when provided', () => {
+    const body = buildShipmentRequest(sampleInput, { mode: 'non-contract' }) as Record<string, any>;
+    expect(body.deliverySpec.references.customerRef1).toBe('1ADBF06C');
+    expect(body.deliverySpec.notification).toMatchObject({
+      email: 'jane@example.com',
+      onShipment: true,
+      onException: true,
+      onDelivery: true,
+    });
   });
 
   it('adds customs for US/international services and omits them domestically', () => {
-    const intl = buildNcShipmentXml({ ...sampleInput, serviceCode: 'USA.TP' });
-    expect(intl).toContain('<customs>');
-    expect(intl).toContain('<reason-for-export>SOG</reason-for-export>');
+    const intl = buildShipmentRequest({ ...sampleInput, serviceCode: 'USA.TP' }, { mode: 'non-contract' }) as Record<string, any>;
+    expect(intl.deliverySpec.customs).toMatchObject({ currency: 'CAD', reasonForExport: 'SOG' });
+    // International destinations carry a phone number for the carrier.
+    expect(isDomesticService('USA.TP')).toBe(false);
 
-    const dom = buildNcShipmentXml(sampleInput);
-    expect(dom).not.toContain('<customs>');
+    const dom = buildShipmentRequest(sampleInput, { mode: 'non-contract' }) as Record<string, any>;
+    expect(dom.deliverySpec.customs).toBeUndefined();
   });
 
   it('omits optional blocks when not provided', () => {
-    const xml = buildNcShipmentXml({
-      ...sampleInput,
-      email: undefined,
-      reference: undefined,
-      parcel: { weightKg: 0.4 },
-    });
-    expect(xml).not.toContain('<customer-ref-1>');
-    expect(xml).not.toContain('<notification>');
-    expect(xml).not.toContain('<dimensions>');
-    expect(xml).toContain('<weight>0.400</weight>');
+    const body = buildShipmentRequest(
+      { ...sampleInput, email: undefined, reference: undefined, parcel: { weightKg: 0.4 } },
+      { mode: 'non-contract' },
+    ) as Record<string, any>;
+    expect(body.deliverySpec.references).toBeUndefined();
+    expect(body.deliverySpec.notification).toBeUndefined();
+    expect(body.deliverySpec.parcelCharacteristics.dimensions).toBeUndefined();
+    expect(body.deliverySpec.parcelCharacteristics.weight).toBe(0.4);
+  });
+
+  it('contract mode groups shipments instead of transmitting immediately', () => {
+    const body = buildShipmentRequest(sampleInput, {
+      mode: 'contract',
+      groupId: 'lc-20260921',
+    }) as Record<string, any>;
+    expect(body.groupId).toBe('lc-20260921');
+    expect(body.transmitShipment).toBeUndefined();
+    expect(body.deliverySpec.settlementInfo.intendedMethodOfPayment).toBe('Account');
   });
 });
 
-describe('Canada Post response parsing', () => {
-  it('extracts link rel/href pairs', () => {
-    const xml = `<?xml version="1.0"?>
-<non-contract-shipment xmlns="http://www.canadapost.ca/ws/ncshipment-v4">
-<link rel="self" href="https://ct.soa-gw.canadapost.ca/rs/0000000000/ncshipment/12345" media-type="application/vnd.cpc.ncshipment-v4+xml"/>
-<link rel="label" href="https://ct.soa-gw.canadapost.ca/rs/0000000000/12345/label/0" media-type="application/pdf"/>
-</non-contract-shipment>`;
-    const links = parseLinks(xml);
-    expect(links.self).toContain('/ncshipment/12345');
+describe('response parsing', () => {
+  it('flattens the links array into rel → href', () => {
+    const links = parseLinks([
+      { rel: 'self', href: 'https://api.canadapost-postescanada.ca/x/shipments/1', mediaType: 'application/json' },
+      { rel: 'label', href: 'https://api.canadapost-postescanada.ca/x/shipments/1/label/0', mediaType: 'application/pdf' },
+    ]);
+    expect(links.self).toContain('/shipments/1');
     expect(links.label).toContain('/label/0');
+    expect(parseLinks(undefined)).toEqual({});
   });
 
-  it('parses a tracking summary with events', () => {
-    const xml = `<?xml version="1.0" encoding="utf-8"?>
-<tracking-summary xmlns="http://www.canadapost.ca/ws/track-v2">
-<pin-summary>
-<pin>123456789012</pin>
-<expected-delivery-date>2026-09-24</expected-delivery-date>
-<event>
-<event-date>2026-09-21</event-date>
-<event-time>09:12:44</event-time>
-<event-description>Item information at origin facility</event-description>
-<event-site>CALGARY AB</event-site>
-</event>
-<event>
-<event-date>2026-09-20</event-date>
-<event-time>18:03:00</event-time>
-<event-description>Electronic information submitted</event-description>
-<event-site/>
-</event>
-</pin-summary>
-</tracking-summary>`;
-    const summary = parseTrackingSummary(xml);
+  it('parses a tracking summary array with the latest event first', () => {
+    const summary = parseTrackingSummary([
+      {
+        pin: '123456789012',
+        serviceName: 'Xpresspost',
+        expectedDeliveryDate: '2026-09-24',
+        eventDescription: 'Item information at origin facility',
+        eventDate: '2026-09-21',
+        eventTime: '09:12:44',
+        eventLocation: 'CALGARY AB',
+      },
+      {
+        eventDescription: 'Electronic information submitted',
+        eventDate: '2026-09-20',
+        eventTime: '18:03:00',
+      },
+    ]);
     expect(summary.pin).toBe('123456789012');
     expect(summary.expectedDelivery).toBe('2026-09-24');
     expect(summary.eventName).toBe('Item information at origin facility');
+    expect(summary.serviceName).toBe('Xpresspost');
     expect(summary.events).toHaveLength(2);
-    expect(summary.events[1].description).toBe('Electronic information submitted');
     expect(summary.events[0].site).toBe('CALGARY AB');
+    expect(summary.events[1].description).toBe('Electronic information submitted');
+  });
+
+  it('survives a per-PIN error entry (200 with error object)', () => {
+    const summary = parseTrackingSummary([
+      { pin: '123456789012', error: { code: '004', descEn: 'No PIN History' } },
+    ]);
+    expect(summary.pin).toBe('123456789012');
+    expect(summary.eventName).toBeNull();
+  });
+});
+
+describe('rating request building (rating/v1 JSON)', () => {
+  it('builds a domestic scenario with quote type and services', () => {
+    const body = buildRateRequest({
+      quoteType: 'counter',
+      originPostal: 't2t 1n6',
+      destPostal: 'm5h 2n2',
+      destCountry: 'CA',
+      weightKg: 0.25,
+      services: ['DOM.EP', 'DOM.RP'],
+    }) as Record<string, any>;
+    expect(body.quoteType).toBe('counter');
+    expect(body.originPostalCode).toBe('T2T1N6');
+    expect(body.destination).toEqual({ domestic: { postalCode: 'M5H2N2' } });
+    expect(body.services).toEqual(['DOM.EP', 'DOM.RP']);
+    expect(body.parcelCharacteristics.weight).toBe(0.25);
+  });
+
+  it('builds a US scenario with zip-code destination and no services', () => {
+    const body = buildRateRequest({
+      quoteType: 'counter',
+      originPostal: 'T2T1N6',
+      destPostal: '90210',
+      destCountry: 'US',
+      weightKg: 0.4,
+    }) as Record<string, any>;
+    expect(body.destination).toEqual({ unitedStates: { zipCode: '90210' } });
+    expect(body.services).toBeUndefined();
+  });
+});
+
+describe('rating response parsing', () => {
+  it('parses every price quote with due, eta, and guarantee', () => {
+    const quotes = parsePriceQuotes([
+      {
+        serviceCode: 'DOM.RP',
+        serviceName: 'Regular Parcel',
+        priceDetails: { base: 9.99, due: 13.57 },
+        serviceStandard: {
+          guaranteedDelivery: false,
+          expectedTransitTime: 4,
+          expectedDeliveryDate: '2026-09-25',
+        },
+      },
+      {
+        serviceCode: 'DOM.XP',
+        serviceName: 'Xpresspost',
+        priceDetails: { base: 16.5, due: 21.06 },
+        serviceStandard: {
+          guaranteedDelivery: true,
+          expectedTransitTime: 2,
+          expectedDeliveryDate: '2026-09-23',
+        },
+      },
+    ]);
+    expect(quotes).toHaveLength(2);
+    expect(quotes[0]).toMatchObject({
+      serviceCode: 'DOM.RP',
+      serviceName: 'Regular Parcel',
+      due: 13.57,
+      transitDays: 4,
+      expectedDeliveryDate: '2026-09-25',
+      guaranteed: false,
+    });
+    expect(quotes[1]).toMatchObject({ serviceCode: 'DOM.XP', due: 21.06, guaranteed: true });
+  });
+
+  it('returns no quotes for null payload and skips quotes missing due', () => {
+    expect(parsePriceQuotes(null)).toEqual([]);
+    const partial = parsePriceQuotes([
+      { serviceCode: 'DOM.RP', serviceName: 'Regular Parcel', priceDetails: { base: 9.99 } },
+      { serviceCode: 'DOM.EP', serviceName: 'Expedited', priceDetails: { due: 12.34 } },
+    ]);
+    expect(partial).toHaveLength(1);
+    expect(partial[0].serviceCode).toBe('DOM.EP');
   });
 });
 
 describe('credential gating', () => {
   it('reports unconfigured when env vars are absent', async () => {
-    const { isCanadaPostConfigured } = await import('@/lib/shipping/canadapost');
-    const savedKey = process.env.CP_API_KEY;
-    const savedCustomer = process.env.CP_CUSTOMER_NUMBER;
-    delete process.env.CP_API_KEY;
-    delete process.env.CP_CUSTOMER_NUMBER;
+    const { isCanadaPostConfigured, getCpConfig } = await import('@/lib/shipping/canadapost');
+    const saved: Record<string, string | undefined> = {};
+    for (const k of ['CP_API_KEY', 'CP_RATING_KEY', 'CP_SHIPPING_KEY', 'CP_TRACKING_KEY', 'CP_CUSTOMER_NUMBER']) {
+      saved[k] = process.env[k];
+      delete process.env[k];
+    }
     try {
       expect(isCanadaPostConfigured()).toBe(false);
+      expect(getCpConfig()).toBeNull();
     } finally {
-      if (savedKey) process.env.CP_API_KEY = savedKey;
-      if (savedCustomer) process.env.CP_CUSTOMER_NUMBER = savedCustomer;
+      for (const [k, v] of Object.entries(saved)) {
+        if (v !== undefined) process.env[k] = v;
+      }
+    }
+  });
+
+  it('falls back across families so one subscribed pair can cover another', async () => {
+    const { getCpConfig } = await import('@/lib/shipping/canadapost');
+    const saved: Record<string, string | undefined> = {};
+    for (const k of ['CP_API_KEY', 'CP_RATING_KEY', 'CP_SHIPPING_KEY', 'CP_TRACKING_KEY', 'CP_CUSTOMER_NUMBER']) {
+      saved[k] = process.env[k];
+    }
+    process.env.CP_CUSTOMER_NUMBER = '0001306247';
+    process.env.CP_SHIPPING_KEY = 'shipkey:shipsecret';
+    delete process.env.CP_RATING_KEY;
+    delete process.env.CP_TRACKING_KEY;
+    try {
+      const cfg = getCpConfig()!;
+      expect(cfg.shippingPair).toBe('shipkey:shipsecret');
+      // Same-account fallback: family without its own pair borrows another.
+      expect(cfg.trackingPair).toBe('shipkey:shipsecret');
+      expect(cfg.ratingPair).toBe('shipkey:shipsecret');
+    } finally {
+      for (const [k, v] of Object.entries(saved)) {
+        if (v !== undefined) process.env[k] = v;
+        else delete process.env[k];
+      }
     }
   });
 });

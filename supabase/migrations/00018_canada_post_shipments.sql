@@ -16,6 +16,7 @@ CREATE TABLE IF NOT EXISTS public.cp_shipments (
   service_code text NOT NULL,                  -- DOM.EP, DOM.RP, ...
   pin text,                                    -- tracking number assigned by Canada Post
   group_id text,                               -- contract mode: manifest grouping
+  shipment_id text,                            -- CP shipment id (portal API; void/refund)
   links jsonb NOT NULL DEFAULT '{}'::jsonb,    -- self / label / details hrefs from CP
   price jsonb,                                 -- quoted price details when returned
   status text NOT NULL DEFAULT 'created',      -- created | voided | transmitted

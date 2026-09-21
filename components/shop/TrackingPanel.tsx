@@ -6,6 +6,8 @@ type TrackState = {
   state: 'idle' | 'loading' | 'ok' | 'error' | 'unavailable';
   status?: string | null;
   expectedDelivery?: string | null;
+  actualDelivery?: string | null;
+  serviceName?: string | null;
   lastEvent?: { date: string | null; description: string | null; site: string | null } | null;
   error?: string | null;
 };
@@ -45,6 +47,8 @@ export function TrackingPanel({ pin, carrier }: { pin: string; carrier: string |
               state: 'ok',
               status: data.status,
               expectedDelivery: data.expectedDelivery,
+              actualDelivery: data.actualDelivery,
+              serviceName: data.serviceName,
               lastEvent: data.lastEvent ?? null,
             },
           });
@@ -74,9 +78,12 @@ export function TrackingPanel({ pin, carrier }: { pin: string; carrier: string |
         <div className="mt-1.5 text-xs text-ink-700 space-y-0.5">
           <p>
             <span className="font-medium">{state.status || 'In transit'}</span>
-            {state.expectedDelivery && (
+            {state.serviceName && <span className="text-ink-500"> · {state.serviceName}</span>}
+            {state.actualDelivery ? (
+              <span className="text-ink-500"> · delivered {state.actualDelivery}</span>
+            ) : state.expectedDelivery ? (
               <span className="text-ink-500"> · expected {state.expectedDelivery}</span>
-            )}
+            ) : null}
           </p>
           {state.lastEvent?.description && (
             <p className="text-ink-500">

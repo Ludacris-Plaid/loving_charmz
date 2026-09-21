@@ -26,7 +26,7 @@ export async function GET(
   }
 
   const cfg = getCpConfig();
-  if (!cfg?.trackingAuth) {
+  if (!cfg?.trackingPair) {
     return NextResponse.json({ available: false });
   }
 
@@ -36,6 +36,8 @@ export async function GET(
       available: true,
       status: summary.eventName,
       expectedDelivery: summary.expectedDelivery,
+      actualDelivery: summary.actualDelivery,
+      serviceName: summary.serviceName,
       deliveredTo: summary.deliveredTo,
       lastEvent: summary.events?.[0]
         ? {

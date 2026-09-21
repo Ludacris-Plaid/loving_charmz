@@ -3,97 +3,97 @@ import 'server-only';
 /**
  * Canada Post REST client — labels, manifests, and tracking.
  *
- * Covers the three API families the shop needs:
- *  - Non-Contract Shipping (nc-shipment v4): pay-per-label, no commercial
- *    contract needed. This is the default mode.
- *  - Contract Shipping (shipment v8 + manifest v8): for customers with a
- *    Canada Post contract — shipments join a group that is later transmitted
- *    into a manifest.
- *  - Tracking (track v2): live status for any PIN.
+ * Built on the Canada Post Developer Portal APIs (April 2026 generation):
+ * REST + JSON, authenticated with OAuth 2.0 client-credentials Bearer
+ * tokens minted from a per-app key/secret pair. All traffic goes through
+ * the single portal gateway:
  *
- * All calls are XML-over-REST with HTTP Basic auth, per the Canada Post
- * developer docs (canadapost-postescanada.ca → Developer Program).
+ *   token:     …/devportal-portaildesdeveloppeurs/cpc-api-native-oauth-provider/oauth2/token
+ *   shipping:  …/devportal-portaildesdeveloppeurs/shipping/v1   (labels, manifests)
+ *   rating:    …/devportal-portaildesdeveloppeurs/rating/v1     (live checkout rates)
+ *   tracking:  …/devportal-portaildesdeveloppeurs/tracking/v1   (PIN status)
  *
- * Credentials (env) — Canada Post issues one key:secret pair per service.
- * The values go in as a single CP_API_KEY="key:secret" per family so the
- * config stays a flat map (see resolveAuths):
- *  - CP_RATING_KEY="key:secret"      Get Rates at checkout
- *  - CP_SHIPPING_KEY="key:secret"    label creation + manifests
- *  - CP_TRACKING_KEY="key:secret"    live tracking lookups
- *  - CP_API_KEY (legacy fallback)    one key for all families
- *  - CP_CUSTOMER_NUMBER 10-digit mailed-by customer number
- *  - CP_MODE           "non-contract" (default) | "contract"
- *  - CP_ENV            "sandbox" (default) | "production"
- *  - CP_ORIGIN_POSTAL  6-char origin postal code (e.g. T2T1N6)
- *  - CP_SHIPPING_POINT_ID  optional 4-char deposit site number (contract)
+ * Each API product is subscribed independently in the portal, so every
+ * family carries its own key:secret pair:
+ *   CP_RATING_KEY="key:secret"      Get Rates at checkout
+ *   CP_SHIPPING_KEY="key:secret"    label creation + manifests
+ *   CP_TRACKING_KEY="key:secret"    live tracking lookups
+ *   CP_API_KEY (fallback)           one pair used for every family
+ * A family missing its pair falls back to any configured pair of the same
+ * Canada Post account — the gateway authorizes by app subscription, so a
+ * fallback only ever succeeds when that app really has access.
  *
- * Without at least a tracking key (or CP_API_KEY) the module reports
- * `isConfigured: false` and every admin action returns a friendly message
- * instead of attempting calls.
+ * Other env values:
+ *   CP_CUSTOMER_NUMBER     10-digit mailed-by customer number
+ *   CP_MODE                "non-contract" (default) | "contract"
+ *   CP_ORIGIN_POSTAL       6-char origin postal code (e.g. T2T1N6)
+ *   CP_SENDER_ADDRESS / CP_SENDER_CITY / CP_SENDER_PROVINCE / CP_SENDER_PHONE
+ *   CP_QUOTE_TYPE          "counter" (default) | "commercial" — rating basis
+ *
+ * Without at least one key pair the module reports `isConfigured: false`
+ * and every admin action returns a friendly message instead of calling.
  */
+
+const GATEWAY = 'https://api.canadapost-postescanada.ca/prod/devportal-portaildesdeveloppeurs';
+const TOKEN_URL = `${GATEWAY}/cpc-api-native-oauth-provider/oauth2/token`;
+
+export type CpFamily = 'rating' | 'shipping' | 'tracking';
 
 export type CpConfig = {
-  /** Pre-encoded Basic header values per API family. */
-  ratingAuth: string | null;
-  shippingAuth: string | null;
-  trackingAuth: string | null;
+  /** key:secret pairs per family (post-fallback; null when absent). */
+  ratingPair: string | null;
+  shippingPair: string | null;
+  trackingPair: string | null;
   customerNumber: string;
   mode: 'non-contract' | 'contract';
-  baseUrl: string; // ct.soa-gw (sandbox) or soa-gw (production)
   originPostal: string;
   shippingPointId?: string;
+  quoteType: 'counter' | 'commercial';
 };
 
-function basicAuth(user: string, secret: string): string {
-  return `Basic ${Buffer.from(`${user}:${secret}`).toString('base64')}`;
+function normalizePair(value: string | undefined): string | null {
+  const pair = value?.trim();
+  if (!pair || !pair.includes(':')) return null;
+  const [key, ...rest] = pair.split(':');
+  const secret = rest.join(':').trim();
+  return key && secret ? `${key.trim()}:${secret}` : null;
 }
 
-/**
- * Resolves per-service auth headers. Accepts either the per-service
- * key/secret pairs (what the Developer Program mailbox actually shows) or
- * the legacy single CP_API_KEY="user:password" for all families.
- */
-function resolveAuths() {
-  const toAuth = (v: string | undefined): string | null => {
-    const pair = v?.trim();
-    return pair && pair.includes(':')
-      ? basicAuth(pair.split(':')[0], pair.split(':').slice(1).join(':'))
-      : null;
-  };
-
-  const ratingAuth = toAuth(process.env.CP_RATING_KEY);
-  const shippingAuth = toAuth(process.env.CP_SHIPPING_KEY);
-  const trackingAuth = toAuth(process.env.CP_TRACKING_KEY);
-  const legacyAuth = toAuth(process.env.CP_API_KEY);
-
+function resolvePairs() {
+  const legacy = normalizePair(process.env.CP_API_KEY);
+  const rating = normalizePair(process.env.CP_RATING_KEY) ?? legacy;
+  const shipping = normalizePair(process.env.CP_SHIPPING_KEY) ?? legacy;
+  const tracking = normalizePair(process.env.CP_TRACKING_KEY) ?? legacy;
   return {
-    ratingAuth: ratingAuth ?? legacyAuth,
-    shippingAuth: shippingAuth ?? legacyAuth,
-    trackingAuth: trackingAuth ?? legacyAuth,
+    ratingPair: rating ?? shipping ?? tracking,
+    shippingPair: shipping ?? rating ?? tracking,
+    trackingPair: tracking ?? shipping ?? rating,
   };
 }
 
 export function getCpConfig(): CpConfig | null {
-  const { ratingAuth, shippingAuth, trackingAuth } = resolveAuths();
-  const customerNumber = process.env.CP_CUSTOMER_NUMBER?.trim();
-  if ((!trackingAuth && !shippingAuth && !ratingAuth) || !customerNumber) return null;
+  const { ratingPair, shippingPair, trackingPair } = resolvePairs();
+  if (!ratingPair && !shippingPair && !trackingPair) return null;
 
-  const env = (process.env.CP_ENV || 'sandbox').toLowerCase();
+  const customerNumber = process.env.CP_CUSTOMER_NUMBER?.trim();
+  if (!customerNumber) return null;
+
   const mode = (process.env.CP_MODE || 'non-contract').toLowerCase() === 'contract'
     ? 'contract'
     : 'non-contract';
+  const quoteType = (process.env.CP_QUOTE_TYPE || 'counter').toLowerCase() === 'commercial'
+    ? 'commercial'
+    : 'counter';
 
   return {
-    ratingAuth,
-    shippingAuth,
-    trackingAuth,
+    ratingPair,
+    shippingPair,
+    trackingPair,
     customerNumber,
     mode,
-    baseUrl: env === 'production'
-      ? 'https://soa-gw.canadapost.ca'
-      : 'https://ct.soa-gw.canadapost.ca',
     originPostal: (process.env.CP_ORIGIN_POSTAL || '').replace(/\s/g, '').toUpperCase(),
     shippingPointId: process.env.CP_SHIPPING_POINT_ID?.trim() || undefined,
+    quoteType,
   };
 }
 
@@ -101,49 +101,47 @@ export function isCanadaPostConfigured(): boolean {
   return getCpConfig() !== null;
 }
 
-/* ── XML helpers ─────────────────────────────────────────────────────── */
-
-export function escXml(value: string): string {
-  return value
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&apos;');
+function pairFor(cfg: CpConfig, family: CpFamily): string | null {
+  if (family === 'rating') return cfg.ratingPair;
+  if (family === 'shipping') return cfg.shippingPair;
+  return cfg.trackingPair;
 }
 
-/** Tiny element builder: el('city', 'Calgary') → '<city>Calgary</city>' */
-function el(name: string, value: string | number | undefined | null): string {
-  if (value === undefined || value === null || value === '') return '';
-  return `<${name}>${escXml(String(value))}</${name}>`;
-}
+/* ── OAuth 2.0 client-credentials token cache ────────────────────────── */
 
-function textOf(xml: string, tag: string): string | null {
-  const m = xml.match(new RegExp(`<[^>]*:?${tag}(?:\\s[^>]*)?>([\\s\\S]*?)</[^>]*:?${tag}>`));
-  return m ? decodeXml(m[1].trim()) : null;
-}
+type CachedToken = { token: string; expiresAt: number };
+const tokenCache = new Map<string, CachedToken>();
 
-function decodeXml(value: string): string {
-  return value
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&quot;/g, '"')
-    .replace(/&apos;/g, "'")
-    .replace(/&amp;/g, '&');
-}
+async function getBearerToken(cfg: CpConfig, family: CpFamily): Promise<string> {
+  const pair = pairFor(cfg, family);
+  if (!pair) throw new CanadaPostError(`Canada Post ${family} credentials are not configured.`);
 
-/** All <link rel="..." href="..."> entries from a CP response. */
-export function parseLinks(xml: string): Record<string, string> {
-  const links: Record<string, string> = {};
-  const re = /<link\b[^>]*>/g;
-  let m: RegExpExecArray | null;
-  while ((m = re.exec(xml))) {
-    const tag = m[0];
-    const rel = tag.match(/rel="([^"]+)"/)?.[1];
-    const href = tag.match(/href="([^"]+)"/)?.[1];
-    if (rel && href) links[rel] = href;
+  const cached = tokenCache.get(family);
+  if (cached && cached.expiresAt > Date.now() + 5 * 60 * 1000) return cached.token;
+
+  const [clientId, ...rest] = pair.split(':');
+  const clientSecret = rest.join(':');
+
+  const res = await fetch(TOKEN_URL, {
+    method: 'POST',
+    headers: {
+      'X-IBM-Client-Id': clientId,
+      'X-IBM-Client-Secret': clientSecret,
+      'Content-Type': 'application/x-www-form-urlencoded',
+      Accept: 'application/json',
+    },
+    body: 'grant_type=client_credentials&scope=merchant',
+    cache: 'no-store',
+  });
+  const body = (await res.json().catch(() => null)) as { access_token?: string; expires_in?: number; error_description?: string } | null;
+  if (!res.ok || !body?.access_token) {
+    throw new CanadaPostError(
+      `Canada Post authentication failed for ${family}: ${body?.error_description || `HTTP ${res.status}`}`,
+    );
   }
-  return links;
+  const expiresIn = typeof body.expires_in === 'number' ? body.expires_in : 3600;
+  tokenCache.set(family, { token: body.access_token, expiresAt: Date.now() + expiresIn * 1000 });
+  return body.access_token;
 }
 
 /* ── Error surface ───────────────────────────────────────────────────── */
@@ -157,46 +155,77 @@ export class CanadaPostError extends Error {
   }
 }
 
-function parseErrorBody(body: string): { code: string | null; description: string } {
-  const code = textOf(body, 'code');
-  const description = textOf(body, 'description');
-  return { code: code || null, description: description || 'Canada Post request failed.' };
+type ApiErrorBody = {
+  title?: string;
+  detail?: string;
+  errors?: { errorCode?: string; message?: string }[];
+  httpCode?: string;
+  httpMessage?: string;
+  moreInformation?: string;
+};
+
+function describeError(status: number, body: string): CanadaPostError {
+  let parsed: ApiErrorBody | null = null;
+  try {
+    parsed = JSON.parse(body) as ApiErrorBody;
+  } catch {
+    // non-JSON body — fall through
+  }
+  if (parsed?.errors?.length) {
+    const first = parsed.errors[0];
+    return new CanadaPostError(
+      `Canada Post ${first.errorCode ?? ''}: ${first.message ?? parsed.detail ?? parsed.title ?? 'request failed'}`.replace(': :', ': '),
+      first.errorCode ?? null,
+    );
+  }
+  if (parsed?.httpCode) {
+    return new CanadaPostError(
+      `Canada Post HTTP ${parsed.httpCode}: ${parsed.moreInformation || parsed.httpMessage}`,
+      null,
+    );
+  }
+  if (parsed?.detail || parsed?.title) {
+    return new CanadaPostError(`Canada Post: ${parsed.detail || parsed.title}`, null);
+  }
+  return new CanadaPostError(`Canada Post HTTP ${status}: ${body.slice(0, 200) || 'request failed'}`);
 }
 
-async function cpFetch(
+export async function cpJson<T>(
   cfg: CpConfig,
+  family: CpFamily,
   url: string,
-  init: { method: 'GET' | 'POST' | 'DELETE'; accept: string; contentType?: string; body?: string; auth?: string | null },
-): Promise<{ status: number; body: string }> {
-  // Per-service auth when the caller names it; otherwise the first available
-  // header (a single shared key sets all three to the same value).
-  const auth = init.auth ?? cfg.trackingAuth ?? cfg.shippingAuth ?? cfg.ratingAuth;
-  if (!auth) throw new CanadaPostError('Canada Post credentials are not configured.');
+  init: { method: 'GET' | 'POST' | 'DELETE'; body?: unknown; accept?: string; timeoutMs?: number } = { method: 'GET' },
+): Promise<{ status: number; data: T | null }> {
+  const token = await getBearerToken(cfg, family);
   const res = await fetch(url, {
     method: init.method,
     headers: {
-      Authorization: auth,
-      Accept: init.accept,
+      Authorization: `Bearer ${token}`,
+      Accept: init.accept ?? 'application/json',
       'Accept-Language': 'en-CA',
-      ...(init.contentType ? { 'Content-Type': init.contentType } : {}),
+      ...(init.body !== undefined ? { 'Content-Type': 'application/json' } : {}),
     },
-    body: init.body,
+    body: init.body !== undefined ? JSON.stringify(init.body) : undefined,
     cache: 'no-store',
+    signal: AbortSignal.timeout(init.timeoutMs ?? 15000),
   });
-  const body = await res.text();
-  return { status: res.status, body };
+  const text = await res.text();
+  if (res.status >= 400) {
+    // Manifest/artifact endpoints sometimes 404 briefly while rendering.
+    throw describeError(res.status, text);
+  }
+  let data: T | null = null;
+  if (text) {
+    try {
+      data = JSON.parse(text) as T;
+    } catch {
+      data = null; // PDF/binary endpoints return non-JSON
+    }
+  }
+  return { status: res.status, data };
 }
 
-function assertOk(status: number, body: string): void {
-  if (status >= 200 && status < 300) return;
-  const { code, description } = parseErrorBody(body);
-  throw new CanadaPostError(
-    code ? `Canada Post ${code}: ${description}` : `Canada Post HTTP ${status}: ${description}`,
-    code,
-  );
-}
-
-/* ── Address / parcel input shared by both shipping modes ────────────── */
+/* ── Address / parcel input ──────────────────────────────────────────── */
 
 export type CpAddress = {
   name?: string;
@@ -223,185 +252,210 @@ export type CpShipmentInput = {
   destination: CpAddress;
   parcel: CpParcel;
   email?: string; // shopper email for CP tracking notifications
-  reference?: string; // stored as customer-ref-1 (shows in Track)
+  reference?: string; // stored as customerRef1 (shows in Track)
   orderTotalCad?: number; // customs value for US/international
 };
 
-function normalizePostal(postal: string, country: string): string {
+export function normalizePostal(postal: string, country: string): string {
   const raw = postal.replace(/\s/g, '').toUpperCase();
   return country === 'CA' ? raw : raw; // US format kept as-is (5 or 5-4)
 }
 
-function addressXml(addr: CpAddress, opts: { requirePhone: boolean }): string {
-  return [
-    el('name', addr.name),
-    el('company', addr.company),
-    opts.requirePhone ? el('client-voice-number', addr.phone) : '',
-    '<address-details>',
-    el('address-line-1', addr.addressLine1),
-    el('address-line-2', addr.addressLine2),
-    el('city', addr.city),
-    el('prov-state', addr.province),
-    el('country-code', addr.countryCode),
-    el('postal-zip-code', normalizePostal(addr.postalCode, addr.countryCode)),
-    '</address-details>',
-  ].join('');
-}
-
 const DOMESTIC_SERVICES = /^DOM\./;
-
-function isDomestic(serviceCode: string): boolean {
+export function isDomesticService(serviceCode: string): boolean {
   return DOMESTIC_SERVICES.test(serviceCode);
 }
 
-/* ── Non-Contract shipment (v4) ──────────────────────────────────────── */
+type CpApiLink = { rel?: string; href?: string; index?: number; mediaType?: string };
 
-const NC_V4 = 'application/vnd.cpc.ncshipment-v4+xml';
-
-export function buildNcShipmentXml(input: CpShipmentInput): string {
-  const intl = !isDomestic(input.serviceCode);
-  const dims = input.parcel.lengthCm && input.parcel.widthCm && input.parcel.heightCm
-    ? '<dimensions>'
-      + el('length', input.parcel.lengthCm!.toFixed(1))
-      + el('width', input.parcel.widthCm!.toFixed(1))
-      + el('height', input.parcel.heightCm!.toFixed(1))
-      + '</dimensions>'
-    : '';
-
-  const customs = intl
-    ? '<customs>'
-      + el('currency', 'CAD')
-      + el('reason-for-export', 'SOG')
-      + '</customs>'
-    : '';
-
-  const notification = input.email
-    ? '<notification>'
-      + el('email', input.email)
-      + '<on-shipment>true</on-shipment>'
-      + '<on-exception>true</on-exception>'
-      + '<on-delivery>true</on-delivery>'
-      + '</notification>'
-    : '';
-
-  return `<?xml version="1.0" encoding="utf-8"?>
-<non-contract-shipment xmlns="http://www.canadapost.ca/ws/ncshipment-v4">
-<delivery-spec>
-${el('service-code', input.serviceCode)}
-<sender>
-${el('name', input.sender.name)}
-${el('company', input.sender.company)}
-${el('contact-phone', input.sender.phone)}
-<address-details>
-${el('address-line-1', input.sender.addressLine1)}
-${el('address-line-2', input.sender.addressLine2)}
-${el('city', input.sender.city)}
-${el('prov-state', input.sender.province)}
-${el('postal-zip-code', normalizePostal(input.sender.postalCode, 'CA'))}
-</address-details>
-</sender>
-<destination>
-${addressXml(input.destination, { requirePhone: !isDomestic(input.serviceCode) && /USA\.|INT\.(XP|TP)/.test(input.serviceCode) })}
-</destination>
-${customs}
-<parcel-characteristics>
-${el('weight', input.parcel.weightKg.toFixed(3))}
-${dims}
-</parcel-characteristics>
-${notification}
-<preferences>
-<show-packing-instructions>true</show-packing-instructions>
-</preferences>
-${input.reference ? '<references>' + el('customer-ref-1', input.reference) + '</references>' : ''}
-</delivery-spec>
-</non-contract-shipment>`;
+/** Flatten the links array into rel → href. */
+export function parseLinks(links: CpApiLink[] | undefined | null): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const l of links ?? []) {
+    if (l?.rel && l?.href) out[l.rel] = l.href;
+  }
+  return out;
 }
 
+/* ── Shipment request builders (exported for tests) ──────────────────── */
+
+type DeliverySpec = {
+  serviceCode: string;
+  sender: Record<string, unknown>;
+  destination: Record<string, unknown>;
+  parcelCharacteristics: Record<string, unknown>;
+  preferences: Record<string, unknown>;
+  settlementInfo: Record<string, unknown>;
+  options?: unknown;
+  notification?: Record<string, unknown>;
+  printPreferences?: Record<string, unknown>;
+  references?: Record<string, unknown>;
+  customs?: Record<string, unknown>;
+};
+
+function addressDetails(addr: CpAddress, opts: { domestic: boolean }): Record<string, unknown> {
+  const details: Record<string, unknown> = {
+    addressLine1: addr.addressLine1,
+    city: addr.city,
+    provState: addr.province.toUpperCase().slice(0, 2),
+    countryCode: opts.domestic ? 'CA' : addr.countryCode,
+    postalZipCode: normalizePostal(addr.postalCode, opts.domestic ? 'CA' : addr.countryCode),
+  };
+  if (addr.addressLine2) details.addressLine2 = addr.addressLine2;
+  return details;
+}
+
+export function buildShipmentRequest(
+  input: CpShipmentInput,
+  opts: { mode: 'non-contract' | 'contract'; groupId?: string },
+): Record<string, unknown> {
+  const domestic = isDomesticService(input.serviceCode);
+  const intl = !domestic;
+
+  const dims = input.parcel.lengthCm && input.parcel.widthCm && input.parcel.heightCm
+    ? {
+        length: Math.min(999.9, input.parcel.lengthCm),
+        width: Math.min(999.9, input.parcel.widthCm),
+        height: Math.min(999.9, input.parcel.heightCm),
+      }
+    : undefined;
+
+  const parcel: Record<string, unknown> = { weight: Math.max(0.001, input.parcel.weightKg) };
+  if (dims) parcel.dimensions = dims;
+
+  const spec: DeliverySpec = {
+    serviceCode: input.serviceCode,
+    sender: {
+      ...(input.sender.name ? { name: input.sender.name } : {}),
+      company: input.sender.company || 'Loving Charmz',
+      contactPhone: input.sender.phone || '5555555555',
+      addressDetails: addressDetails(input.sender, { domestic: true }),
+    },
+    destination: {
+      ...(input.destination.name ? { name: input.destination.name } : {}),
+      ...(input.destination.company ? { company: input.destination.company } : {}),
+      ...((!domestic && input.destination.phone) ? { clientVoiceNumber: input.destination.phone } : {}),
+      addressDetails: addressDetails(input.destination, { domestic }),
+    },
+    parcelCharacteristics: parcel,
+    preferences: { showPackingInstructions: true },
+    settlementInfo:
+      opts.mode === 'contract'
+        ? { intendedMethodOfPayment: 'Account' }
+        : { intendedMethodOfPayment: 'CreditCard' },
+  };
+
+  if (input.email) {
+    spec.notification = {
+      email: input.email,
+      onShipment: true,
+      onException: true,
+      onDelivery: true,
+    };
+  }
+
+  spec.printPreferences = { outputFormat: '8.5x11', encoding: 'PDF' };
+
+  if (input.reference) {
+    spec.references = { customerRef1: input.reference.slice(0, 35) };
+  }
+
+  if (intl) {
+    spec.customs = {
+      currency: 'CAD',
+      reasonForExport: 'SOG', // sale of goods
+      ...(input.orderTotalCad ? { conversionFromCad: 1 } : {}),
+    };
+  }
+
+  const body: Record<string, unknown> = {
+    requestedShippingPoint: normalizePostal(process.env.CP_ORIGIN_POSTAL || '', 'CA') || undefined,
+    expectedMailingDate: new Date().toISOString().slice(0, 10),
+    deliverySpec: spec,
+  };
+
+  if (opts.mode === 'contract') {
+    body.groupId = opts.groupId;
+  } else {
+    // Non-contract labels are billed to the card on file immediately and
+    // need no manifest — transmitShipment must NOT be combined with groupId.
+    body.transmitShipment = true;
+  }
+
+  // Drop undefined values (fetch JSON.stringify keeps them as null otherwise).
+  return JSON.parse(JSON.stringify(body));
+}
+
+/* ── Create shipment ─────────────────────────────────────────────────── */
+
 export type CpShipmentResult = {
+  /** CP shipment id (needed for void/refund/price calls). */
+  shipmentId: string | null;
   pin: string | null;
-  links: Record<string, string>; // self, label, details, (receipt)
+  links: Record<string, string>; // self, label, details, price, receipt…
   price: { due: number | null; gst: number | null; pst: number | null } | null;
 };
 
-export async function createNcShipment(
+type CreateShipmentResponse = {
+  shipmentId?: string;
+  trackingPin?: string;
+  links?: CpApiLink[];
+  shipmentPrice?: {
+    dueAmount?: number;
+    gstAmount?: number;
+    pstAmount?: number;
+    hstAmount?: number;
+  } | null;
+};
+
+export async function createShipment(
   input: CpShipmentInput,
   cfgOverride?: CpConfig,
 ): Promise<CpShipmentResult> {
   const cfg = cfgOverride ?? getCpConfig();
   if (!cfg) throw new CanadaPostError('Canada Post is not configured.');
+  if (!pairFor(cfg, 'shipping')) throw new CanadaPostError('Canada Post shipping credentials are not configured.');
 
-  const url = `${cfg.baseUrl}/rs/${cfg.customerNumber}/ncshipment`;
-  const { status, body } = await cpFetch(cfg, url, {
+  const groupId = cfg.mode === 'contract'
+    ? `lc-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}`
+    : undefined;
+
+  const body = buildShipmentRequest(input, { mode: cfg.mode, groupId });
+  const url = `${GATEWAY}/shipping/v1/${cfg.customerNumber}/${cfg.customerNumber}/shipments`;
+  const { data } = await cpJson<CreateShipmentResponse>(cfg, 'shipping', url, {
     method: 'POST',
-    accept: NC_V4,
-    contentType: NC_V4,
-    body: buildNcShipmentXml(input),
-    auth: cfg.shippingAuth,
+    body,
   });
-  assertOk(status, body);
+  if (!data) throw new CanadaPostError('Canada Post returned an unreadable shipment response.');
 
-  const links = parseLinks(body);
-  const due = textOf(body, 'due-amount') ?? textOf(body, 'due');
-  const gst = textOf(body, 'gst-amount') ?? textOf(body, 'gst');
-  const pst = textOf(body, 'pst-amount') ?? textOf(body, 'pst');
+  const price = data.shipmentPrice
+    ? {
+        due: data.shipmentPrice.dueAmount ?? null,
+        gst: data.shipmentPrice.gstAmount ?? null,
+        pst: data.shipmentPrice.pstAmount ?? null,
+      }
+    : null;
 
   return {
-    pin: textOf(body, 'pin') ?? textOf(body, 'tracking-pin'),
-    links,
-    price: due !== null || gst !== null || pst !== null
-      ? { due: due ? Number(due) : null, gst: gst ? Number(gst) : null, pst: pst ? Number(pst) : null }
-      : null,
+    shipmentId: data.shipmentId ?? null,
+    pin: data.trackingPin ?? null,
+    links: parseLinks(data.links),
+    price,
   };
 }
 
-/* ── Contract shipment (v8) ──────────────────────────────────────────── */
+/* ── Void / manifest / label ─────────────────────────────────────────── */
 
-const SHIPMENT_V8 = 'application/vnd.cpc.shipment-v8+xml';
-
-export function buildContractShipmentXml(input: CpShipmentInput, groupId: string): string {
-  // Same delivery-spec shape as nc-shipment; wrapped in <shipment> with a
-  // namespaced group-id (required by the v8 schema).
-  const inner = buildNcShipmentXml(input)
-    .replace(/^<\?xml[^>]*\?>\s*/, '')
-    .replace('<non-contract-shipment xmlns="http://www.canadapost.ca/ws/ncshipment-v4">', '')
-    .replace('</non-contract-shipment>', '')
-    .trim();
-
-  return `<?xml version="1.0" encoding="utf-8"?>
-<shipment xmlns="http://www.canadapost.ca/ws/shipment-v8" xmlns:v8="http://www.canadapost.ca/ws/shipment-v8">
-<group-id>${escXml(groupId)}</group-id>
-<requested-shipping-point>${escXml('')}</requested-shipping-point>
-<delivery-spec>
-${inner}
-</delivery-spec>
-</shipment>`;
-}
-
-export async function createContractShipment(
-  input: CpShipmentInput,
-  groupId: string,
+export async function voidShipment(
+  links: Record<string, string>,
   cfgOverride?: CpConfig,
-): Promise<CpShipmentResult> {
+): Promise<void> {
   const cfg = cfgOverride ?? getCpConfig();
   if (!cfg) throw new CanadaPostError('Canada Post is not configured.');
-
-  const url = `${cfg.baseUrl}/rs/${cfg.customerNumber}/${cfg.customerNumber}/shipment`;
-  const { status, body } = await cpFetch(cfg, url, {
-    method: 'POST',
-    accept: SHIPMENT_V8,
-    contentType: SHIPMENT_V8,
-    body: buildContractShipmentXml(input, groupId),
-    auth: cfg.shippingAuth,
-  });
-  assertOk(status, body);
-
-  const links = parseLinks(body);
-  return { pin: textOf(body, 'tracking-pin') ?? textOf(body, 'pin'), links, price: null };
+  const href = links.self;
+  if (!href) throw new CanadaPostError('No void link stored for this shipment.');
+  await cpJson(cfg, 'shipping', href, { method: 'DELETE' });
 }
-
-/* ── Manifest (contract mode) ────────────────────────────────────────── */
-
-const MANIFEST_V8 = 'application/vnd.cpc.manifest-v8+xml';
 
 export async function transmitShipments(
   groupIds: string[],
@@ -410,110 +464,85 @@ export async function transmitShipments(
   const cfg = cfgOverride ?? getCpConfig();
   if (!cfg) throw new CanadaPostError('Canada Post is not configured.');
 
-  const xml = `<?xml version="1.0" encoding="utf-8"?>
-<transmit-set xmlns="http://www.canadapost.ca/ws/manifest-v8">
-<group-ids>
-${groupIds.map((g) => el('group-id', g)).join('')}
-</group-ids>
-${cfg.shippingPointId
-    ? el('shipping-point-id', cfg.shippingPointId)
-    : el('requested-shipping-point', cfg.originPostal)}
-<method-of-payment>Account</method-of-payment>
-<manifest-address>
-${el('company', 'Loving Charmz')}
-<address-details>
-${el('city', '')}
-${el('prov-state', '')}
-${el('country-code', 'CA')}
-${el('postal-zip-code', cfg.originPostal)}
-</address-details>
-</manifest-address>
-</transmit-set>`;
+  const body: Record<string, unknown> = {
+    groupIds,
+    methodOfPayment: 'Account',
+    manifestAddress: {
+      manifestCompany: 'Loving Charmz',
+      manifestPhone: process.env.CP_SENDER_PHONE || '5555555555',
+      manifestAddressDetails: {
+        city: process.env.CP_SENDER_CITY || undefined,
+        provState: process.env.CP_SENDER_PROVINCE || undefined,
+        countryCode: 'CA',
+        postalZipCode: cfg.originPostal || undefined,
+      },
+    },
+  };
+  if (cfg.shippingPointId) body.shippingPointId = cfg.shippingPointId;
+  else if (cfg.originPostal) body.requestedShippingPoint = cfg.originPostal;
 
-  const url = `${cfg.baseUrl}/rs/${cfg.customerNumber}/${cfg.customerNumber}/manifest`;
-  const { status, body } = await cpFetch(cfg, url, {
+  const url = `${GATEWAY}/shipping/v1/${cfg.customerNumber}/${cfg.customerNumber}/manifests`;
+  const { data } = await cpJson<CpApiLink[] | Record<string, unknown>>(cfg, 'shipping', url, {
     method: 'POST',
-    accept: MANIFEST_V8,
-    contentType: MANIFEST_V8,
-    body: xml,
-    auth: cfg.shippingAuth,
+    body,
   });
-  assertOk(status, body);
 
-  // Response contains <link rel="manifest" href="..."> entries.
-  const links = parseLinks(body);
-  const manifestLinks = Object.entries(links)
-    .filter(([rel]) => rel === 'manifest' || rel === 'self')
-    .map(([, href]) => href);
+  // manifestList: array of link objects (rel "manifest", mediaType pdf).
+  const list = Array.isArray(data) ? data : [];
+  const manifestLinks = list
+    .filter((l): l is CpApiLink & { href: string } => Boolean(l?.rel && l?.href))
+    .map((l) => l.href);
   return { manifestLinks };
 }
 
-export async function voidShipment(
-  links: Record<string, string>,
-  cfgOverride?: CpConfig,
-): Promise<void> {
-  const cfg = cfgOverride ?? getCpConfig();
-  if (!cfg) throw new CanadaPostError('Canada Post is not configured.');
-  const href = links.voidShipment ?? links['void-shipment'] ?? links.self;
-  if (!href) throw new CanadaPostError('No void link stored for this shipment.');
-
-  const { status, body } = await cpFetch(cfg, href, {
-    method: 'DELETE',
-    accept: SHIPMENT_V8,
-    auth: cfg.shippingAuth,
-  });
-  // 204 = voided; some environments answer 200 with a body.
-  if (status !== 204 && status !== 200) assertOk(status, body);
-}
-
-/* ── Label artifact ──────────────────────────────────────────────────── */
-
 export async function getLabelPdf(
-  labelHref: string,
+  links: Record<string, string>,
   cfgOverride?: CpConfig,
 ): Promise<Buffer> {
   const cfg = cfgOverride ?? getCpConfig();
   if (!cfg) throw new CanadaPostError('Canada Post is not configured.');
+  const href = links.label ?? links.self;
+  if (!href) throw new CanadaPostError('Stored shipment has no label link.');
 
-  // First call: encode the label request (returns artifact link).
-  const enc = await cpFetch(cfg, labelHref, {
-    method: 'GET',
-    accept: SHIPMENT_V8,
-  });
-  let artifactHref: string | undefined;
-
-  if (enc.status === 200) {
-    const links = parseLinks(enc.body);
-    artifactHref = links.label ?? links.artifact;
-  }
-  if (!artifactHref && labelHref.includes('/artifact/')) {
-    artifactHref = labelHref; // already an artifact link
-  }
-  if (!artifactHref) {
-    // The label link itself may point straight at the artifact (nc flow v4).
-    artifactHref = labelHref;
-  }
-
-  // Fetch the actual PDF.
-  const pdf = await fetch(artifactHref!, {
-    headers: { Authorization: cfg.shippingAuth ?? cfg.trackingAuth ?? cfg.ratingAuth ?? '', Accept: 'application/pdf' },
+  const token = await getBearerToken(cfg, 'shipping');
+  const res = await fetch(href, {
+    headers: { Authorization: `Bearer ${token}`, Accept: 'application/pdf' },
     cache: 'no-store',
+    signal: AbortSignal.timeout(20000),
   });
-  if (!pdf.ok) {
-    const text = await pdf.text().catch(() => '');
-    const { description } = parseErrorBody(text);
-    throw new CanadaPostError(`Label download failed: ${description}`);
-  }
-  const buf = Buffer.from(await pdf.arrayBuffer());
-  if (buf.length < 100 || buf.subarray(0, 4).toString() !== '%PDF') {
-    throw new CanadaPostError('Label artifact did not return a PDF (it may still be rendering — retry in a few seconds).');
+  const buf = Buffer.from(await res.arrayBuffer());
+  if (!res.ok || buf.subarray(0, 4).toString() !== '%PDF') {
+    // The label link may answer with a JSON pointer to the artifact first.
+    let artifactHref: string | null = null;
+    try {
+      const parsed = JSON.parse(buf.toString('utf8')) as { links?: CpApiLink[] } | CpApiLink[];
+      const arr = Array.isArray(parsed) ? parsed : (parsed.links ?? []);
+      artifactHref = arr.find((l) => l?.rel === 'artifact')?.href ?? null;
+    } catch {
+      artifactHref = null;
+    }
+    if (!artifactHref) {
+      throw new CanadaPostError(
+        res.ok
+          ? 'Label artifact did not return a PDF (it may still be rendering — retry in a few seconds).'
+          : `Label download failed: HTTP ${res.status}`,
+      );
+    }
+    const retry = await fetch(artifactHref, {
+      headers: { Authorization: `Bearer ${token}`, Accept: 'application/pdf' },
+      cache: 'no-store',
+      signal: AbortSignal.timeout(20000),
+    });
+    const pdf = Buffer.from(await retry.arrayBuffer());
+    if (!retry.ok || pdf.subarray(0, 4).toString() !== '%PDF') {
+      throw new CanadaPostError('Label artifact did not return a PDF (retry in a few seconds).');
+    }
+    return pdf;
   }
   return buf;
 }
 
-/* ── Tracking (v2) ───────────────────────────────────────────────────── */
-
-const TRACK_V2 = 'application/vnd.cpc.track-v2+xml';
+/* ── Tracking ────────────────────────────────────────────────────────── */
 
 export type CpTrackingEvent = {
   date: string | null;
@@ -528,31 +557,46 @@ export type CpTrackingSummary = {
   eventDate: string | null;
   eventSite: string | null;
   expectedDelivery: string | null;
+  actualDelivery: string | null;
   deliveredTo: string | null;
+  serviceName: string | null;
   events: CpTrackingEvent[];
 };
 
-export function parseTrackingSummary(xml: string): CpTrackingSummary {
-  const events: CpTrackingEvent[] = [];
-  const eventRe = /<event>([\s\S]*?)<\/event>/g;
-  let em: RegExpExecArray | null;
-  while ((em = eventRe.exec(xml))) {
-    const block = em[1];
-    events.push({
-      date: textOf(block, 'event-date'),
-      time: textOf(block, 'event-time'),
-      description: textOf(block, 'event-description'),
-      site: textOf(block, 'event-site'),
-    });
-  }
+type TrackingSummaryItem = {
+  pin?: string;
+  serviceName?: string;
+  expectedDeliveryDate?: string;
+  actualDeliveryDate?: string;
+  eventDescription?: string;
+  eventDateTime?: string;
+  eventDate?: string;
+  eventTime?: string;
+  eventLocation?: string;
+  eventSite?: string;
+  error?: { code?: string; descEn?: string };
+};
+
+export function parseTrackingSummary(payload: TrackingSummaryItem[] | null): CpTrackingSummary {
+  const items = Array.isArray(payload) ? payload : [];
+  const first = items[0] ?? {};
+
+  const events: CpTrackingEvent[] = items.map((it) => ({
+    date: it.eventDate ?? it.eventDateTime?.slice(0, 10) ?? null,
+    time: it.eventTime ?? it.eventDateTime?.slice(11) ?? null,
+    description: it.eventDescription ?? null,
+    site: it.eventLocation ?? it.eventSite ?? null,
+  }));
 
   return {
-    pin: textOf(xml, 'pin'),
-    eventName: textOf(xml, 'event-description') ?? textOf(xml, 'event-name'),
-    eventDate: textOf(xml, 'event-date'),
-    eventSite: textOf(xml, 'event-site'),
-    expectedDelivery: textOf(xml, 'expected-delivery-date'),
-    deliveredTo: textOf(xml, 'delivery-agent-name') ?? textOf(xml, 'signed-by'),
+    pin: first.pin ?? null,
+    eventName: first.eventDescription ?? null,
+    eventDate: first.eventDate ?? first.eventDateTime?.slice(0, 10) ?? null,
+    eventSite: first.eventLocation ?? first.eventSite ?? null,
+    expectedDelivery: first.expectedDeliveryDate ?? null,
+    actualDelivery: first.actualDeliveryDate ?? null,
+    deliveredTo: null,
+    serviceName: first.serviceName ?? null,
     events,
   };
 }
@@ -564,12 +608,12 @@ export async function getTrackingSummary(
   const cfg = cfgOverride ?? getCpConfig();
   if (!cfg) throw new CanadaPostError('Canada Post is not configured.');
 
-  const url = `${cfg.baseUrl}/vis/track/pin/${encodeURIComponent(pin.trim())}/summary`;
-  const { status, body } = await cpFetch(cfg, url, {
-    method: 'GET',
-    accept: TRACK_V2,
-    auth: cfg.trackingAuth,
-  });
-  assertOk(status, body);
-  return parseTrackingSummary(body);
+  const url = `${GATEWAY}/tracking/v1/pins/${encodeURIComponent(pin.trim())}/summaries`;
+  const { data } = await cpJson<TrackingSummaryItem[]>(cfg, 'tracking', url, { method: 'GET' });
+  const summary = parseTrackingSummary(data);
+  if (!summary.pin && data?.[0]?.error?.code) {
+    const err = data[0].error;
+    throw new CanadaPostError(err.descEn || 'Tracking lookup returned no data.', err.code ?? null);
+  }
+  return summary;
 }

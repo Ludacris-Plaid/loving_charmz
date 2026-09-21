@@ -5,8 +5,7 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { sendShippingNotification } from '@/lib/email/transactional';
 import {
   CanadaPostError,
-  createContractShipment,
-  createNcShipment,
+  createShipment,
   getCpConfig,
   getLabelPdf,
   isCanadaPostConfigured,
@@ -111,22 +110,10 @@ export async function createCanadaPostLabelAction(
   };
 
   try {
-    let pin: string | null = null;
-    let links: Record<string, string> = {};
-    let price: { due: number | null } | null = null;
-    let groupId: string | null = null;
-
-    if (cfg.mode === 'contract') {
-      groupId = `lc-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}`;
-      const res = await createContractShipment(input, groupId);
-      pin = res.pin;
-      links = res.links;
-    } else {
-      const res = await createNcShipment(input);
-      pin = res.pin;
-      links = res.links;
-      price = res.price ? { due: res.price.due } : null;
-    }
+    const res = await createShipment(input);
+    const pin = res.pin;
+    const links = res.links;
+    const price = res.price ? { due: res.price.due } : null;
 
     if (!pin) return { error: 'Canada Post did not return a tracking PIN. Check the label link in the shipment record.' };
 
@@ -136,7 +123,8 @@ export async function createCanadaPostLabelAction(
       mode: cfg.mode,
       service_code: serviceCode,
       pin,
-      group_id: groupId,
+      shipment_id: res.shipmentId,
+      group_id: null,
       links,
       price: price ?? null,
       status: 'created',
@@ -265,7 +253,7 @@ export async function transmitManifestAction(): Promise<
     let pdf: string | undefined;
     if (manifestLinks[0]) {
       try {
-        const buf = await getLabelPdf(manifestLinks[0]);
+        const buf = await getLabelPdf({ self: manifestLinks[0] });
         pdf = buf.toString('base64');
       } catch {
         // Manifest may take a moment to render; mom can re-fetch later.

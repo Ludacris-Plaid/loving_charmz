@@ -1,39 +1,30 @@
 import { describe, expect, it } from 'vitest';
 
-import { buildRateRequestXml, parsePriceQuotes } from '@/lib/shipping/rates';
+import { buildRateRequest, parsePriceQuotes } from '@/lib/shipping/rates';
 import { computeOrderTotals, FLAT_SHIPPING_RATE, FREE_SHIPPING_THRESHOLD } from '@/lib/checkout/pricing';
 
-const SAMPLE_RESPONSE = `<?xml version="1.0" encoding="utf-8"?>
-<price-quotes xmlns="http://www.canadapost.ca/ws/ship/rate-v4">
-<price-quote>
-<service-code>DOM.RP</service-code>
-<service-name>Regular Parcel</service-name>
-<price-details>
-<base>9.99</base>
-<taxes><gst vat="0.05">0.5</gst></taxes>
-<due>13.57</due>
-</price-details>
-<service-standard>
-<guaranteed-delivery>false</guaranteed-delivery>
-<expected-transit-time>4</expected-transit-time>
-<expected-delivery-date>2026-09-25</expected-delivery-date>
-</service-standard>
-</price-quote>
-<price-quote>
-<service-code>DOM.XP</service-code>
-<service-name>Xpresspost</service-name>
-<price-details>
-<base>16.5</base>
-<taxes><hst vat="0.05">0.83</hst></taxes>
-<due>21.06</due>
-</price-details>
-<service-standard>
-<guaranteed-delivery>true</guaranteed-delivery>
-<expected-transit-time>2</expected-transit-time>
-<expected-delivery-date>2026-09-23</expected-delivery-date>
-</service-standard>
-</price-quote>
-</price-quotes>`;
+const SAMPLE_RESPONSE = [
+  {
+    serviceCode: 'DOM.RP',
+    serviceName: 'Regular Parcel',
+    priceDetails: { base: 9.99, due: 13.57 },
+    serviceStandard: {
+      guaranteedDelivery: false,
+      expectedTransitTime: 4,
+      expectedDeliveryDate: '2026-09-25',
+    },
+  },
+  {
+    serviceCode: 'DOM.XP',
+    serviceName: 'Xpresspost',
+    priceDetails: { base: 16.5, due: 21.06 },
+    serviceStandard: {
+      guaranteedDelivery: true,
+      expectedTransitTime: 2,
+      expectedDeliveryDate: '2026-09-23',
+    },
+  },
+];
 
 describe('Get Rates response parsing', () => {
   it('parses every price quote with due, eta, and guarantee', () => {
@@ -55,16 +46,16 @@ describe('Get Rates response parsing', () => {
     });
   });
 
-  it('returns no quotes for an error message body', () => {
-    const err = `<messages><message><code>9111</code><description>No services are appropriate.</description></message></messages>`;
+  it('returns no quotes for a non-array payload', () => {
+    const err = { httpCode: '401', httpMessage: 'Unauthorized' } as unknown as null;
     expect(parsePriceQuotes(err)).toEqual([]);
   });
 
   it('skips quote blocks missing due amounts', () => {
-    const partial = `<price-quotes>
-<price-quote><service-code>DOM.RP</service-code><service-name>Regular Parcel</service-name><price-details><base>9.99</base></price-details></price-quote>
-<price-quote><service-code>DOM.EP</service-code><service-name>Expedited</service-name><price-details><due>12.34</due></price-details></price-quote>
-</price-quotes>`;
+    const partial = [
+      { serviceCode: 'DOM.RP', serviceName: 'Regular Parcel', priceDetails: { base: 9.99 } },
+      { serviceCode: 'DOM.EP', serviceName: 'Expedited', priceDetails: { due: 12.34 } },
+    ];
     const quotes = parsePriceQuotes(partial);
     expect(quotes).toHaveLength(1);
     expect(quotes[0].serviceCode).toBe('DOM.EP');
@@ -72,33 +63,33 @@ describe('Get Rates response parsing', () => {
 });
 
 describe('Get Rates request building', () => {
-  it('builds a domestic scenario with customer number and services', () => {
-    const xml = buildRateRequestXml({
-      customerNumber: '0000000000',
+  it('builds a domestic scenario with quote type, origin, and services', () => {
+    const body = buildRateRequest({
+      quoteType: 'counter',
       originPostal: 'T2T1N6',
       destPostal: 'm5h 2n2',
       destCountry: 'CA',
       weightKg: 0.25,
       services: ['DOM.EP', 'DOM.RP'],
-    });
-    expect(xml).toContain('<customer-number>0000000000</customer-number>');
-    expect(xml).toContain('<origin-postal-code>T2T1N6</origin-postal-code>');
-    expect(xml).toContain('<postal-code>M5H2N2</postal-code>');
-    expect(xml).toContain('<service-code>DOM.EP</service-code>');
-    expect(xml).toContain('<weight>0.250</weight>');
-    expect(xml).not.toContain('<united-states>');
+    }) as Record<string, any>;
+    expect(body.quoteType).toBe('counter');
+    expect(body.originPostalCode).toBe('T2T1N6');
+    expect(body.destination).toEqual({ domestic: { postalCode: 'M5H2N2' } });
+    expect(body.services).toEqual(['DOM.EP', 'DOM.RP']);
+    expect(body.parcelCharacteristics.weight).toBe(0.25);
+    expect(body.destination.unitedStates).toBeUndefined();
   });
 
-  it('builds a US scenario with zip-code destination and no customer number', () => {
-    const xml = buildRateRequestXml({
+  it('builds a US scenario with zip-code destination and no services', () => {
+    const body = buildRateRequest({
+      quoteType: 'counter',
       originPostal: 'T2T1N6',
       destPostal: '90210',
       destCountry: 'US',
       weightKg: 0.4,
-    });
-    expect(xml).toContain('<united-states><zip-code>90210</zip-code></united-states>');
-    expect(xml).not.toContain('customer-number');
-    expect(xml).not.toContain('<services>');
+    }) as Record<string, any>;
+    expect(body.destination).toEqual({ unitedStates: { zipCode: '90210' } });
+    expect(body.services).toBeUndefined();
   });
 });
 
