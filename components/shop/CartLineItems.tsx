@@ -13,7 +13,7 @@ type LineItem = {
   id: string;
   quantity: number;
   product: { id?: string; name?: string; slug?: string; base_price?: number | string };
-  variant: { id: string; name: string; price_adjustment: number | string } | null;
+  variant: { id: string; name: string; price_adjustment: number | string; stock_quantity?: number | null } | null;
   image: string;
 };
 
@@ -78,6 +78,8 @@ export function CartLineItems({ items }: Props) {
             Number(item.product?.base_price || 0) + Number(item.variant?.price_adjustment || 0);
           const lineTotal = +(price * item.quantity).toFixed(2);
           const isBusy = busy === item.id;
+          const stockRaw = item.variant?.stock_quantity;
+          const maxQty = stockRaw == null ? null : Number(stockRaw);
           return (
             <li key={item.id} className="surface-card p-4 flex gap-4">
               <Link
@@ -123,13 +125,17 @@ export function CartLineItems({ items }: Props) {
                   <button
                     type="button"
                     onClick={() => updateQty(item.id, item.quantity + 1)}
-                    disabled={isBusy}
+                    disabled={isBusy || maxQty !== null && item.quantity >= maxQty}
                     aria-label="Increase quantity"
-                    className="h-8 w-8 rounded-pill border border-cream-300 text-ink-700 hover:border-plum-500 hover:text-plum-700 motion-base"
+                    title={maxQty !== null && item.quantity >= maxQty ? `Only ${maxQty} in stock` : undefined}
+                    className="h-8 w-8 rounded-pill border border-cream-300 text-ink-700 hover:border-plum-500 hover:text-plum-700 motion-base disabled:opacity-40 disabled:hover:border-cream-300 disabled:hover:text-ink-700"
                   >
                     +
                   </button>
                 </div>
+                {maxQty !== null && item.quantity >= maxQty && (
+                  <p className="text-[11px] text-amber-600">Only {maxQty} in stock</p>
+                )}
                 <p className="text-sm font-semibold text-plum-900">${lineTotal.toFixed(2)}</p>
               </div>
             </li>

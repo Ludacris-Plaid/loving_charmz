@@ -66,6 +66,30 @@ export async function addToCartAction(
     .eq('variant_id', variantId)
     .maybeSingle();
 
+  // Stock cap at add time: the cart may never hold more than exists, so the
+  // rejection happens on the product page — not at final checkout.
+  if (variantId) {
+    const { data: variant } = await admin
+      .from('product_variants')
+      .select('stock_quantity')
+      .eq('id', variantId)
+      .maybeSingle();
+    const stock = variant?.stock_quantity == null ? null : Number(variant.stock_quantity);
+    if (stock !== null && Number.isFinite(stock)) {
+      if (stock <= 0) return { error: 'That combination is currently out of stock.' };
+      const already = existing ? Number(existing.quantity) : 0;
+      const requested = already + quantity;
+      if (requested > stock) {
+        return {
+          error:
+            already >= stock
+              ? `Your cart already holds all ${stock} available.`
+              : `Only ${stock} available — your cart already holds ${already}.`,
+        };
+      }
+    }
+  }
+
   if (existing) {
     const { error } = await admin
       .from('cart_items')
@@ -92,10 +116,23 @@ export async function updateCartItemAction(itemId: string, quantity: number): Pr
   // Ownership check: the row must belong to the caller's cart.
   const { data: item } = await admin
     .from('cart_items')
-    .select('cart_id')
+    .select('cart_id, variant_id')
     .eq('id', itemId)
     .maybeSingle();
   if (!item || item.cart_id !== resolved.cartId) return { error: 'Item not found in your cart.' };
+
+  // Same stock cap as adding: typed-in quantities cannot exceed stock.
+  if (quantity > 0 && item.variant_id) {
+    const { data: variant } = await admin
+      .from('product_variants')
+      .select('stock_quantity')
+      .eq('id', item.variant_id)
+      .maybeSingle();
+    const stock = variant?.stock_quantity == null ? null : Number(variant.stock_quantity);
+    if (stock !== null && Number.isFinite(stock) && quantity > stock) {
+      return { error: `Only ${stock} available.` };
+    }
+  }
 
   if (quantity <= 0) {
     const { error } = await admin.from('cart_items').delete().eq('id', itemId);

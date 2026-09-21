@@ -108,6 +108,10 @@ export default function ProductDetailClient({
   const stock = selected ? Number(selected.stock_quantity) : 0;
   const soldOut = !selected || stock <= 0;
   const lowStock = !soldOut && stock <= 3;
+  // The button stays honest about what can still be added: a variant the
+  // cart already holds to its max is un-buyable, same as sold out.
+  const [cartAdds, setCartAdds] = useState(0);
+  const addable = stock - cartAdds;
 
   const [pending, startTransition] = useTransition();
   const [feedback, setFeedback] = useState<{ kind: 'ok' | 'err'; text: string } | null>(null);
@@ -127,7 +131,10 @@ export default function ProductDetailClient({
     startTransition(async () => {
       const res = await addToCartAction(product.id, selected.id, 1);
       if (res.error) setFeedback({ kind: 'err', text: res.error });
-      else setFeedback({ kind: 'ok', text: 'Added to cart' });
+      else {
+        setFeedback({ kind: 'ok', text: 'Added to cart' });
+        setCartAdds((n) => n + 1); // optimistic cap; reset on variant switch
+      }
     });
   };
 
@@ -282,13 +289,14 @@ export default function ProductDetailClient({
                 label="Size"
                 options={sizeOptions}
                 value={effectiveSize}
-                onChange={(s) => {
-                  setSize(s);
-                  setFeedback(null);
-                }}
-              />
-            )}
-          </div>
+            onChange={(s) => {
+              setSize(s);
+              setFeedback(null);
+              setCartAdds(0); // per-variant count; refetches happen at cart/checkout
+            }}
+          />
+        )}
+      </div>
 
           {/* Live per-combination availability from the selected variant row. */}
           <p
@@ -299,18 +307,20 @@ export default function ProductDetailClient({
           >
             {soldOut
               ? 'This combination is currently out of stock.'
-              : lowStock
-                ? `Only ${stock} left in ${selected?.name}.`
-                : 'In stock and handcrafted to order.'}
+              : addable <= 0
+                ? 'All available stock is in your cart.'
+                : lowStock
+                  ? `Only ${stock} left in ${selected?.name}.`
+                  : 'In stock and handcrafted to order.'}
           </p>
 
           <div className="space-y-3">
             <button
               onClick={handleAdd}
-              disabled={pending || soldOut}
+              disabled={pending || soldOut || addable <= 0}
               className="btn-plum w-full px-8 py-3.5 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {pending ? 'Adding…' : soldOut ? 'Out of stock' : isLoggedIn ? 'Add to cart' : 'Sign in to purchase'}
+              {pending ? 'Adding…' : soldOut ? 'Out of stock' : addable <= 0 ? 'In your cart' : isLoggedIn ? 'Add to cart' : 'Sign in to purchase'}
             </button>
             {feedback && (
               <p

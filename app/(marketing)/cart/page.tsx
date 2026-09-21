@@ -69,6 +69,7 @@ export default async function CartPage() {
                   id: item.variant.id,
                   name: item.variant.name,
                   price_adjustment: item.variant.price_adjustment,
+                  stock_quantity: (item.variant as { stock_quantity?: number | null }).stock_quantity ?? null,
                 } : null,
                 image: images.shop[index % images.shop.length],
               }))}
