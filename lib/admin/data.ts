@@ -38,13 +38,23 @@ export type AdminCustomer = {
   created_at: string;
   email: string | null;
   order_count: number;
+  last_sign_in_at: string | null;
+  is_subscriber: boolean;
+  custom_order_count: number;
 };
 
 export async function getAdminCustomers(): Promise<AdminCustomer[]> {
   const admin = createAdminClient();
-  const [{ data: profiles, error: profilesErr }, { data: users }] = await Promise.all([
+  const [
+    { data: profiles, error: profilesErr },
+    { data: users },
+    { data: customOrders },
+    { data: subscribers },
+  ] = await Promise.all([
     admin.from('profiles').select('*').order('created_at', { ascending: false }),
     admin.auth.admin.listUsers(),
+    admin.from('personalization_requests').select('user_id'),
+    admin.from('subscribers').select('email'),
   ]);
   if (profilesErr) throw new Error(profilesErr.message);
 
@@ -60,6 +70,17 @@ export async function getAdminCustomers(): Promise<AdminCustomer[]> {
     }
   }
 
+  // Custom-order requests per customer.
+  const customCounts: Record<string, number> = {};
+  for (const r of customOrders || []) {
+    if (r.user_id) customCounts[r.user_id] = (customCounts[r.user_id] || 0) + 1;
+  }
+
+  // Mailing-list membership by email (case-insensitive).
+  const subscriberEmails = new Set(
+    (subscribers || []).map((s) => (s.email || '').toLowerCase())
+  );
+
   return (profiles || []).map((p: any) => ({
     id: p.id,
     username: p.username,
@@ -68,6 +89,9 @@ export async function getAdminCustomers(): Promise<AdminCustomer[]> {
     created_at: p.created_at,
     email: users?.users?.find((u) => u.id === p.id)?.email || null,
     order_count: counts[p.id] || 0,
+    last_sign_in_at: users?.users?.find((u) => u.id === p.id)?.last_sign_in_at || null,
+    is_subscriber: Boolean(p.email && subscriberEmails.has(p.email.toLowerCase())),
+    custom_order_count: customCounts[p.id] || 0,
   }));
 }
 

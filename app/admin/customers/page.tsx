@@ -1,4 +1,5 @@
-import { getAdminCustomers } from '@/lib/admin/data';
+import { getAdminCustomers, getAdminOrders } from '@/lib/admin/data';
+import { AdminCustomersClient } from '@/components/admin/AdminCustomersClient';
 import { redirect } from 'next/navigation';
 import { getSession } from '@/components/admin/AdminGuard';
 
@@ -13,7 +14,10 @@ export default async function AdminCustomersPage() {
   const session = await getSession();
   if (!session?.isAdmin) redirect('/login?next=/admin/customers');
 
-  const customers = await getAdminCustomers();
+  const [customers, orders] = await Promise.all([
+    getAdminCustomers(),
+    getAdminOrders(),
+  ]);
 
   return (
     <div className="space-y-6">
@@ -21,50 +25,40 @@ export default async function AdminCustomersPage() {
         <span className="badge-plum">People</span>
         <h1 className="font-display text-3xl font-semibold text-plum-900 mt-3">Customers</h1>
         <p className="text-sm text-ink-600 mt-1">
-          {customers.length} customer{customers.length === 1 ? '' : 's'} total.
+          {customers.length} customer{customers.length === 1 ? '' : 's'} total. Click View to see
+          profile, stats, and purchase history.
         </p>
       </div>
 
-      {customers.length === 0 ? (
-        <div className="text-center py-12 surface-card text-sm text-ink-500">
-          No customers yet.
-        </div>
-      ) : (
-        <div className="surface-card overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="bg-cream-100 text-left text-xs uppercase tracking-wider text-ink-500">
-                <th className="px-4 py-3">Username</th>
-                <th className="px-4 py-3">Display name</th>
-                <th className="px-4 py-3">Email</th>
-                <th className="px-4 py-3">Public</th>
-                <th className="px-4 py-3">Orders</th>
-                <th className="px-4 py-3">Joined</th>
-              </tr>
-            </thead>
-            <tbody>
-              {customers.map((c) => (
-                <tr key={c.id} className="border-t border-cream-200 text-sm">
-                  <td className="px-4 py-3 font-medium text-ink-800">@{c.username}</td>
-                  <td className="px-4 py-3 text-ink-700">{c.display_name || '—'}</td>
-                  <td className="px-4 py-3 text-ink-700">{c.email || '—'}</td>
-                  <td className="px-4 py-3">
-                    {c.is_public ? (
-                      <span className="badge-mint">Public</span>
-                    ) : (
-                      <span className="badge-soft">Private</span>
-                    )}
-                  </td>
-                  <td className="px-4 py-3 text-ink-700">{c.order_count}</td>
-                  <td className="px-4 py-3 text-ink-500">
-                    {new Date(c.created_at).toLocaleDateString()}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+      <AdminCustomersClient
+        customers={customers}
+        orders={orders.map((o) => ({
+          id: o.id,
+          user_id: o.user_id ?? null,
+          status: o.status,
+          total: Number(o.total),
+          subtotal: Number(o.subtotal),
+          tax: Number(o.tax),
+          shipping_cost: Number(o.shipping_cost),
+          discount: Number(o.discount || 0),
+          customer_email: o.customer_email || null,
+          discount_code: o.discount_code || null,
+          shipping_address: o.shipping_address || null,
+          payment_method: o.payment_method || null,
+          payment_status: o.payment_status || 'pending',
+          tracking_number: o.tracking_number || null,
+          tracking_carrier: o.tracking_carrier || null,
+          updated_at: o.updated_at || o.created_at,
+          created_at: o.created_at,
+          items: (o.items || []).map((it: any) => ({
+            id: it.id,
+            product_name: it.product_name,
+            variant_name: it.variant_name,
+            unit_price: Number(it.unit_price),
+            quantity: it.quantity,
+          })),
+        }))}
+      />
     </div>
   );
 }
