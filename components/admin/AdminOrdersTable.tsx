@@ -3,6 +3,7 @@
 import { useState, useTransition, useCallback, useRef, useEffect } from 'react';
 import { updateOrderStatusAction, shipOrderAction, refundOrderAction } from '@/lib/admin/actions';
 import { formatDate } from '@/lib/admin/analytics/format';
+import { CanadaPostCard } from './CanadaPostCard';
 
 type OrderItem = {
   id: string;
@@ -349,6 +350,13 @@ export function OrderModal({
               </p>
             </div>
           )}
+
+          {/* Canada Post — labels, voiding, manifests */}
+          <CanadaPostCard
+            orderId={order.id}
+            status={currentStatus}
+            trackingNumber={order.tracking_number}
+ />
 
           {/* Status controls */}
           <div>

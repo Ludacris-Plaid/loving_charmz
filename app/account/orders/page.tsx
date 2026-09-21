@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { getSession } from '@/components/admin/AdminGuard';
 import { getMyOrdersServer } from '@/lib/orders/server';
+import { TrackingPanel } from '@/components/shop/TrackingPanel';
 
 export const metadata = {
   title: 'Orders — Loving Charmz',
@@ -76,11 +77,10 @@ export default async function OrdersPage() {
                   <p className="font-semibold text-plum-700">${Number(order.total).toFixed(2)}</p>
                 </div>
                 {order.tracking_number && (
-                  <div className="mt-3 rounded-lg bg-mint-50 border border-mint-200 px-3 py-2 text-sm">
-                    <span className="font-medium text-mint-800">Tracking:</span>{' '}
-                    {order.tracking_carrier && <span className="text-ink-700">{order.tracking_carrier} </span>}
-                    <span className="font-mono text-ink-800">{order.tracking_number}</span>
-                  </div>
+                  <TrackingPanel
+                    pin={order.tracking_number}
+                    carrier={order.tracking_carrier || null}
+                  />
                 )}
               </li>
             );
