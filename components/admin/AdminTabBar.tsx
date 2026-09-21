@@ -14,7 +14,7 @@ const adminNavItems = [
   { href: '/admin/subscribers', label: 'Mailing list' },
   { href: '/admin/email', label: 'Send email' },
   { href: '/admin/personalization', label: 'Custom Orders' },
-  { href: '/admin/content', label: 'Ticker Bar' },
+  { href: '/admin/content', label: 'Homepage Design' },
   { href: '/admin/discounts', label: 'Discounts' },
   { href: '/admin/analytics', label: 'Analytics' },
   { href: '/admin/monitoring', label: 'Site Traffic' },
