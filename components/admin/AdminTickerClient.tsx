@@ -174,7 +174,7 @@ export function AdminTickerClient({ initialConfig, themes, fallback, initialHero
 
         <div className="flex justify-end">
           <button onClick={handleSubmit} disabled={pending} className="btn-plum px-6 py-2.5 text-sm">
-            {pending ? 'Saving…' : 'Save ticker'}
+            {pending ? 'Saving…' : 'Save changes'}
           </button>
         </div>
       </div>
