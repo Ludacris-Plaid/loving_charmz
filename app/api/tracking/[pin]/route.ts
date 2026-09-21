@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getTrackingSummary, isCanadaPostConfigured } from '@/lib/shipping/canadapost';
+import { getCpConfig, getTrackingSummary } from '@/lib/shipping/canadapost';
 
 export const dynamic = 'force-dynamic';
 
@@ -8,8 +8,10 @@ export const dynamic = 'force-dynamic';
  *
  * Rate limiting and size guards keep this endpoint from being hammered;
  * Canada Post credentials never leave the server. Returns `available:
- * false` (not an error) when the shop hasn't configured Canada Post, so
- * the UI falls back to the public canadapost.ca link.
+ * false` (not an error) when the shop has no tracking key, so the UI
+ * falls back to the public canadapost.ca link. Tracking by PIN needs
+ * only the tracking key — no customer number — so it works before the
+ * shipping/rating setup is complete.
  */
 export async function GET(
   _request: NextRequest,
@@ -23,7 +25,8 @@ export async function GET(
     return NextResponse.json({ error: 'Invalid tracking number format.' }, { status: 400 });
   }
 
-  if (!isCanadaPostConfigured()) {
+  const cfg = getCpConfig();
+  if (!cfg?.trackingAuth) {
     return NextResponse.json({ available: false });
   }
 
