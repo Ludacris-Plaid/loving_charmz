@@ -68,6 +68,23 @@ function senderAddress(): CpShipmentInput['sender'] | null {
   };
 }
 
+/**
+ * Resolves the customer's email: guests carry it in shipping_address;
+ * members come from their auth profile (the orders table has no email
+ * column — admin pages synthesize it the same way).
+ */
+async function customerEmail(
+  userId: string | null,
+  shippingAddress: unknown,
+): Promise<string | undefined> {
+  const fromAddress = (shippingAddress as { email?: string } | null)?.email || undefined;
+  if (fromAddress) return fromAddress;
+  if (!userId) return undefined;
+  const admin = createAdminClient();
+  const { data } = await admin.auth.admin.getUserById(userId);
+  return data?.user?.email || undefined;
+}
+
 export async function createCanadaPostLabelAction(
   orderId: string,
   serviceCode: string,
@@ -85,13 +102,19 @@ export async function createCanadaPostLabelAction(
     };
   }
 
-  const { data: order } = await admin
+  const { data: order, error: orderErr } = await admin
     .from('orders')
-    .select('id, shipping_address, customer_email, status, tracking_number')
+    .select('id, user_id, shipping_address, status, tracking_number')
     .eq('id', orderId)
     .maybeSingle();
+  if (orderErr) {
+    console.error('[canadapost] order lookup failed:', orderErr.message);
+    return { error: `Order lookup failed: ${orderErr.message}` };
+  }
   if (!order) return { error: 'Order not found.' };
-  if (order.tracking_number) return { error: 'This order already has a tracking number. Void it first to relabel.' };
+  if (order.tracking_number) {
+    return { error: 'This order already has a tracking number. Void it first to relabel.' };
+  }
 
   const destination = addressFromOrder(order.shipping_address);
   const sender = senderAddress();
@@ -104,7 +127,7 @@ export async function createCanadaPostLabelAction(
     sender,
     destination,
     parcel: { weightKg: Math.max(0.001, weightKg || 0.25) },
-    email: notifyEmail ? order.customer_email || (order.shipping_address as any)?.email || undefined : undefined,
+    email: notifyEmail ? await customerEmail(order.user_id, order.shipping_address) : undefined,
     reference: order.id.slice(0, 8).toUpperCase(),
     orderTotalCad: undefined,
   };
@@ -142,7 +165,7 @@ export async function createCanadaPostLabelAction(
     if (shipErr) return { error: `Label created but order update failed: ${shipErr.message}` };
 
     // Ship & Notify: the branded shipping email with the tracking number.
-    const email = order.customer_email || (order.shipping_address as any)?.email;
+    const email = await customerEmail(order.user_id, order.shipping_address);
     if (email) {
       await sendShippingNotification({ to: email, orderId, trackingNumber: pin });
     }
