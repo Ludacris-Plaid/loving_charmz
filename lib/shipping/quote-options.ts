@@ -20,6 +20,8 @@ export type ShippingOption = {
   eta: string | null; // human-readable, e.g. "Arrives by Sep 26" or "2 business days"
   guaranteed: boolean;
   isLive: boolean;
+  /** Standard tier (flat rate / Regular Parcel) — the only one free shipping covers. */
+  isStandard: boolean;
 };
 
 export const SHIPPING_FLAT_ID = 'flat';
@@ -32,6 +34,7 @@ export function flatOption(): ShippingOption {
     eta: null,
     guaranteed: false,
     isLive: false,
+    isStandard: true,
   };
 }
 
@@ -52,5 +55,8 @@ export function quoteToOption(q: CpRateQuote): ShippingOption {
     eta,
     guaranteed: q.guaranteed,
     isLive: true,
+    // Regular Parcel is the standard tier; every other CP service is
+    // expedited and excluded from the free-shipping promotion.
+    isStandard: q.serviceCode === 'DOM.RP',
   };
 }

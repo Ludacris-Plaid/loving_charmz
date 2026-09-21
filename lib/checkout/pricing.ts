@@ -64,20 +64,23 @@ export type DiscountInfo = {
  *
  * `shippingOverride` lets callers replace the flat-rate rule with a live
  * Canada Post quote (checkout) while keeping every other branch identical.
- * Free-over-threshold still wins when the cart qualifies: the threshold
- * policy applies to every shipping method, quoted or flat.
+ * Free-over-threshold applies to STANDARD shipping only (flat rate or CP
+ * Regular Parcel): pass `expedited: true` when the shopper chose an express
+ * service and the quoted price is charged even on a cart that qualifies.
  */
 export function computeOrderTotals(
   lines: PricedLine[],
   discount?: DiscountInfo | null,
   taxRegion?: TaxRegion,
   shippingOverride?: number | null,
+  shippingOpts?: { expedited?: boolean },
 ): OrderTotals {
   const region = taxRegion ?? taxRegionForAddress({ country: 'CA', state: 'AB' });
   const subtotal = roundMoney(
     lines.reduce((sum, line) => sum + Number(line.unitPrice || 0) * Number(line.quantity || 0), 0),
   );
-  const freeShipping = subtotal > 0 && subtotal > FREE_SHIPPING_THRESHOLD;
+  const freeShipping =
+    subtotal > 0 && subtotal > FREE_SHIPPING_THRESHOLD && !shippingOpts?.expedited;
   const quoted =
     subtotal > 0 &&
     shippingOverride != null &&

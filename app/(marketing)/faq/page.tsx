@@ -15,7 +15,11 @@ const faqCategories = [
       },
       {
         q: 'How much is shipping?',
-        a: 'We offer free shipping on all Canadian orders over $50 CAD. Orders under $50 ship flat rate at $9.99 CAD. International shipping rates are calculated at checkout.',
+        a: 'Free standard shipping (Canada Post Regular Parcel) applies to all Canadian orders over $50 CAD. Orders under $50 ship at a flat rate of $9.99 CAD. Faster upgrades like Xpresspost and Priority are available at checkout at their listed rates — choosing them charges that rate even when your order qualifies for free standard shipping. International shipping rates are calculated at checkout.',
+      },
+      {
+        q: 'Does free shipping apply to Xpresspost or Priority?',
+        a: 'No. The free-shipping-over-$50 promotion covers standard shipping (Regular Parcel) only. You are welcome to upgrade to Xpresspost or Priority at checkout — the displayed rate for that service is what you pay.',
       },
       {
         q: 'Do you ship internationally?',

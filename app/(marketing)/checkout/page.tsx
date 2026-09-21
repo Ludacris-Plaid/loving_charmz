@@ -4,7 +4,7 @@ import { Container } from '@/components/ui/Container';
 import { getCartWithItemsServer } from '@/lib/cart/server';
 import { getSession } from '@/components/admin/AdminGuard';
 import { CheckoutForm } from '@/components/shop/CheckoutForm';
-import { computeOrderTotals, lineUnitPrice } from '@/lib/checkout/pricing';
+import { computeOrderTotals, lineUnitPrice, FLAT_SHIPPING_RATE } from '@/lib/checkout/pricing';
 import { getPaymentMethodOptions } from '@/lib/payments/config';
 import { images } from '@/lib/images';
 import type { CartItem } from '@/lib/supabase/types';
@@ -47,6 +47,10 @@ export default async function CheckoutPage({ searchParams }: Props) {
     );
   }
 
+  // Pre-submit estimate: the shopper has not picked a shipping service yet,
+  // so quote the standard tier (flat rate / Regular Parcel) — the only one
+  // the free-over-$50 promotion covers. The live checkout form re-prices
+  // from the actual selection once a postal code is entered.
   const totals = computeOrderTotals(
     items.map((item) => ({
       unitPrice: lineUnitPrice({
@@ -56,6 +60,7 @@ export default async function CheckoutPage({ searchParams }: Props) {
       quantity: Number(item.quantity || 0),
     })),
   );
+  const estimateShipping = totals.shipping === 0 ? 0 : FLAT_SHIPPING_RATE;
 
   const summaryItems = items.map((item, index) => ({
     id: item.id,
@@ -106,18 +111,23 @@ export default async function CheckoutPage({ searchParams }: Props) {
               <span className="text-ink-800">${totals.subtotal.toFixed(2)}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-ink-600">Shipping</span>
+              <span className="text-ink-600">Shipping{totals.shipping === 0 ? ' (standard)' : ''}</span>
               <span className="text-ink-800">
-                {totals.shipping === 0 ? 'FREE' : `$${totals.shipping.toFixed(2)}`}
+                {estimateShipping === 0 ? 'FREE' : `$${estimateShipping.toFixed(2)}`}
               </span>
             </div>
             <div className="flex justify-between">
               <span className="text-ink-600">Tax</span>
               <span className="text-ink-800">${totals.tax.toFixed(2)}</span>
             </div>
+            <p className="text-xs text-ink-500">
+              Free shipping applies to standard shipping only. Xpresspost and Priority are charged at their listed rates.
+            </p>
             <div className="pt-2 border-t border-cream-300 flex justify-between">
               <span className="font-medium text-plum-900">Total</span>
-              <span className="font-semibold plum-gradient-text text-lg">${totals.total.toFixed(2)}</span>
+              <span className="font-semibold plum-gradient-text text-lg">
+                ${(totals.subtotal + estimateShipping + totals.tax).toFixed(2)}
+              </span>
             </div>
           </div>
         </aside>

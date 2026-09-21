@@ -209,7 +209,12 @@ export function CheckoutForm({ defaultEmail, methods, totalAmount }: Props) {
                   className="mt-0.5 accent-plum-700"
                 />
                 <span className="flex-1">
-                  <span className="block text-ink-800">{option.label}</span>
+                  <span className="block text-ink-800">
+                    {option.label}
+                    {!option.isStandard && (
+                      <span className="ml-2 text-xs text-ink-500">express — not eligible for free shipping</span>
+                    )}
+                  </span>
                   {option.eta && (
                     <span className="block text-xs text-ink-500 mt-1">
                       {option.eta}

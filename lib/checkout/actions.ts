@@ -16,7 +16,7 @@ import { CURRENCY, computeOrderTotals, formatMoney, lineUnitPrice, type Discount
 import { taxRegionForAddress } from './tax';
 import { readGuestCartToken } from '@/lib/cart/guest';
 import { captureSubscriberEmail } from '@/lib/subscribers/capture';
-import { resolveLiveShippingRate } from '@/lib/shipping/quote-server';
+import { resolveLiveShippingRate, isStandardShipping } from '@/lib/shipping/quote-server';
 import { SHIPPING_FLAT_ID } from '@/lib/shipping/quote-options';
 import { validateDiscountCode } from './discount';
 
@@ -132,6 +132,9 @@ export async function createCheckoutAction(formData: FormData): Promise<Checkout
     discount,
     taxRegionForAddress({ country, state }),
     liveShipping,
+    // Free-over-$50 covers standard shipping only; express/priority always
+    // charge their quoted price (server-decided, not client-supplied).
+    { expedited: !isStandardShipping(selectedService) },
   );
 
   // Resolved before anything is written: an environment with no usable

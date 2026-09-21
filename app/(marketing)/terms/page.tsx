@@ -58,6 +58,11 @@ export default function TermsPage() {
               <a href="/shipping" className="plum-gradient-text font-medium">Shipping Policy</a>.
               Risk of loss passes to you on delivery to the carrier.
             </p>
+            <p className="mt-3">
+              Free shipping promotions apply to standard shipping only. Where an order qualifies for
+              free shipping and an upgraded service (such as Xpresspost or Priority) is selected, the
+              listed rate for that upgraded service is charged.
+            </p>
           </section>
 
           <section>

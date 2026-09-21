@@ -107,10 +107,23 @@ describe('computeOrderTotals shipping override', () => {
     expect(t.total).toBe(30 + 13.57 + t.tax);
   });
 
-  it('free-over-threshold wins even when a live quote exists', () => {
+  it('free-over-threshold wins for a standard live quote', () => {
     const bigCart = [{ unitPrice: FREE_SHIPPING_THRESHOLD + 10, quantity: 1 }];
     const t = computeOrderTotals(bigCart, null, undefined, 21.06);
     expect(t.shipping).toBe(0);
+  });
+
+  it('charges the quoted price for expedited services even on qualifying carts', () => {
+    // Xpresspost on a $120 cart: the free-shipping promotion must NOT zero it.
+    const bigCart = [{ unitPrice: FREE_SHIPPING_THRESHOLD + 10, quantity: 1 }];
+    const t = computeOrderTotals(bigCart, null, undefined, 21.06, { expedited: true });
+    expect(t.shipping).toBe(21.06);
+  });
+
+  it('charges the flat rate below threshold for expedited services too', () => {
+    const lines = [{ unitPrice: 30, quantity: 1 }];
+    const t = computeOrderTotals(lines, null, undefined, 21.06, { expedited: true });
+    expect(t.shipping).toBe(21.06); // quoted, not flat, since a real quote exists
   });
 
   it('ignores invalid overrides and falls back to flat rate', () => {

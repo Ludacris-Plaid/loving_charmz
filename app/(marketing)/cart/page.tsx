@@ -102,8 +102,8 @@ export default async function CartPage() {
             </Link>
             <p className="mt-3 text-center text-xs text-ink-500">
               {totals.shipping === 0
-                ? 'You qualify for free shipping.'
-                : `Add $${(50 - totals.subtotal).toFixed(2)} more for free shipping.`}
+                ? 'You qualify for free standard shipping.'
+                : `Add $${(50 - totals.subtotal).toFixed(2)} more for free standard shipping.`}
             </p>
           </aside>
         </div>
