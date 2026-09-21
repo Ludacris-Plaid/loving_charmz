@@ -42,7 +42,7 @@ export function AccountMenu({ avatarUrl, email, isAdmin }: AccountMenuProps) {
         aria-expanded={open}
         aria-label="Open account menu"
         className={[
-          'motion-base inline-flex items-center gap-1.5 rounded-pill border bg-plum-50 pl-1 pr-2 py-1 text-plum-800',
+          'motion-base relative inline-flex items-center gap-1.5 rounded-pill border bg-plum-50 pl-1 pr-2 py-1 text-plum-800',
           open
             ? 'border-plum-500 shadow-[0_4px_14px_rgba(93,51,115,0.12)]'
             : 'border-plum-200 hover:border-plum-500 hover:bg-plum-100',
@@ -57,6 +57,19 @@ export function AccountMenu({ avatarUrl, email, isAdmin }: AccountMenuProps) {
             sizes="28px"
           />
         </span>
+        {isAdmin && (
+          <>
+            {/* Admin badge — visible at a glance on every page */}
+            <span
+              aria-hidden
+              title="Admin"
+              className="absolute -bottom-1 -right-0.5 inline-flex h-3.5 w-3.5 items-center justify-center rounded-full bg-plum-700 text-[8px] font-bold leading-none text-cream-50 ring-1 ring-surface"
+            >
+              A
+            </span>
+            <span className="sr-only">Admin account</span>
+          </>
+        )}
         <svg
           width="10"
           height="10"
