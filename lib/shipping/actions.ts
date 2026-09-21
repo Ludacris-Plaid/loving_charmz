@@ -1,5 +1,6 @@
 'use server';
 
+import { getSession } from '@/components/admin/AdminGuard';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { sendShippingNotification } from '@/lib/email/transactional';
 import {
@@ -74,11 +75,9 @@ export async function createCanadaPostLabelAction(
   weightKg: number,
   notifyEmail?: boolean,
 ): Promise<CpActionResult> {
+  const session = await getSession();
+  if (!session?.isAdmin) return { error: 'Admin permission required.' };
   const admin = createAdminClient();
-  const { data: { user } } = await admin.auth.getUser();
-  if (!user) return { error: 'Please sign in first.' };
-  const { data: isAdmin } = await admin.rpc('is_admin');
-  if (!isAdmin) return { error: 'Admins only.' };
 
   if (!isCanadaPostConfigured()) {
     return {
@@ -171,11 +170,9 @@ export async function createCanadaPostLabelAction(
 export async function downloadCanadaPostLabelAction(
   orderId: string,
 ): Promise<{ ok?: boolean; error?: string; pdfBase64?: string }> {
+  const session = await getSession();
+  if (!session?.isAdmin) return { error: 'Admin permission required.' };
   const admin = createAdminClient();
-  const { data: { user } } = await admin.auth.getUser();
-  if (!user) return { error: 'Please sign in first.' };
-  const { data: isAdmin } = await admin.rpc('is_admin');
-  if (!isAdmin) return { error: 'Admins only.' };
 
   const { data: cp } = await admin
     .from('cp_shipments')
@@ -198,11 +195,9 @@ export async function downloadCanadaPostLabelAction(
 }
 
 export async function voidCanadaPostLabelAction(orderId: string): Promise<CpActionResult> {
+  const session = await getSession();
+  if (!session?.isAdmin) return { error: 'Admin permission required.' };
   const admin = createAdminClient();
-  const { data: { user } } = await admin.auth.getUser();
-  if (!user) return { error: 'Please sign in first.' };
-  const { data: isAdmin } = await admin.rpc('is_admin');
-  if (!isAdmin) return { error: 'Admins only.' };
 
   const { data: cp } = await admin
     .from('cp_shipments')
@@ -238,11 +233,9 @@ export async function voidCanadaPostLabelAction(orderId: string): Promise<CpActi
 export async function transmitManifestAction(): Promise<
   { ok?: boolean; error?: string; manifestCount?: number; labelPdfBase64?: string }
 > {
+  const session = await getSession();
+  if (!session?.isAdmin) return { error: 'Admin permission required.' };
   const admin = createAdminClient();
-  const { data: { user } } = await admin.auth.getUser();
-  if (!user) return { error: 'Please sign in first.' };
-  const { data: isAdmin } = await admin.rpc('is_admin');
-  if (!isAdmin) return { error: 'Admins only.' };
 
   const cfg = getCpConfig();
   if (!cfg) return { error: 'Canada Post is not configured.' };
