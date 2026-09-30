@@ -195,9 +195,15 @@ export async function downloadCanadaPostLabelAction(
   if (!cp) return { error: 'No Canada Post label for this order.' };
 
   try {
-    const href = cp.links?.label ?? cp.links?.self;
-    if (!href) return { error: 'Stored shipment has no label link.' };
-    const pdf = await getLabelPdf(href);
+    // getLabelPdf takes the whole links record and picks label/self itself.
+    // It was previously handed the already-resolved href string, so its own
+    // `links.label ?? links.self` lookup was always undefined and every
+    // download failed with "Stored shipment has no label link" — even though
+    // the stored record had a perfectly good label URL. The untyped admin
+    // client is why the compiler never caught the mismatch.
+    const links = (cp.links ?? {}) as Record<string, string>;
+    if (!links.label && !links.self) return { error: 'Stored shipment has no label link.' };
+    const pdf = await getLabelPdf(links);
     return { ok: true, pdfBase64: pdf.toString('base64') };
   } catch (e) {
     if (e instanceof CanadaPostError) return { error: e.message };
