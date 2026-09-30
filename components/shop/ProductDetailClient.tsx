@@ -12,6 +12,7 @@ import {
   findVariant,
   MATERIAL_LABELS,
   SIZE_LABELS,
+  variantPrice,
   type VariantLike,
 } from '@/lib/shop/variants';
 import { parseDescription } from '@/lib/shop/description';
@@ -65,9 +66,10 @@ export default function ProductDetailClient({
     [variants, material, effectiveSize],
   );
 
-  // One price per product — the admin's entered price IS the price for every
-  // material and size. Variants carry stock, never a price modifier.
-  const totalPrice = product.base_price;
+  // The price is per version: the admin can raise or lower the price of one
+  // material/size from the Inventory page without touching the product's
+  // base price. What the shopper pays is the price of the version they pick.
+  const totalPrice = variantPrice(product as any, selected as any);
 
   // Thumbnail gallery: the server passes the first image; the full gallery
   // comes from the product row. Square crop views for every image, with the
@@ -260,9 +262,11 @@ export default function ProductDetailClient({
 
           <div className="flex items-baseline gap-3">
             <p className="text-3xl font-semibold plum-gradient-text">
-              From ${totalPrice.toFixed(2)}
+              ${totalPrice.toFixed(2)}
             </p>
-            <span className="text-sm text-ink-500">CAD · every version, same price</span>
+            {selected && (
+              <span className="text-sm text-ink-500">in {selected.name}</span>
+            )}
           </div>
 
           {product.is_personalizable && (

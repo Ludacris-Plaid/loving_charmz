@@ -10,6 +10,13 @@ type Props = {
   amount: number;
   currency: string;
   orderId: string;
+  /**
+   * The postal/ZIP code the shopper already typed into the address form.
+   * Handing it to Square means the card frame validates the address this
+   * order is actually shipping to, instead of rendering its own postal
+   * field — which is what rejected otherwise-valid codes.
+   */
+  postalCode?: string;
   onPaymentSuccess: (result: { orderId: string }) => void;
   onPaymentError: (error: string) => void;
 };
@@ -20,6 +27,7 @@ export function SquareCardForm({
   amount,
   currency,
   orderId,
+  postalCode,
   onPaymentSuccess,
   onPaymentError,
 }: Props) {
@@ -54,7 +62,8 @@ export function SquareCardForm({
   return (
     <div className="space-y-4">
       <p className="text-xs text-ink-500">
-        Enter your card details below. The postal code field appears automatically and adapts to the card&apos;s country (Postal Code for Canadian cards, ZIP for US cards).
+        Enter your card details below. We pass along the postal code you entered above
+        so the payment matches your delivery address.
       </p>
       <PaymentForm
         applicationId={applicationId}
@@ -63,6 +72,7 @@ export function SquareCardForm({
       >
         <CreditCard
           includeInputLabels={true}
+          postalCode={postalCode?.trim() || undefined}
           buttonProps={{
             isLoading: processing,
             className: 'btn-plum w-full py-3 text-sm',

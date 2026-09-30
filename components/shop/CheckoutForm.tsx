@@ -164,7 +164,8 @@ export function CheckoutForm({ defaultEmail, methods, items }: Props) {
   };
 
   return (
-    <form action={handleSubmit} className="space-y-8">
+    <form action={handleSubmit} className="grid lg:grid-cols-3 gap-10 items-start">
+      <div className="lg:col-span-2 space-y-8">
       <section className="surface-card p-6">
         <h2 className="font-display text-lg font-semibold text-plum-900 mb-4">Contact</h2>
         <Input
@@ -252,47 +253,6 @@ export function CheckoutForm({ defaultEmail, methods, items }: Props) {
         )}
       </section>
 
-      {/* Live order summary: the same computeOrderTotals the server charges
-          against, so what the shopper sees is exactly what they pay. */}
-      <section className="surface-card p-6">
-        <h2 className="font-display text-lg font-semibold text-plum-900 mb-4">Order summary</h2>
-        <ul className="space-y-2 text-sm mb-4">
-          {items.map((item, i) => (
-            <li key={`${item.name}-${i}`} className="flex justify-between gap-3">
-              <span className="text-ink-800">
-                {item.name}
-                {item.variant ? ` (${item.variant})` : ''} × {item.quantity}
-              </span>
-              <span className="text-ink-700">${(item.unitPrice * item.quantity).toFixed(2)}</span>
-            </li>
-          ))}
-        </ul>
-        <div className="border-t border-cream-300 pt-3 space-y-1.5 text-sm">
-          <div className="flex justify-between">
-            <span className="text-ink-600">Subtotal</span>
-            <span className="text-ink-800">${totals.subtotal.toFixed(2)}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-ink-600">Shipping{chosen.isLive ? '' : ' (estimate)'}</span>
-            <span className="text-ink-800">${totals.shipping.toFixed(2)}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-ink-600">{totals.taxLabel}</span>
-            <span className="text-ink-800">${totals.tax.toFixed(2)}</span>
-          </div>
-          {totals.discount > 0 && (
-            <div className="flex justify-between text-plum-700">
-              <span>Discount</span>
-              <span>−${totals.discount.toFixed(2)}</span>
-            </div>
-          )}
-          <div className="flex justify-between border-t border-cream-300 pt-2 font-semibold text-plum-900">
-            <span>Total ({CURRENCY})</span>
-            <span>${totals.total.toFixed(2)}</span>
-          </div>
-        </div>
-      </section>
-
       <section className="surface-card p-6">
         <h2 className="font-display text-lg font-semibold text-plum-900 mb-4">Discount code</h2>
         {discountStatus === 'applied' && discountData ? (
@@ -376,6 +336,7 @@ export function CheckoutForm({ defaultEmail, methods, items }: Props) {
                   amount={totalAmount}
                   currency="CAD"
                   orderId={orderId}
+                  postalCode={zip}
                   onPaymentSuccess={handlePaymentSuccess}
                   onPaymentError={handlePaymentError}
                 />
@@ -405,6 +366,59 @@ export function CheckoutForm({ defaultEmail, methods, items }: Props) {
       >
         {pending ? 'Opening secure payment…' : 'Continue to payment'}
       </button>
+      </div>
+
+      {/* Order review sits beside the form and is driven by the same state as
+          the shipping radios and discount field, so the total it shows is
+          the total the server charges — it can never drift to a stale
+          estimate the way a server-rendered panel does. */}
+      <aside className="surface-card p-6 h-fit lg:sticky lg:top-24">
+        <h2 className="font-display text-lg font-semibold text-plum-900 mb-4">Order review</h2>
+        <ul className="space-y-2 text-sm mb-4">
+          {items.map((item, i) => (
+            <li key={`${item.name}-${i}`} className="flex justify-between gap-3">
+              <span className="text-ink-800">
+                {item.name}
+                {item.variant ? ` (${item.variant})` : ''} × {item.quantity}
+              </span>
+              <span className="text-ink-700">${(item.unitPrice * item.quantity).toFixed(2)}</span>
+            </li>
+          ))}
+        </ul>
+        <div className="border-t border-cream-300 pt-3 space-y-1.5 text-sm">
+          <div className="flex justify-between">
+            <span className="text-ink-600">Subtotal</span>
+            <span className="text-ink-800">${totals.subtotal.toFixed(2)}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-ink-600">
+              Shipping{chosen.isLive ? '' : ' (estimate)'}
+            </span>
+            <span className="text-ink-800">${totals.shipping.toFixed(2)}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-ink-600">{totals.taxLabel}</span>
+            <span className="text-ink-800">${totals.tax.toFixed(2)}</span>
+          </div>
+          {totals.discount > 0 && (
+            <div className="flex justify-between text-plum-700">
+              <span>Discount</span>
+              <span>−${totals.discount.toFixed(2)}</span>
+            </div>
+          )}
+          <div className="flex justify-between border-t border-cream-300 pt-2 font-semibold text-plum-900">
+            <span>Total ({CURRENCY})</span>
+            <span>${totals.total.toFixed(2)}</span>
+          </div>
+        </div>
+        <p className="text-xs text-ink-500 mt-3">
+          {shippingLoading
+            ? 'Checking Canada Post rates…'
+            : chosen.isLive
+              ? 'Live Canada Post rate for your address — this is what you pay.'
+              : 'Enter your postal code to see your live Canada Post rate.'}
+        </p>
+      </aside>
     </form>
   );
 }
