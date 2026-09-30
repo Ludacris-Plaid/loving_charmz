@@ -13,6 +13,51 @@ async function requireAdmin() {
 
 export type CollectionResult = { error?: string; success?: boolean };
 
+/**
+ * Reads the chosen product ids from the form. They arrive as a JSON array of
+ * uuids in the order the admin arranged them — that order becomes the
+ * storefront's display order for the collection.
+ */
+function parseProductIds(formData: FormData): string[] {
+  const raw = (formData.get('productIds') as string | null)?.trim();
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter((v): v is string => typeof v === 'string' && v.length > 0);
+  } catch {
+    return [];
+  }
+}
+
+/** Replaces a collection's products with exactly `productIds`, in order. */
+async function syncCollectionProducts(
+  admin: Awaited<ReturnType<typeof createAdminClient>>,
+  collectionId: string,
+  productIds: string[],
+): Promise<string | null> {
+  // A stale member left behind would still show on the storefront, so the
+  // membership is rebuilt from scratch rather than diffed. The catalog is a
+  // handful of rows — clearing and re-adding is cheaper than any merge logic
+  // and can never leave a product in the collection twice or out of order.
+  const { error: clearError } = await admin
+    .from('collection_products')
+    .delete()
+    .eq('collection_id', collectionId);
+  if (clearError) return clearError.message;
+
+  if (productIds.length > 0) {
+    const rows = productIds.map((productId, index) => ({
+      collection_id: collectionId,
+      product_id: productId,
+      sort_order: index,
+    }));
+    const { error } = await admin.from('collection_products').insert(rows);
+    if (error) return error.message;
+  }
+  return null;
+}
+
 export async function upsertCollectionAction(formData: FormData): Promise<CollectionResult> {
   const admin = await requireAdmin();
   const id = (formData.get('id') as string | null)?.trim() || null;
@@ -24,7 +69,9 @@ export async function upsertCollectionAction(formData: FormData): Promise<Collec
   const image_url = (formData.get('image_url') as string | null)?.trim() || null;
   const sort_order = Number(formData.get('sort_order') || 0);
   const is_active = formData.get('is_active') === 'on';
+  const productIds = parseProductIds(formData);
 
+  let collectionId = id;
   if (id) {
     const { error } = await admin
       .from('collections')
@@ -32,13 +79,22 @@ export async function upsertCollectionAction(formData: FormData): Promise<Collec
       .eq('id', id);
     if (error) return { error: error.message };
   } else {
-    const { error } = await admin
+    const { data, error } = await admin
       .from('collections')
-      .insert({ name, slug, description, image_url, sort_order, is_active });
+      .insert({ name, slug, description, image_url, sort_order, is_active })
+      .select('id')
+      .single();
     if (error) return { error: error.message };
+    collectionId = data.id;
   }
+
+  const productsError = await syncCollectionProducts(admin, collectionId!, productIds);
+  if (productsError) return { error: productsError };
+
   revalidatePath('/admin/collections');
   revalidatePath('/collections');
+  revalidatePath(`/collections/${slug}`);
+  revalidatePath('/shop');
   return { success: true };
 }
 

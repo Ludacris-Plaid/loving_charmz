@@ -104,11 +104,16 @@ export async function getAdminCustomers(): Promise<AdminCustomer[]> {
   }));
 }
 
+/**
+ * Collections for the admin Collections tab, each with the ids of the
+ * products it currently holds (in display order) so the editor can show
+ * exactly what is in the collection — not just a count.
+ */
 export async function getAdminCollections() {
   const admin = createAdminClient();
   const { data, error } = await admin
     .from('collections')
-    .select('*, collection_products(count)')
+    .select('*, collection_products(product_id, sort_order)')
     .order('sort_order', { ascending: true });
   if (error) throw new Error(error.message);
   return data || [];
