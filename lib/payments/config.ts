@@ -110,10 +110,30 @@ export function isProviderConfigured(provider: PaymentProviderId): boolean {
   return provider === 'paypal' ? getPayPalConfig() !== null : getSquareConfig() !== null;
 }
 
+/**
+ * Whether the *embedded* card form can actually be rendered in the browser.
+ *
+ * The server-side Square config only needs an access token and a location, but
+ * the Web Payments SDK form additionally needs `SQUARE_APP_ID`. The two used
+ * to disagree: checkout advertised card payment whenever the server could
+ * charge, the client form then failed to render because the app id was
+ * missing, and the shopper was silently redirected to a hosted Square page
+ * that asked for the address a second time — where Square's own postal-code
+ * validation rejected codes our form had already accepted.
+ *
+ * Card checkout is only offered when the whole path works end to end.
+ */
+export function isEmbeddedCardConfigured(): boolean {
+  return getSquareConfig() !== null && readPaymentEnv('SQUARE_APP_ID').length > 0;
+}
+
 export function getPaymentMethodOptions(): PaymentMethodOption[] {
   return METHOD_DEFINITIONS.map((method) => ({
     ...method,
-    configured: isProviderConfigured(method.provider),
+    // Card is offered on the strength of the embedded form, not merely the
+    // server's ability to charge: see isEmbeddedCardConfigured().
+    configured:
+      method.provider === 'square' ? isEmbeddedCardConfigured() : isProviderConfigured(method.provider),
   }));
 }
 

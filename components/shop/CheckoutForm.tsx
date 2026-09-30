@@ -138,6 +138,14 @@ export function CheckoutForm({ defaultEmail, methods, items }: Props) {
           setError('We could not start the payment. Please try again.');
         }
       });
+    } else if (selectedPayment === 'card') {
+      // Card was chosen but the embedded Square form never loaded (the client
+      // config is missing, e.g. SQUARE_APP_ID unset). Redirecting to a hosted
+      // Square page here would ask for the address a second time, on a page
+      // we do not control. Say so plainly instead.
+      setError(
+        'Card checkout is unavailable right now. Please choose PayPal, or contact us and we will arrange your order directly.',
+      );
     } else {
       // For PayPal or other redirect-based payments
       startTransition(async () => {
