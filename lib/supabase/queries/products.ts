@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server';
+import { normalizeSlug } from '@/lib/shop/slug';
 import type { Product, ProductVariant } from '@/lib/supabase/types';
 
 /**
@@ -40,6 +41,38 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
 
   if (error && error.code !== 'PGRST116') throw new Error(error.message);
   return data;
+}
+
+/**
+ * Find a product by any reasonable spelling of its slug.
+ *
+ * An exact match always wins. Only when it misses do we fall back to comparing
+ * normalized slugs, so `forever pawprints`, `forever-paw-prints` and
+ * `forever%20pawprints` all still reach the product whose stored slug is
+ * `foreverpawprints`. The catalog is small (a handful of products), so
+ * comparing in memory is cheaper than a second round trip that would need an
+ * unindexed SQL expression.
+ *
+ * The caller is expected to compare `product.slug` against the requested slug
+ * and permanently redirect when they differ — this function resolves the
+ * product, it does not pretend the requested URL was the right one.
+ */
+export async function getProductByAnySlug(slug: string): Promise<Product | null> {
+  const exact = await getProductBySlug(slug);
+  if (exact) return exact;
+
+  const wanted = normalizeSlug(slug);
+  if (!wanted) return null;
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from('products')
+    .select('*')
+    .eq('is_active', true);
+
+  if (error) throw new Error(error.message);
+  const match = (data || []).find((p: any) => normalizeSlug(p.slug) === wanted);
+  return match ?? null;
 }
 
 export async function getProductVariants(productId: string): Promise<ProductVariant[]> {

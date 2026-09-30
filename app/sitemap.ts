@@ -1,6 +1,7 @@
 import type { MetadataRoute } from 'next';
 import { SITE_URL } from '@/lib/site';
 import { createClient } from '@/lib/supabase/server';
+import { encodeSlug } from '@/lib/shop/slug';
 import { stories } from './(marketing)/stories/page';
 
 /**
@@ -48,7 +49,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }));
 
   const storyEntries: MetadataRoute.Sitemap = stories.map((story) => ({
-    url: `${base}/stories/${story.slug}`,
+    url: `${base}/stories/${encodeSlug(story.slug)}`,
     changeFrequency: 'yearly',
     priority: 0.5,
   }));
@@ -63,8 +64,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
     for (const row of products.data ?? []) {
       if (!row.slug) continue;
+      // Encoded: a stored slug must never be able to emit a `<loc>` with a raw
+      // space or other unsafe character, which crawlers may reject outright.
       catalogEntries.push({
-        url: `${base}/products/${row.slug}`,
+        url: `${base}/products/${encodeSlug(row.slug)}`,
         lastModified: row.updated_at ? new Date(row.updated_at) : undefined,
         changeFrequency: 'weekly',
         priority: 0.9,
@@ -73,7 +76,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     for (const row of collections.data ?? []) {
       if (!row.slug) continue;
       catalogEntries.push({
-        url: `${base}/collections/${row.slug}`,
+        url: `${base}/collections/${encodeSlug(row.slug)}`,
         lastModified: row.updated_at ? new Date(row.updated_at) : undefined,
         changeFrequency: 'weekly',
         priority: 0.8,

@@ -1,9 +1,10 @@
-import { notFound } from 'next/navigation';
+import { notFound, permanentRedirect } from 'next/navigation';
 import Link from 'next/link';
 import { Container } from '@/components/ui/Container';
 import { JsonLd } from '@/components/ui/JsonLd';
 import { createClient } from '@/lib/supabase/server';
-import { getProductBySlug } from '@/lib/supabase/queries/products';
+import { getProductByAnySlug } from '@/lib/supabase/queries/products';
+import { encodeSlug } from '@/lib/shop/slug';
 import { getCartCount } from '@/lib/cart/server';
 import ProductDetailClient from '@/components/shop/ProductDetailClient';
 import { images } from '@/lib/images';
@@ -15,15 +16,19 @@ type Props = {
 
 export async function generateMetadata({ params }: Props) {
   const { slug } = await params;
-  const product = await getProductBySlug(slug);
+  const product = await getProductByAnySlug(slug);
   if (!product) return { title: 'Product Not Found' };
+  // Always the product's own slug, never the requested one: a request for a
+  // legacy spelling must not advertise that spelling to search engines.
+  const url = `${SITE_URL}/products/${encodeSlug(product.slug)}`;
   return {
     title: `${product.name} — Loving Charmz`,
     description: product.description || product.tagline || '',
+    alternates: { canonical: url },
     openGraph: {
       title: product.name,
       description: product.description || product.tagline || '',
-      url: `${SITE_URL}/products/${slug}`,
+      url,
       images: product.images?.[0] ? [{ url: product.images[0], width: 800, height: 800 }] : [],
     },
   };
@@ -31,8 +36,16 @@ export async function generateMetadata({ params }: Props) {
 
 export default async function ProductPage({ params }: Props) {
   const { slug } = await params;
-  const product = await getProductBySlug(slug);
+  const product = await getProductByAnySlug(slug);
   if (!product) notFound();
+
+  // The URL asked for is not the product's real slug (a legacy link, a
+  // hand-typed variant, a stray %20). Send the visitor — and the crawler —
+  // to the one true URL with a 308, so the old address keeps working and
+  // never becomes a second indexable page for the same product.
+  if (product.slug !== slug) {
+    permanentRedirect(`/products/${encodeSlug(product.slug)}`);
+  }
 
   const supabase = await createClient();
   const [{ data: variantsData }, { data: { user } }, cartCount] = await Promise.all([
@@ -47,6 +60,7 @@ export default async function ProductPage({ params }: Props) {
   ]);
 
   const imageUrl = product.images?.[0] || images.shop[(product.name.length + product.id.length) % images.shop.length];
+  const canonicalUrl = `${SITE_URL}/products/${encodeSlug(product.slug)}`;
 
   // Prices of the sellable versions, for the structured-data range.
   const versionPrices = (variantsData || [])
@@ -62,7 +76,7 @@ export default async function ProductPage({ params }: Props) {
     name: product.name,
     description: product.description || product.tagline || '',
     image: imageUrl,
-    url: `${SITE_URL}/products/${slug}`,
+    url: canonicalUrl,
     brand: {
       '@type': 'Brand',
       name: 'Loving Charmz',
@@ -75,7 +89,7 @@ export default async function ProductPage({ params }: Props) {
       lowPrice: lowestPrice,
       highPrice: highestPrice,
       availability: 'https://schema.org/InStock',
-      url: `${SITE_URL}/products/${slug}`,
+      url: canonicalUrl,
     },
   };
 
