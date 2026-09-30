@@ -245,7 +245,7 @@ function ProductForm({ initial, pending, onCancel, onSubmit }: FormProps) {
           min="0.01"
           required
           defaultValue={initial?.base_price ?? 55}
-          hint="This is the price for every version of the piece — brass or stainless steel, any size. It is also the CAD amount charged at checkout."
+          hint="The starting price in Canadian dollars. Every version begins here — to give a particular material or size a different price, set it on the Inventory page."
         />
         <Input
           label="Tagline"

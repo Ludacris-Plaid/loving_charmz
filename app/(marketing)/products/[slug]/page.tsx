@@ -48,6 +48,13 @@ export default async function ProductPage({ params }: Props) {
 
   const imageUrl = product.images?.[0] || images.shop[(product.name.length + product.id.length) % images.shop.length];
 
+  // Prices of the sellable versions, for the structured-data range.
+  const versionPrices = (variantsData || [])
+    .filter((v: any) => v.is_active)
+    .map((v: any) => Number(product.base_price) + Number(v.price_adjustment || 0));
+  const lowestPrice = versionPrices.length ? Math.min(...versionPrices) : Number(product.base_price);
+  const highestPrice = versionPrices.length ? Math.max(...versionPrices) : Number(product.base_price);
+
   // Product + Offer structured data for Google rich results
   const structuredData = {
     '@context': 'https://schema.org',
@@ -61,10 +68,12 @@ export default async function ProductPage({ params }: Props) {
       name: 'Loving Charmz',
     },
     offers: {
-      // One price per product, every version: a plain Offer, not a range.
-      '@type': 'Offer',
+      // Versions may carry their own price, so quote the real range: the
+      // lowest price a shopper can pay up to the highest.
+      '@type': 'AggregateOffer',
       priceCurrency: 'CAD',
-      price: product.base_price,
+      lowPrice: lowestPrice,
+      highPrice: highestPrice,
       availability: 'https://schema.org/InStock',
       url: `${SITE_URL}/products/${slug}`,
     },

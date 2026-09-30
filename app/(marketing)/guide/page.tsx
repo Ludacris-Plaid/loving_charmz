@@ -529,10 +529,9 @@ export default function GuidePage() {
             <Step n="4">
               <strong>Price</strong> — a number with a decimal, like <em>165.00</em>.
               Type digits and the dot only — no dollar sign; amounts are Canadian
-              dollars. This is <em>the</em> price of the piece: every version sells
-              for exactly this amount, brass or stainless steel, small, medium or
-              large. What you type is what customers see and pay — nothing is added
-              or hidden anywhere.
+              dollars. This is the starting price of the piece. Every version begins
+              at this price, and if a particular material or size should cost more
+              or less, you set that exactly on the Inventory page (chapter 8).
             </Step>
             <Step n="5">
               <strong>Tagline</strong> — optional. A short sweet phrase shown as a
@@ -743,9 +742,10 @@ export default function GuidePage() {
               the website shows &ldquo;sold out&rdquo; for that version automatically.
             </LI>
             <LI>
-              <strong>The Price</strong> is not on this page — it lives with the
-              product itself (chapter 5). Every version sells for that one price, so
-              changing it here is never needed: this page is for stock only.
+              <strong>Price</strong> — the real price customers pay for that exact version. Type a
+              number and it becomes the price for that material and size, everywhere
+              on the site. To push every version of a piece to one price at once, type
+              it in the <em>Set all prices</em> box at the top of the product.
             </LI>
           </UList>
           <Ex>

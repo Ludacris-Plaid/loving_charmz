@@ -4,6 +4,7 @@ import {
   availableSizes,
   charmMatrixCells,
   findVariant,
+  lowestVariantPrice,
   skuRoot,
   variantDisplayName,
   variantPrice,
@@ -74,6 +75,36 @@ describe('findVariant', () => {
   });
 });
 
+describe('lowestVariantPrice', () => {
+  it('falls back to the base price when no variant is active', () => {
+    expect(lowestVariantPrice({ base_price: 45 }, [])).toBe(45);
+    expect(
+      lowestVariantPrice({ base_price: 45 }, [
+        { price_adjustment: 10, is_active: false },
+      ]),
+    ).toBe(45);
+  });
+
+  it('quotes the cheapest version, not the base price', () => {
+    // Small discounted, large premium: the card must advertise 40.
+    const variants = charmMatrix({
+      'brass-small': { price_adjustment: -5 },
+      'brass-large': { price_adjustment: 15 },
+    });
+    expect(lowestVariantPrice({ base_price: 45 }, variants)).toBe(40);
+  });
+
+  it('ignores inactive variants when hunting the lowest price', () => {
+    const variants = charmMatrix({ 'brass-small': { price_adjustment: -20, is_active: false } });
+    expect(lowestVariantPrice({ base_price: 45 }, variants)).toBe(45);
+  });
+
+  it('never returns a negative price', () => {
+    const variants = charmMatrix({ 'brass-small': { price_adjustment: -500 } });
+    expect(lowestVariantPrice({ base_price: 45 }, variants)).toBe(0);
+  });
+});
+
 describe('pricing and labels', () => {
   it('adds the variant adjustment to the product base price', () => {
     const product = { base_price: 25 };
@@ -81,6 +112,12 @@ describe('pricing and labels', () => {
     expect(variantPrice(product, findVariant(variants, 'brass', 'medium'))).toBe(25);
     expect(variantPrice(product, findVariant(variants, 'stainless_steel', 'medium'))).toBe(50);
     expect(variantPrice(product, null)).toBe(25);
+  });
+
+  it('supports a version priced below the base price', () => {
+    const product = { base_price: 45 };
+    const variants = charmMatrix({ 'brass-small': { price_adjustment: -5 } });
+    expect(variantPrice(product, findVariant(variants, 'brass', 'small'))).toBe(40);
   });
 
   it('formats display names and SKUs like the database rows', () => {

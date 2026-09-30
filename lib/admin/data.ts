@@ -124,7 +124,7 @@ export async function getInventoryRows() {
   const { data, error } = await admin
     .from('product_variants')
     .select(
-      'id, name, sku, stock_quantity, price_adjustment, is_active, material, size, product_id, products(name, slug, kind)',
+      'id, name, sku, stock_quantity, price_adjustment, is_active, material, size, product_id, products(name, slug, kind, base_price)',
     )
     .order('stock_quantity', { ascending: true });
   if (error) throw new Error(error.message);
@@ -141,6 +141,7 @@ export async function getInventoryRows() {
     product_name: row.products?.name || '—',
     product_slug: row.products?.slug || '',
     product_kind: row.products?.kind || 'charm',
+    product_base_price: Number(row.products?.base_price || 0),
   }));
 }
 

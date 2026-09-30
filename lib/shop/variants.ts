@@ -88,6 +88,23 @@ export function variantPrice(product: ProductLike, variant?: VariantLike | null)
   return product.base_price + (variant?.price_adjustment || 0);
 }
 
+/**
+ * The lowest price a shopper can actually pay for this product — the number a
+ * "From $X" card must quote. Falls back to the base price when the product has
+ * no active variants, and never returns less than zero.
+ */
+export function lowestVariantPrice(
+  product: ProductLike,
+  variants: Pick<VariantLike, 'price_adjustment' | 'is_active'>[],
+): number {
+  const active = variants.filter((v) => v.is_active);
+  if (active.length === 0) return Math.max(0, product.base_price);
+  const lowest = Math.min(
+    ...active.map((v) => product.base_price + (Number(v.price_adjustment) || 0)),
+  );
+  return Math.max(0, lowest);
+}
+
 /** "Brass · Large" — the human label stored on the variant row. */
 export function variantDisplayName(material: string, size: string | null): string {
   return size

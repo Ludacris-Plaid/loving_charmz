@@ -1,17 +1,32 @@
 import { createClient } from '@/lib/supabase/server';
 import type { Product, ProductVariant } from '@/lib/supabase/types';
 
-export async function getProducts(limit = 50): Promise<Product[]> {
+/**
+ * A catalog row plus the lowest price any version sells for. Cards show
+ * "From $X" using `from_price`, so a version priced below the base price can
+ * never leave the card advertising a price a shopper cannot get.
+ */
+export type ProductWithPricing = Product & { from_price: number };
+
+export async function getProducts(limit = 50): Promise<ProductWithPricing[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from('products')
-    .select('*')
+    .select('*, product_variants(price_adjustment, is_active)')
     .eq('is_active', true)
     .order('created_at', { ascending: false })
     .limit(limit);
 
   if (error) throw new Error(error.message);
-  return data || [];
+
+  return (data || []).map((p: any) => {
+    const variants = Array.isArray(p.product_variants) ? p.product_variants : [];
+    const active = variants.filter((v: any) => v.is_active);
+    const lowest = active.length
+      ? Math.min(...active.map((v: any) => Number(p.base_price) + Number(v.price_adjustment || 0)))
+      : Number(p.base_price);
+    return { ...p, from_price: Math.max(0, lowest) } as ProductWithPricing;
+  });
 }
 
 export async function getProductBySlug(slug: string): Promise<Product | null> {

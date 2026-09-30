@@ -88,7 +88,7 @@ export default async function ShopPage() {
                       {product.name}
                     </h3>
                     <p className="mt-2 text-sm text-ink-600">
-                      From <span className="font-medium text-plum-700">${product.base_price.toFixed(2)}</span>
+                      From <span className="font-medium text-plum-700">${product.from_price.toFixed(2)}</span>
                     </p>
                   </div>
                 </article>

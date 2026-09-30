@@ -26,6 +26,7 @@ export type ProductCard = {
   productId: string;
   productName: string;
   productSlug: string;
+  productBasePrice: number;
   kind: string;
   variants: VariantCell[];
 };
@@ -104,6 +105,18 @@ function CharmMatrixCard({ card, onSaved, onError }: CardProps) {
     setRows((prev) => prev.map((r, i) => (i === index ? { ...r, ...patch } : r)));
   };
 
+  // The admin edits the real selling price per version, never a hidden
+  // delta. The stored column is an adjustment against the product's base
+  // price, so converting here keeps one truth on screen and one on disk.
+  const basePrice = card.productBasePrice;
+  const priceOf = (row: VariantCell) =>
+    +(basePrice + Number(row.price_adjustment || 0)).toFixed(2);
+
+  const setPrice = (index: number, entered: number) => {
+    if (!Number.isFinite(entered)) return;
+    setCell(index, { price_adjustment: +(entered - basePrice).toFixed(2) });
+  };
+
   const save = () => {
     onError(null);
     startTransition(async () => {
@@ -133,12 +146,33 @@ function CharmMatrixCard({ card, onSaved, onError }: CardProps) {
         <div>
           <h2 className="font-display text-lg font-semibold text-plum-900">{card.productName}</h2>
           <p className="text-xs text-ink-500">
-            Stock tracked per material and size · /{card.productSlug} · {totalStock} in stock
+            Stock and price tracked per material and size · /{card.productSlug} · {totalStock} in stock
           </p>
         </div>
-        <button type="button" onClick={save} className="btn-plum px-5 py-2 text-xs">
-          Save {card.productName}
-        </button>
+        <div className="flex items-center gap-2">
+          <label className="flex items-center gap-1.5 text-xs text-ink-500">
+            Set all prices
+            <input
+              type="number"
+              min="0.01"
+              step="0.01"
+              placeholder={basePrice.toFixed(2)}
+              onChange={(e) => {
+                const entered = Number(e.target.value);
+                if (!Number.isFinite(entered) || entered <= 0) return;
+                const adjustment = +(entered - basePrice).toFixed(2);
+                setRows((prev) =>
+                  prev.map((r) => ({ ...r, price_adjustment: adjustment })),
+                );
+              }}
+              className="input-base w-24 py-1.5 text-sm"
+              aria-label={`Set the same price for every version of ${card.productName}`}
+            />
+          </label>
+          <button type="button" onClick={save} className="btn-plum px-5 py-2 text-xs">
+            Save {card.productName}
+          </button>
+        </div>
       </div>
       <div className="overflow-x-auto">
         <table className="w-full">
@@ -148,6 +182,7 @@ function CharmMatrixCard({ card, onSaved, onError }: CardProps) {
               <th className="px-3 py-2">Size</th>
               <th className="px-3 py-2">SKU</th>
               <th className="px-3 py-2 w-24">Stock</th>
+              <th className="px-3 py-2 w-28">Price</th>
               <th className="px-3 py-2">Active</th>
             </tr>
           </thead>
@@ -169,6 +204,17 @@ function CharmMatrixCard({ card, onSaved, onError }: CardProps) {
                     onChange={(e) => setCell(i, { stock_quantity: Number(e.target.value) })}
                     className="input-base w-20 py-1.5 text-sm"
                     aria-label={`${r.name} stock`}
+                  />
+                </td>
+                <td className="px-3 py-2">
+                  <input
+                    type="number"
+                    min="0.01"
+                    step="0.01"
+                    value={priceOf(r)}
+                    onChange={(e) => setPrice(i, Number(e.target.value))}
+                    className="input-base w-24 py-1.5 text-sm"
+                    aria-label={`${r.name} price`}
                   />
                 </td>
                 <td className="px-3 py-2">

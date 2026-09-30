@@ -21,6 +21,7 @@ type VariantRow = {
   product_name: string;
   product_slug: string;
   product_kind: string;
+  product_base_price: number;
 };
 
 export default async function AdminInventoryPage() {
@@ -42,6 +43,7 @@ export default async function AdminInventoryPage() {
     productId,
     productName: variants[0].product_name,
     productSlug: variants[0].product_slug,
+    productBasePrice: Number(variants[0].product_base_price || 0),
     kind: variants[0].product_kind,
     variants: variants.map((v) => ({
       id: v.id,
@@ -62,6 +64,7 @@ export default async function AdminInventoryPage() {
       productId: p.id as string,
       productName: p.name as string,
       productSlug: p.slug as string,
+      productBasePrice: Number(p.base_price || 0),
       kind: (p.kind as string) || 'charm',
       variants: [],
     }));
@@ -72,7 +75,7 @@ export default async function AdminInventoryPage() {
         <span className="badge-plum">Inventory</span>
         <h1 className="font-display text-3xl font-semibold text-plum-900 mt-3">Stock &amp; variants</h1>
         <p className="text-sm text-ink-600 mt-1">
-          Every piece tracks stock per material (brass / stainless steel) and size (S / M / L). Type the counts, then press Save — one save per product.
+          Every piece tracks stock and price per material (brass / stainless steel) and size (S / M / L). Type your counts, then press Save — one save per product.
         </p>
       </div>
       <AdminInventoryClient productCards={[...productCards, ...variantless]} />

@@ -135,10 +135,12 @@ export async function saveVariantMatrixAction(
 
   const { data: product } = await admin
     .from('products')
-    .select('slug, kind')
+    .select('slug, base_price')
     .eq('id', productId)
     .maybeSingle();
   if (!product) return { error: 'Product not found' };
+
+  const basePrice = Number(product.base_price || 0);
 
   // Validate every row before writing anything so a save is all-or-nothing
   // at the input level.
@@ -152,8 +154,14 @@ export async function saveVariantMatrixAction(
     if (!Number.isFinite(r.stock_quantity) || r.stock_quantity < 0) {
       return { error: 'Stock must be a number, zero or more' };
     }
-    if (!Number.isFinite(r.price_adjustment) || r.price_adjustment < 0) {
-      return { error: 'Price adjustment must be a number, zero or more' };
+    if (!Number.isFinite(r.price_adjustment)) {
+      return { error: 'Price must be a number' };
+    }
+    // The storefront shows base_price + adjustment, so a negative adjustment
+    // is legal (a cheaper small size) but the final price may never drop to
+    // zero or below — that would make the piece unsellable-but-addable.
+    if (basePrice + r.price_adjustment <= 0) {
+      return { error: 'Price must be more than zero' };
     }
   }
 
