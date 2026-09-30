@@ -41,8 +41,18 @@ export default async function ProductPage({ params }: Props) {
 
   // The URL asked for is not the product's real slug (a legacy link, a
   // hand-typed variant, a stray %20). Send the visitor — and the crawler —
-  // to the one true URL with a 308, so the old address keeps working and
-  // never becomes a second indexable page for the same product.
+  // to the one true URL, so the old address keeps working and never becomes
+  // a second indexable page for the same product. The canonical link below
+  // points at the real slug either way.
+  //
+  // Note this is a *soft* redirect: resolving the product is an await, so the
+  // response has already begun streaming by the time we get here and Next
+  // cannot set a 308 status. It emits a meta-refresh plus a client-side
+  // `NEXT_REDIRECT` carrying 308 instead, and the HTTP response is 200.
+  // That is enough for a legacy link to land in the right place with no
+  // duplicate content; only a middleware-level lookup before streaming
+  // begins would produce a true 308, at the cost of a database round trip on
+  // every product request.
   if (product.slug !== slug) {
     permanentRedirect(`/products/${encodeSlug(product.slug)}`);
   }
