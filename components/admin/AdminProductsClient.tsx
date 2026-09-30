@@ -238,13 +238,14 @@ function ProductForm({ initial, pending, onCancel, onSubmit }: FormProps) {
           hint="Used in the URL — lowercase and hyphenated."
         />
         <Input
-          label="Base price (USD)"
+          label="Price (CAD)"
           name="base_price"
           type="number"
           step="0.01"
-          min="0"
+          min="0.01"
           required
           defaultValue={initial?.base_price ?? 55}
+          hint="This is the price for every version of the piece — brass or stainless steel, any size. It is also the CAD amount charged at checkout."
         />
         <Input
           label="Tagline"

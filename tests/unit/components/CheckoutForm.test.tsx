@@ -24,6 +24,8 @@ const methods = [
   },
 ];
 
+const items = [{ name: 'Apex Cuff', variant: null, quantity: 1, unitPrice: 100 }];
+
 beforeEach(() => {
   createCheckoutAction.mockReset();
 });
@@ -34,7 +36,7 @@ describe('CheckoutForm', () => {
       <CheckoutForm
         defaultEmail="tracy@example.com"
         methods={methods.map((method) => ({ ...method, configured: false }))}
-        totalAmount={100}
+        items={items}
       />,
     );
 
@@ -46,7 +48,7 @@ describe('CheckoutForm', () => {
   });
 
   it('only offers the configured providers', () => {
-    render(<CheckoutForm defaultEmail="tracy@example.com" methods={methods} totalAmount={100} />);
+    render(<CheckoutForm defaultEmail="tracy@example.com" methods={methods} items={items} />);
 
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
     expect(screen.getByRole('radio', { name: /paypal/i })).toBeChecked();
@@ -58,7 +60,7 @@ describe('CheckoutForm', () => {
     vi.stubGlobal('location', { assign });
     createCheckoutAction.mockResolvedValue({ orderId: 'order-1', redirectUrl: 'https://www.sandbox.paypal.com/x' });
 
-    const { container } = render(<CheckoutForm defaultEmail="tracy@example.com" methods={methods} totalAmount={100} />);
+    const { container } = render(<CheckoutForm defaultEmail="tracy@example.com" methods={methods} items={items} />);
     fireEvent.submit(container.querySelector('form') as HTMLFormElement);
 
     await waitFor(() => expect(createCheckoutAction).toHaveBeenCalledTimes(1));
@@ -69,7 +71,7 @@ describe('CheckoutForm', () => {
   it('shows the server error when no payment could be started', async () => {
     createCheckoutAction.mockResolvedValue({ error: 'PayPal is not configured for this environment.' });
 
-    const { container } = render(<CheckoutForm defaultEmail="tracy@example.com" methods={methods} totalAmount={100} />);
+    const { container } = render(<CheckoutForm defaultEmail="tracy@example.com" methods={methods} items={items} />);
     fireEvent.submit(container.querySelector('form') as HTMLFormElement);
 
     expect(await screen.findByText(/not configured/i)).toBeInTheDocument();

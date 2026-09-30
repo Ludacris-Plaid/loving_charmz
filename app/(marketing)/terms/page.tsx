@@ -59,9 +59,8 @@ export default function TermsPage() {
               Risk of loss passes to you on delivery to the carrier.
             </p>
             <p className="mt-3">
-              Free shipping promotions apply to standard shipping only. Where an order qualifies for
-              free shipping and an upgraded service (such as Xpresspost or Priority) is selected, the
-              listed rate for that upgraded service is charged.
+              Shipping is charged at the live Canada Post rate for the selected service and address,
+              shown at checkout before payment. The rate displayed at checkout is the rate charged.
             </p>
           </section>
 

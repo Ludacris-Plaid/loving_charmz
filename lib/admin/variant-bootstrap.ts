@@ -20,10 +20,14 @@ export type InitialStock = {
   >;
 };
 
-/** Charm matrix price adjustments: stainless steel carries the +$25 upgrade. */
+/**
+ * Charm matrix price adjustments. The admin's entered price is the price for
+ * every version, so every cell is zero — kept as an explicit table so any
+ * future per-version pricing has one obvious place to change.
+ */
 const CHARM_ADJUSTMENTS: Record<string, number> = {
   brass: 0,
-  stainless_steel: 25,
+  stainless_steel: 0,
 };
 
 /**

@@ -528,9 +528,11 @@ export default function GuidePage() {
             </Step>
             <Step n="4">
               <strong>Price</strong> — a number with a decimal, like <em>165.00</em>.
-              Type digits and the dot only — no dollar sign. This is the price for the
-              base version (brass). The metal and size choices adjust the price
-              themselves on the product page.
+              Type digits and the dot only — no dollar sign; amounts are Canadian
+              dollars. This is <em>the</em> price of the piece: every version sells
+              for exactly this amount, brass or stainless steel, small, medium or
+              large. What you type is what customers see and pay — nothing is added
+              or hidden anywhere.
             </Step>
             <Step n="5">
               <strong>Tagline</strong> — optional. A short sweet phrase shown as a
@@ -741,9 +743,9 @@ export default function GuidePage() {
               the website shows &ldquo;sold out&rdquo; for that version automatically.
             </LI>
             <LI>
-              <strong>The &ldquo;Price +$&rdquo; column</strong> — leave it alone. It is
-              the extra amount for stainless steel (+$25) and is already set correctly
-              for every product.
+              <strong>The Price</strong> is not on this page — it lives with the
+              product itself (chapter 5). Every version sells for that one price, so
+              changing it here is never needed: this page is for stock only.
             </LI>
           </UList>
           <Ex>
@@ -1053,11 +1055,10 @@ export default function GuidePage() {
           </P>
           <UList>
             <LI>
-              <strong>Live shipping prices at checkout.</strong> Customers see real
-              Canada Post prices for their address — Regular Parcel, Xpresspost,
-              Priority — instead of a flat guess. Free shipping over $50 applies to
-              the standard Regular Parcel service; express upgrades always charge
-              their listed price, and the checkout says so plainly on each option.
+              <strong>Live shipping prices at checkout.</strong> Customers pay the real
+              Canada Post price for their address — Regular Parcel, Xpresspost,
+              Priority — so shipping never costs you money out of your own pocket.
+              Every option shows its exact price right on the checkout page.
             </LI>
             <LI>
               <strong>Print-at-home postage labels.</strong> Chapter 4 showed the

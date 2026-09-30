@@ -21,12 +21,12 @@ export default function ShippingPolicyPage() {
 
         <div className="space-y-8 text-ink-700 leading-relaxed">
           <section>
-            <h2 className="font-display text-xl font-semibold text-plum-900 mb-3">Free Shipping</h2>
+            <h2 className="font-display text-xl font-semibold text-plum-900 mb-3">Shipping Rates</h2>
             <p>
-              We offer free <strong>standard</strong> shipping on all Canadian orders over $50 CAD. No promo code is needed — free shipping is applied automatically at checkout when you choose the standard shipping option.
+              Shipping is charged at the <strong>live Canada Post rate</strong> for your address. Enter your postal code at checkout and the exact price appears — no flat guesses, no surprises.
             </p>
             <p className="mt-3">
-              Upgraded services (Xpresspost, Priority) are not included in the free-shipping promotion. You may still choose them at checkout, and their listed rate is charged even when your order qualifies for free standard shipping.
+              Faster services (Xpresspost, Priority) are listed alongside Regular Parcel with their own live prices, so you can pick the speed and price that suit you.
             </p>
           </section>
 
@@ -36,7 +36,7 @@ export default function ShippingPolicyPage() {
               Orders within Canada ship via Canada Post. At checkout you can pick from the live services available for your address:
             </p>
             <ul className="mt-3 list-disc pl-6 space-y-1">
-              <li><strong>Regular Parcel</strong> (standard) — 5–10 business days. Free over $50 CAD; $9.99 flat rate under $50.</li>
+              <li><strong>Regular Parcel</strong> (standard) — 5–10 business days, priced live for your address at checkout.</li>
               <li><strong>Xpresspost</strong> — typically 2–3 business days, guaranteed, charged at the listed rate.</li>
               <li><strong>Priority</strong> — next-day to 2 business days, guaranteed, charged at the listed rate.</li>
             </ul>

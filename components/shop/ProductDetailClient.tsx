@@ -12,7 +12,6 @@ import {
   findVariant,
   MATERIAL_LABELS,
   SIZE_LABELS,
-  variantPrice,
   type VariantLike,
 } from '@/lib/shop/variants';
 import { parseDescription } from '@/lib/shop/description';
@@ -66,7 +65,9 @@ export default function ProductDetailClient({
     [variants, material, effectiveSize],
   );
 
-  const totalPrice = variantPrice(product as any, selected as any);
+  // One price per product — the admin's entered price IS the price for every
+  // material and size. Variants carry stock, never a price modifier.
+  const totalPrice = product.base_price;
 
   // Thumbnail gallery: the server passes the first image; the full gallery
   // comes from the product row. Square crop views for every image, with the
@@ -258,10 +259,10 @@ export default function ProductDetailClient({
           )}
 
           <div className="flex items-baseline gap-3">
-            <p className="text-3xl font-semibold plum-gradient-text">${totalPrice.toFixed(2)}</p>
-            {selected && (
-              <span className="text-sm text-ink-500">in {selected.name}</span>
-            )}
+            <p className="text-3xl font-semibold plum-gradient-text">
+              From ${totalPrice.toFixed(2)}
+            </p>
+            <span className="text-sm text-ink-500">CAD · every version, same price</span>
           </div>
 
           {product.is_personalizable && (
@@ -341,7 +342,7 @@ export default function ProductDetailClient({
 
           <div className="divider-cream" />
           <ul className="space-y-3 text-sm text-ink-700">
-            <li className="flex items-start gap-3"><span className="badge-mint shrink-0">1</span> Free shipping on orders over $50 CAD</li>
+            <li className="flex items-start gap-3"><span className="badge-mint shrink-0">1</span> Shipped across Canada with Canada Post</li>
             <li className="flex items-start gap-3"><span className="badge-mint shrink-0">2</span> Handcrafted to order, just for you</li>
             <li className="flex items-start gap-3"><span className="badge-mint shrink-0">3</span> Lifetime quality guarantee</li>
           </ul>

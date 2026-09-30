@@ -16,7 +16,7 @@ import { CURRENCY, computeOrderTotals, formatMoney, lineUnitPrice, type Discount
 import { taxRegionForAddress } from './tax';
 import { readGuestCartToken } from '@/lib/cart/guest';
 import { captureSubscriberEmail } from '@/lib/subscribers/capture';
-import { resolveLiveShippingRate, isStandardShipping } from '@/lib/shipping/quote-server';
+import { resolveLiveShippingRate } from '@/lib/shipping/quote-server';
 import { SHIPPING_FLAT_ID } from '@/lib/shipping/quote-options';
 import { validateDiscountCode } from './discount';
 
@@ -120,7 +120,7 @@ export async function createCheckoutAction(formData: FormData): Promise<Checkout
   // Tax follows the shipping address (province-aware GST/HST); computed only
   // after the address fields are parsed and validated. Shipping is re-priced
   // server-side from the selected service so a tampered client cannot check
-  // out at a price the shop never quoted (flat rate is the fallback).
+  // out at a price the shop never quoted (flat rate is the outage fallback).
   const selectedService = (formData.get('shippingService') as string | null)?.trim() || SHIPPING_FLAT_ID;
   const liveShipping = await resolveLiveShippingRate({
     serviceId: selectedService,
@@ -132,9 +132,6 @@ export async function createCheckoutAction(formData: FormData): Promise<Checkout
     discount,
     taxRegionForAddress({ country, state }),
     liveShipping,
-    // Free-over-$50 covers standard shipping only; express/priority always
-    // charge their quoted price (server-decided, not client-supplied).
-    { expedited: !isStandardShipping(selectedService) },
   );
 
   // Resolved before anything is written: an environment with no usable

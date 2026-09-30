@@ -50,7 +50,7 @@ export const TICKER_SLUG = 'ticker';
 /** The hard defaults — also what the ticker falls back to on any failure. */
 export const DEFAULT_TICKER: TickerConfig = {
   published: true,
-  messages: ['Free shipping on orders over $50 CAD'],
+  messages: ['Handcrafted pet-bond keepsakes · Shipped across Canada with Canada Post'],
   theme: 'plum',
 };
 

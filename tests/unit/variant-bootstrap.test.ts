@@ -86,7 +86,7 @@ describe('bootstrapCharmVariants', () => {
     const steel = inserted.find((r) => r.material === 'stainless_steel' && r.size === 'medium');
     expect(steel?.name).toBe('Stainless Steel · Medium');
     expect(steel?.sku).toBe('FAITHFUL-FRIEND-STL-M');
-    expect(steel?.price_adjustment).toBe(25);
+    expect(steel?.price_adjustment).toBe(0);
     expect(steel?.is_active).toBe(true);
   });
 });

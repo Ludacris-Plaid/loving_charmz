@@ -216,7 +216,7 @@ async function renderAbandonedCartEmail(cart: AbandonedCart, unsubscribeToken: s
     </div>
 
     <p style="margin:0 0 20px;color:#6b5b7b;font-size:13px;line-height:1.6;text-align:center;">
-      Free shipping on orders over $50 CAD &middot; Handcrafted to order &middot; Lifetime quality guarantee
+      Handcrafted to order &middot; Shipped with Canada Post &middot; Lifetime quality guarantee
     </p>
 
     <p style="margin:0;font-size:11px;color:#9b8fae;text-align:center;">

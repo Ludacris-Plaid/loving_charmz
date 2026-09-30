@@ -209,8 +209,8 @@ describe('createCheckoutAction with a configured provider', () => {
       payment_method: 'paypal',
       payment_status: 'awaiting_payment',
       subtotal: 60,
-      shipping_cost: 0,
-      total: 63.00,
+      shipping_cost: 9.99,
+      total: 72.99,
     });
 
     expect(db.state.orderItems).toHaveLength(1);
@@ -222,7 +222,7 @@ describe('createCheckoutAction with a configured provider', () => {
       provider: 'paypal',
       provider_transaction_id: 'PAYPAL-ORDER-1',
       status: 'requires_action',
-      amount: 63.00,
+      amount: 72.99,
     });
 
     // The cart is not emptied until the payment is actually captured.
@@ -294,7 +294,7 @@ describe('createCheckoutAction with a configured provider', () => {
     expect(result.error).toBeUndefined();
     expect(db.state.orders).toHaveLength(1);
     // Canonical uppercase code stored, discount applied off the $60 subtotal.
-    expect(db.state.orders[0]).toMatchObject({ discount_code: 'WELCOME10', discount: 6, total: 56.70 });
+    expect(db.state.orders[0]).toMatchObject({ discount_code: 'WELCOME10', discount: 6, total: 66.69 });
   });
 
   it('rejects guest checkout when there is no cart', async () => {

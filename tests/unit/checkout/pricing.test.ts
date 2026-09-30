@@ -9,7 +9,7 @@ import {
 } from '@/lib/checkout/pricing';
 
 describe('computeOrderTotals', () => {
-  it('charges flat shipping below the free threshold', () => {
+  it('falls back to the flat rate when no live quote resolved', () => {
     const totals = computeOrderTotals([{ unitPrice: 40, quantity: 1 }]);
     expect(totals.subtotal).toBe(40);
     expect(totals.shipping).toBe(9.99);
@@ -18,13 +18,19 @@ describe('computeOrderTotals', () => {
     expect(totals.taxLabel).toBe('GST');
   });
 
-  it('drops shipping above the threshold', () => {
+  it('never drops shipping on a larger cart — the price is always charged', () => {
     const totals = computeOrderTotals([{ unitPrice: 60, quantity: 2 }]);
     expect(totals.subtotal).toBe(120);
-    expect(totals.shipping).toBe(0);
+    expect(totals.shipping).toBe(9.99);
     expect(totals.tax).toBe(6.0);
-    expect(totals.total).toBe(126.0);
+    expect(totals.total).toBe(135.99);
     expect(totals.taxLabel).toBe('GST');
+  });
+
+  it('uses the live Canada Post quote over the flat fallback', () => {
+    const totals = computeOrderTotals([{ unitPrice: 40, quantity: 1 }], null, undefined, 29.72);
+    expect(totals.shipping).toBe(29.72);
+    expect(totals.total).toBe(40 + 29.72 + 2.0);
   });
 
   it('does not round-trip through floats', () => {

@@ -6,20 +6,6 @@ import { DEFAULT_PARCEL_WEIGHT_KG } from './weight';
 export const SHIPPING_FLAT_ID = 'flat';
 
 /**
- * True when the chosen service counts as STANDARD shipping — the only tier
- * the free-over-$50 promotion covers. Anything else (Xpresspost, Priority,
- * any future express code) is expedited and always charges its quoted price.
- *
- * Keep this in one place: the pricing engine branches on it at submission,
- * and the checkout UI uses the same definition to show the free-shipping
- * note on the right option.
- */
-export function isStandardShipping(serviceId: string): boolean {
-  if (!serviceId || serviceId === SHIPPING_FLAT_ID) return true;
-  return serviceId === 'DOM.RP'; // Canada Post Regular Parcel
-}
-
-/**
  * Server-side re-pricing for checkout submission.
  *
  * The browser sends the chosen service id; this module decides what that is

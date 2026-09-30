@@ -4,10 +4,11 @@ import { useState, useEffect, useTransition, useCallback, useRef } from 'react';
 import { Input } from '@/components/ui/Input';
 import { createCheckoutAction } from '@/lib/checkout/actions';
 import { validateDiscountCode } from '@/lib/checkout/discount';
-import { FREE_SHIPPING_THRESHOLD } from '@/lib/checkout/pricing';
+import { CURRENCY, computeOrderTotals, type DiscountInfo } from '@/lib/checkout/pricing';
+import { taxRegionForAddress } from '@/lib/checkout/tax';
 import { getSquareClientConfig, type SquareClientConfig } from '@/lib/payments/config-client';
 import { quoteShippingAction } from '@/lib/shipping/quote';
-import { flatOption, type ShippingOption } from '@/lib/shipping/quote-options';
+import { flatOption, SHIPPING_FLAT_ID, type ShippingOption } from '@/lib/shipping/quote-options';
 import { SquareCardForm } from './SquareCardForm';
 
 type PaymentMethodOption = {
@@ -20,12 +21,11 @@ type PaymentMethodOption = {
 type Props = {
   defaultEmail: string;
   methods: PaymentMethodOption[];
-  totalAmount: number;
-  /** Cart subtotal before shipping/tax — decides the free-shipping display. */
-  subtotal?: number;
+  /** Cart lines with display info, re-priced as shipping choices change. */
+  items: Array<{ name: string; variant: string | null; quantity: number; unitPrice: number }>;
 };
 
-export function CheckoutForm({ defaultEmail, methods, totalAmount, subtotal = 0 }: Props) {
+export function CheckoutForm({ defaultEmail, methods, items }: Props) {
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [discountInput, setDiscountInput] = useState('');
@@ -50,6 +50,20 @@ export function CheckoutForm({ defaultEmail, methods, totalAmount, subtotal = 0 
   const quoteTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const available = methods.filter((method) => method.configured);
   const paymentsUnavailable = available.length === 0;
+
+  // The single source of truth for every number on this form: the same
+  // engine the server uses to charge. Live CP quotes replace the fallback
+  // flat option; the estimated note disappears the moment they arrive.
+  const lines = items.map(({ unitPrice, quantity }) => ({ unitPrice, quantity }));
+  const liveQuotes = shippingOptions.some((o) => o.isLive);
+  const chosen = shippingOptions.find((o) => o.id === selectedShipping) ?? shippingOptions[0] ?? flatOption();
+  const totals = computeOrderTotals(
+    lines,
+    discountData ? { type: discountData.type as DiscountInfo['type'], value: discountData.value } : null,
+    taxRegionForAddress({ country, state }),
+    chosen.id === SHIPPING_FLAT_ID && !liveQuotes ? null : chosen.price,
+  );
+  const totalAmount = totals.total;
 
   // Load Square config on mount
   useEffect(() => {
@@ -197,9 +211,7 @@ export function CheckoutForm({ defaultEmail, methods, totalAmount, subtotal = 0 
         ) : (
           <div className="space-y-2">
             {shippingOptions.map((option) => {
-              // The engine charges $0 for standard shipping over the threshold;
-              // the label must say the same thing the total says.
-              const displaysFree = option.isStandard && subtotal > FREE_SHIPPING_THRESHOLD;
+              // Prices are what they are: live CP rate, charged as shown.
               return (
               <label
                 key={option.id}
@@ -218,8 +230,8 @@ export function CheckoutForm({ defaultEmail, methods, totalAmount, subtotal = 0 
                 <span className="flex-1">
                   <span className="block text-ink-800">
                     {option.label}
-                    {!option.isStandard && (
-                      <span className="ml-2 text-xs text-ink-500">express — not eligible for free shipping</span>
+                    {!option.isLive && (
+                      <span className="ml-2 text-xs text-ink-500">estimated — enter your postal code for live rates</span>
                     )}
                   </span>
                   {option.eta && (
@@ -230,13 +242,7 @@ export function CheckoutForm({ defaultEmail, methods, totalAmount, subtotal = 0 
                   )}
                 </span>
                 <span className="text-sm font-semibold text-plum-700">
-                  {displaysFree ? (
-                    <>
-                      <span className="line-through text-ink-400 font-normal mr-1.5">${option.price.toFixed(2)}</span>FREE
-                    </>
-                  ) : (
-                    `$${option.price.toFixed(2)}`
-                  )}
+                  ${option.price.toFixed(2)}
                 </span>
               </label>
               );
@@ -244,6 +250,47 @@ export function CheckoutForm({ defaultEmail, methods, totalAmount, subtotal = 0 
             {shippingNote && <p className="text-xs text-ink-400">{shippingNote}</p>}
           </div>
         )}
+      </section>
+
+      {/* Live order summary: the same computeOrderTotals the server charges
+          against, so what the shopper sees is exactly what they pay. */}
+      <section className="surface-card p-6">
+        <h2 className="font-display text-lg font-semibold text-plum-900 mb-4">Order summary</h2>
+        <ul className="space-y-2 text-sm mb-4">
+          {items.map((item, i) => (
+            <li key={`${item.name}-${i}`} className="flex justify-between gap-3">
+              <span className="text-ink-800">
+                {item.name}
+                {item.variant ? ` (${item.variant})` : ''} × {item.quantity}
+              </span>
+              <span className="text-ink-700">${(item.unitPrice * item.quantity).toFixed(2)}</span>
+            </li>
+          ))}
+        </ul>
+        <div className="border-t border-cream-300 pt-3 space-y-1.5 text-sm">
+          <div className="flex justify-between">
+            <span className="text-ink-600">Subtotal</span>
+            <span className="text-ink-800">${totals.subtotal.toFixed(2)}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-ink-600">Shipping{chosen.isLive ? '' : ' (estimate)'}</span>
+            <span className="text-ink-800">${totals.shipping.toFixed(2)}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-ink-600">{totals.taxLabel}</span>
+            <span className="text-ink-800">${totals.tax.toFixed(2)}</span>
+          </div>
+          {totals.discount > 0 && (
+            <div className="flex justify-between text-plum-700">
+              <span>Discount</span>
+              <span>−${totals.discount.toFixed(2)}</span>
+            </div>
+          )}
+          <div className="flex justify-between border-t border-cream-300 pt-2 font-semibold text-plum-900">
+            <span>Total ({CURRENCY})</span>
+            <span>${totals.total.toFixed(2)}</span>
+          </div>
+        </div>
       </section>
 
       <section className="surface-card p-6">

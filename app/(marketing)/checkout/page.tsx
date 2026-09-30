@@ -47,10 +47,9 @@ export default async function CheckoutPage({ searchParams }: Props) {
     );
   }
 
-  // Pre-submit estimate: the shopper has not picked a shipping service yet,
-  // so quote the standard tier (flat rate / Regular Parcel) — the only one
-  // the free-over-$50 promotion covers. The live checkout form re-prices
-  // from the actual selection once a postal code is entered.
+  // Pre-submit estimate: the shopper has not picked a shipping service yet.
+  // The live form re-prices from the actual Canada Post quote once a postal
+  // code is entered; this panel shows the fallback flat rate until then.
   const totals = computeOrderTotals(
     items.map((item) => ({
       unitPrice: lineUnitPrice({
@@ -60,7 +59,7 @@ export default async function CheckoutPage({ searchParams }: Props) {
       quantity: Number(item.quantity || 0),
     })),
   );
-  const estimateShipping = totals.shipping === 0 ? 0 : FLAT_SHIPPING_RATE;
+  const estimateShipping = FLAT_SHIPPING_RATE;
 
   const summaryItems = items.map((item, index) => ({
     id: item.id,
@@ -93,8 +92,12 @@ export default async function CheckoutPage({ searchParams }: Props) {
           <CheckoutForm
             defaultEmail={session.email || ''}
             methods={methods}
-            totalAmount={totals.total}
-            subtotal={totals.subtotal}
+            items={summaryItems.map(({ name, variant, quantity, price }) => ({
+              name,
+              variant,
+              quantity,
+              unitPrice: price,
+            }))}
           />
         </div>
         <aside className="surface-card p-6 h-fit lg:sticky lg:top-24">
@@ -116,17 +119,15 @@ export default async function CheckoutPage({ searchParams }: Props) {
               <span className="text-ink-800">${totals.subtotal.toFixed(2)}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-ink-600">Shipping{totals.shipping === 0 ? ' (standard)' : ''}</span>
-              <span className="text-ink-800">
-                {estimateShipping === 0 ? 'FREE' : `$${estimateShipping.toFixed(2)}`}
-              </span>
+              <span className="text-ink-600">Shipping (estimate)</span>
+              <span className="text-ink-800">${estimateShipping.toFixed(2)}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-ink-600">Tax</span>
               <span className="text-ink-800">${totals.tax.toFixed(2)}</span>
             </div>
             <p className="text-xs text-ink-500">
-              Free shipping applies to standard shipping only. Xpresspost and Priority are charged at their listed rates.
+              Shipping is charged at the live Canada Post rate for your address — the exact price appears once you enter your postal code.
             </p>
             <div className="pt-2 border-t border-cream-300 flex justify-between">
               <span className="font-medium text-plum-900">Total</span>

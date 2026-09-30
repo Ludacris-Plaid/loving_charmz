@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { buildRateRequest, parsePriceQuotes } from '@/lib/shipping/rates';
-import { computeOrderTotals, FLAT_SHIPPING_RATE, FREE_SHIPPING_THRESHOLD } from '@/lib/checkout/pricing';
+import { computeOrderTotals, FLAT_SHIPPING_RATE } from '@/lib/checkout/pricing';
 
 const SAMPLE_RESPONSE = [
   {
@@ -107,22 +107,15 @@ describe('computeOrderTotals shipping override', () => {
     expect(t.total).toBe(30 + 13.57 + t.tax);
   });
 
-  it('free-over-threshold wins for a standard live quote', () => {
-    const bigCart = [{ unitPrice: FREE_SHIPPING_THRESHOLD + 10, quantity: 1 }];
+  it('charges the quoted price on large carts — nothing ships free', () => {
+    const bigCart = [{ unitPrice: 120, quantity: 1 }];
     const t = computeOrderTotals(bigCart, null, undefined, 21.06);
-    expect(t.shipping).toBe(0);
-  });
-
-  it('charges the quoted price for expedited services even on qualifying carts', () => {
-    // Xpresspost on a $120 cart: the free-shipping promotion must NOT zero it.
-    const bigCart = [{ unitPrice: FREE_SHIPPING_THRESHOLD + 10, quantity: 1 }];
-    const t = computeOrderTotals(bigCart, null, undefined, 21.06, { expedited: true });
     expect(t.shipping).toBe(21.06);
   });
 
-  it('charges the flat rate below threshold for expedited services too', () => {
+  it('charges the quoted price for express services', () => {
     const lines = [{ unitPrice: 30, quantity: 1 }];
-    const t = computeOrderTotals(lines, null, undefined, 21.06, { expedited: true });
+    const t = computeOrderTotals(lines, null, undefined, 21.06);
     expect(t.shipping).toBe(21.06); // quoted, not flat, since a real quote exists
   });
 

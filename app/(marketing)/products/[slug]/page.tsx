@@ -61,10 +61,10 @@ export default async function ProductPage({ params }: Props) {
       name: 'Loving Charmz',
     },
     offers: {
-      '@type': 'AggregateOffer',
+      // One price per product, every version: a plain Offer, not a range.
+      '@type': 'Offer',
       priceCurrency: 'CAD',
-      lowPrice: product.base_price,
-      highPrice: Math.max(product.base_price, ...((variantsData || []).map(v => product.base_price + Number(v.price_adjustment || 0)))),
+      price: product.base_price,
       availability: 'https://schema.org/InStock',
       url: `${SITE_URL}/products/${slug}`,
     },

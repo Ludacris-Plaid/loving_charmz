@@ -92,7 +92,7 @@ function CharmMatrixCard({ card, onSaved, onError }: CardProps) {
             name: variantDisplayName(m, s),
             sku: null,
             stock_quantity: 0,
-            price_adjustment: m === 'stainless_steel' ? 25 : 0,
+            price_adjustment: 0,
             is_active: true,
           }
         );
@@ -148,7 +148,6 @@ function CharmMatrixCard({ card, onSaved, onError }: CardProps) {
               <th className="px-3 py-2">Size</th>
               <th className="px-3 py-2">SKU</th>
               <th className="px-3 py-2 w-24">Stock</th>
-              <th className="px-3 py-2 w-28">Price +$</th>
               <th className="px-3 py-2">Active</th>
             </tr>
           </thead>
@@ -170,17 +169,6 @@ function CharmMatrixCard({ card, onSaved, onError }: CardProps) {
                     onChange={(e) => setCell(i, { stock_quantity: Number(e.target.value) })}
                     className="input-base w-20 py-1.5 text-sm"
                     aria-label={`${r.name} stock`}
-                  />
-                </td>
-                <td className="px-3 py-2">
-                  <input
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={r.price_adjustment}
-                    onChange={(e) => setCell(i, { price_adjustment: Number(e.target.value) })}
-                    className="input-base w-20 py-1.5 text-sm"
-                    aria-label={`${r.name} price adjustment`}
                   />
                 </td>
                 <td className="px-3 py-2">

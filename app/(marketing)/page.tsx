@@ -238,7 +238,7 @@ export default async function HomePage() {
                         <h3 className="font-display text-lg font-semibold text-plum-900 group-hover:text-plum-700 motion-base">
                           {product.name}
                         </h3>
-                        <p className="mt-2 text-sm text-ink-600">From <span className="font-medium text-plum-700">${product.base_price}</span></p>
+                        <p className="mt-2 text-sm text-ink-600">From <span className="font-medium text-plum-700">${product.base_price.toFixed(2)}</span></p>
                       </div>
                     </Link>
                   </ScrollReveal>

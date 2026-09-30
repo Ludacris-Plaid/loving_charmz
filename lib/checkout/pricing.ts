@@ -4,12 +4,22 @@
  * The checkout page renders these numbers and the payment provider is charged
  * these numbers. They must come from the same function: if the two ever drift,
  * the shopper is charged an amount that does not match the order total.
+ *
+ * Pricing philosophy: the admin's entered price is THE price. One price per
+ * product, no variant adjustments, no hidden math. Shipping is charged at
+ * the live Canada Post rate the shopper accepted at checkout; the flat rate
+ * below only exists as a fallback for the rare moments live quoting is
+ * unavailable.
  */
 
 import { taxRegionForAddress, type TaxRegion } from './tax';
 
 export const CURRENCY = 'CAD';
-export const FREE_SHIPPING_THRESHOLD = 50;
+/**
+ * Fallback shipping price, used only when no live Canada Post quote could be
+ * resolved (credentials missing, CP unreachable, service no longer quoted).
+ * Live rates are the norm; this keeps checkout working when they are not.
+ */
 export const FLAT_SHIPPING_RATE = 9.99;
 
 export type PricedLine = {
@@ -62,25 +72,21 @@ export type DiscountInfo = {
  * omit it and get the Alberta default. Tax applies to the discounted
  * subtotal — the same treatment the CRA expects for point-of-sale discounts.
  *
- * `shippingOverride` lets callers replace the flat-rate rule with a live
- * Canada Post quote (checkout) while keeping every other branch identical.
- * Free-over-threshold applies to STANDARD shipping only (flat rate or CP
- * Regular Parcel): pass `expedited: true` when the shopper chose an express
- * service and the quoted price is charged even on a cart that qualifies.
+ * `shippingOverride` is the live Canada Post price for the shopper's chosen
+ * service. When it cannot be resolved (no credentials, CP unreachable, the
+ * chosen service missing from the current quotes) it is null and the flat
+ * fallback rate applies — an explicit, priced-out fallback, never a promotion.
  */
 export function computeOrderTotals(
   lines: PricedLine[],
   discount?: DiscountInfo | null,
   taxRegion?: TaxRegion,
   shippingOverride?: number | null,
-  shippingOpts?: { expedited?: boolean },
 ): OrderTotals {
   const region = taxRegion ?? taxRegionForAddress({ country: 'CA', state: 'AB' });
   const subtotal = roundMoney(
     lines.reduce((sum, line) => sum + Number(line.unitPrice || 0) * Number(line.quantity || 0), 0),
   );
-  const freeShipping =
-    subtotal > 0 && subtotal > FREE_SHIPPING_THRESHOLD && !shippingOpts?.expedited;
   const quoted =
     subtotal > 0 &&
     shippingOverride != null &&
@@ -88,7 +94,7 @@ export function computeOrderTotals(
     shippingOverride >= 0
       ? roundMoney(shippingOverride)
       : null;
-  const shipping = freeShipping ? 0 : quoted ?? (subtotal > 0 ? FLAT_SHIPPING_RATE : 0);
+  const shipping = quoted ?? (subtotal > 0 ? FLAT_SHIPPING_RATE : 0);
   let discountAmount = 0;
   if (discount) {
     if (discount.type === 'percentage') {
