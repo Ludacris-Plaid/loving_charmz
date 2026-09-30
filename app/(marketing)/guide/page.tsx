@@ -506,7 +506,7 @@ export default function GuidePage() {
 
         {/* ============ PRODUCTS ============ */}
         <div id="products" data-chapter="products">
-          <H>5. Adding a new product (a new piece of jewellery)</H>
+          <H>5. Adding a new product (a new charm)</H>
           <P>
             This is the longest chapter — do it once together with your wonderful loving son, and the
             second time you will fly. Everything you type here appears on the public
@@ -537,28 +537,30 @@ export default function GuidePage() {
               little badge, like <em>Handcrafted in Alberta</em>.
             </Step>
             <Step n="6">
+              <strong>Starting stock</strong> — the little table of six numbers: how
+              many of each version you have on hand right now (brass and stainless
+              steel, each in small, medium, and large). Type what is in your stock
+              box. Anything left at 0 shows as &ldquo;sold out&rdquo; until you restock
+              it on the Inventory page (chapter 8).
+            </Step>
+            <Step n="7">
               <strong>Description</strong> — a few friendly sentences about the piece:
               what it is made of, how it feels, who it suits. Write like you are
               talking to one customer, not writing an ad.
             </Step>
-            <Step n="7">
+            <Step n="8">
               <strong>Picture</strong> — see chapter 6 below. The short version: click
               the picture box, choose the photo from your computer, wait for the little
               preview to appear.
             </Step>
-            <Step n="8">
+            <Step n="9">
               Leave both checkboxes <strong>Active</strong> (ticked) so customers can
               see and buy it. Only untick <strong>Personalizable</strong> if you will
               NOT take engraving requests for this piece.
             </Step>
-            <Step n="9">
+            <Step n="10">
               Take a breath and re-read what you typed. Then press{' '}
               <strong>Create product</strong>.
-            </Step>
-            <Step n="10">
-              Now give it stock: click <strong>Inventory</strong> in the left list and
-              follow chapter 8. A product with no stock looks &ldquo;sold out&rdquo; to
-              customers.
             </Step>
           </OList>
           <Tip>
@@ -707,8 +709,8 @@ export default function GuidePage() {
         <div id="inventory" data-chapter="inventory">
           <H>8. Stock (inventory): the numbers behind each piece</H>
           <P>
-            Every product is sold in up to six versions: <strong>brass or stainless
-            steel</strong>, and <strong>small, medium, or large</strong>. Each version
+            Every product is sold in exactly six versions: <strong>brass or stainless
+            steel</strong>, each in <strong>small, medium, or large</strong>. Each version
             has its own stock count. When a customer buys one, the website subtracts it
             automatically — you only ever touch this page when you{' '}
             <em>make, receive, or fix</em> stock.
@@ -720,16 +722,16 @@ export default function GuidePage() {
               version, and a <strong>Stock</strong> box with the current number.
             </Step>
             <Step n="3">
-              Click inside the Stock box, type the new number, then{' '}
-              <strong>click anywhere outside the box</strong> (that is what saves it —
-              there is no Save button on this page; it saves the moment you click
-              away).
+              Click inside the Stock box and type the new number. Then press the{' '}
+              <strong>Save</strong> button at the top of that product&rsquo;s card —
+              each product saves with its own button, all six numbers at once.
             </Step>
             <Step n="4">
-              If the version you need does not exist yet, use the{' '}
-              <strong>Add version to product</strong> dropdown at the top: pick the
-              product, then fill in Name (like <em>Brass / Large</em>), the stock
-              number, and press <strong>Create variant</strong>.
+              Every product always shows all six versions. If one is ever missing
+              (for example on an older piece), open the product under{' '}
+              <strong>Products</strong> and press <strong>Save changes</strong> — the
+              website adds any missing versions automatically. Then set their stock
+              here.
             </Step>
           </OList>
           <H3>What the numbers mean to customers</H3>
@@ -739,28 +741,29 @@ export default function GuidePage() {
               the website shows &ldquo;sold out&rdquo; for that version automatically.
             </LI>
             <LI>
-              <strong>A version with no row at all</strong> — the website does not
-              offer it. If a size or metal is missing from a product, add the version
-              here (step 4) and it appears on the product page instantly.
+              <strong>The &ldquo;Price +$&rdquo; column</strong> — leave it alone. It is
+              the extra amount for stainless steel (+$25) and is already set correctly
+              for every product.
             </LI>
           </UList>
           <Ex>
-            You finished 5 large brass cuffs of the Aurora Pendant: Inventory → find
-            &ldquo;Aurora Pendant / Brass / Large&rdquo; → click the stock box → type 5
-            → click outside the box. Customers can now buy up to 5 of them.
+            You finished 5 more large brass Aurora Pendants: Inventory → find
+            &ldquo;Aurora Pendant&rdquo; → in its Brass / Large row, click the stock box
+            → type 5 → press <strong>Save Aurora Pendant</strong>. Customers can now
+            buy up to 5 of them.
           </Ex>
           <TROUBLE>
             <QA
               q="I typed the stock number but it did not save"
-              a="The save happens when you click OUTSIDE the box — not while typing. Click the number, change it, then click on any empty grey area of the page. If you reload the page and the old number is still there, it truly did not save — phone your wonderful loving son with the product name."
+              a="The save happens when you press the Save button at the top of the product's card — not while typing. Type the number, then press Save. If you reload the page and the old number is still there, it truly did not save — phone your wonderful loving son with the product name."
             />
             <QA
               q="A customer bought something and the number went down by itself"
               a="That is the system working perfectly. You never add stock for sales — only for making/receiving more."
             />
             <QA
-              q="I need to offer a new size or metal that isn't listed"
-              a="Inventory → 'Add version to product' → pick the product → name it exactly like the others (for example 'Brass / XL') → set the stock → Create. It appears on the product page right away. Ask your wonderful loving son before inventing brand-new option names for the first time, so the shop stays consistent."
+              q="I want to offer a new size or metal that isn't listed"
+              a="The shop sells exactly two metals (brass and stainless steel) and three sizes (S, M, L) — that is the whole catalogue on purpose, so every piece stays simple to stock. If you ever want to add something new, talk to your wonderful loving son first and he will set it up properly across the whole shop."
             />
           </TROUBLE>
         </div>

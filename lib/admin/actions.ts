@@ -4,10 +4,8 @@ import { revalidatePath } from 'next/cache';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { getSession } from '@/components/admin/AdminGuard';
 import { SITE_URL } from '@/lib/site';
-import {
-  bootstrapCharmVariants,
-  bootstrapJewelryVariants,
-} from '@/lib/admin/variant-bootstrap';
+import { bootstrapCharmVariants, type InitialStock } from '@/lib/admin/variant-bootstrap';
+import { CHARM_MATERIALS, CHARM_SIZES } from '@/lib/shop/variants';
 import { HERO_MAX_LINES, HERO_MAX_LINE_LENGTH, HERO_SLUG, HERO_SUB_MAX_LENGTH } from '@/lib/ticker-config';
 
 export type AdminResult = { error?: string; success?: boolean; id?: string };
@@ -67,6 +65,25 @@ function parseImagesField(raw: FormDataEntryValue | null): string[] {
   return [];
 }
 
+/**
+ * Reads the per-size starting stock from the product form: six number inputs
+ * named `stock_<material>_<size>` (e.g. stock_brass_medium). Missing, empty,
+ * or non-positive values become 0.
+ */
+function parseInitialStock(formData: FormData): InitialStock {
+  const stock: InitialStock = {};
+  for (const material of CHARM_MATERIALS) {
+    for (const size of CHARM_SIZES) {
+      const raw = formData.get(`stock_${material}_${size}`);
+      if (raw == null || raw === '') continue;
+      const n = Number(raw);
+      if (!Number.isFinite(n) || n <= 0) continue;
+      (stock[material] ??= {})[size] = Math.round(n);
+    }
+  }
+  return stock;
+}
+
 export async function createProductAction(formData: FormData): Promise<AdminResult> {
   const guard = await getAdminClient();
   if (guard.kind === 'error') return { error: guard.error };
@@ -81,8 +98,7 @@ export async function createProductAction(formData: FormData): Promise<AdminResu
   const is_active = formData.get('is_active') === 'on';
   const is_personalizable = formData.get('is_personalizable') === 'on';
   const images = parseImagesField(formData.get('images'));
-  const kindRaw = (formData.get('kind') as string | null)?.trim();
-  const kind = kindRaw === 'charm' ? 'charm' : 'jewelry';
+  const kind = 'charm';
 
   const { data, error } = await client
     .from('products')
@@ -91,22 +107,19 @@ export async function createProductAction(formData: FormData): Promise<AdminResu
     .single();
   if (error) return { error: error.message };
 
-  // A new product is immediately sellable in every option: charms get the
-  // full 2×3 matrix, jewelry gets the three standard materials. Prices use
-  // the catalog defaults; stock starts at 0 until the inventory page is filled.
+  // A new product is born with its full 6-cell matrix, seeded with the stock
+  // the admin entered on this very form — no separate trip to Inventory
+  // needed before the piece can sell.
   try {
-    if (kind === 'charm') {
-      await bootstrapCharmVariants(client, data.id, data.slug || slug);
-    } else {
-      await bootstrapJewelryVariants(client, data.id, data.slug || slug);
-    }
+    await bootstrapCharmVariants(client, data.id, data.slug || slug, parseInitialStock(formData));
   } catch (e: any) {
     return {
-      error: `Product created, but auto-generating variants failed: ${e?.message || 'unknown error'}. Add them on the Inventory page.`,
+      error: `Product created, but adding the material/size variants failed: ${e?.message || 'unknown error'}. Set the stock on the Inventory page.`,
     };
   }
 
   revalidatePath('/admin/products');
+  revalidatePath('/admin/inventory');
   revalidatePath('/shop');
   return { success: true, id: data.id };
 }
@@ -118,8 +131,6 @@ export async function updateProductAction(id: string, formData: FormData): Promi
   const updates: Record<string, unknown> = {};
   const name = formData.get('name') as string | null;
   if (name) updates.name = name.trim();
-  const kindRaw = (formData.get('kind') as string | null)?.trim();
-  if (kindRaw === 'charm' || kindRaw === 'jewelry') updates.kind = kindRaw;
   const slug = formData.get('slug') as string | null;
   if (slug) updates.slug = slug.trim();
   const price = formData.get('base_price');
@@ -150,21 +161,15 @@ export async function updateProductAction(id: string, formData: FormData): Promi
   const { error } = await client.from('products').update(updates).eq('id', id);
   if (error) return { error: error.message };
 
-  // A kind switch (jewelry ↔ charm) bootstraps the missing variant shape
-  // for the new kind. Idempotent: never touches existing rows or stock.
-  if (updates.kind) {
-    try {
-      const effectiveSlug =
-        (typeof updates.slug === 'string' && updates.slug) || current?.slug || '';
-      if (updates.kind === 'charm') {
-        await bootstrapCharmVariants(client, id, effectiveSlug);
-      } else {
-        await bootstrapJewelryVariants(client, id, effectiveSlug);
-      }
-    } catch {
-      /* Variant generation is best-effort on edit; the matrix editor can
-         fill any gap and the product edit itself has already succeeded. */
-    }
+  // Backfill any missing matrix cells (e.g. a legacy product without the
+  // full six). Idempotent: never touches existing rows or stock.
+  try {
+    const effectiveSlug =
+      (typeof updates.slug === 'string' && updates.slug) || current?.slug || '';
+    await bootstrapCharmVariants(client, id, effectiveSlug);
+  } catch {
+    /* Variant generation is best-effort on edit; the inventory page can
+       fill any gap and the product edit itself has already succeeded. */
   }
 
   revalidatePath('/admin/products');

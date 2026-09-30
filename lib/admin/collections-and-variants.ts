@@ -3,12 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { getSession } from '@/components/admin/AdminGuard';
-import {
-  CHARM_MATERIALS,
-  CHARM_SIZES,
-  variantDisplayName,
-  variantSku,
-} from '@/lib/shop/variants';
+import { CHARM_MATERIALS, CHARM_SIZES, variantDisplayName, variantSku } from '@/lib/shop/variants';
 
 async function requireAdmin() {
   const session = await getSession();
@@ -55,48 +50,8 @@ export async function deleteCollectionAction(id: string): Promise<CollectionResu
   return { success: true };
 }
 
-export type VariantResult = { error?: string; success?: boolean };
-
-export async function upsertVariantAction(
-  productId: string,
-  formData: FormData
-): Promise<VariantResult> {
-  const admin = await requireAdmin();
-  const id = (formData.get('id') as string | null)?.trim() || null;
-  const name = (formData.get('name') as string | null)?.trim();
-  if (!name) return { error: 'Name is required' };
-  const sku = (formData.get('sku') as string | null)?.trim() || null;
-  const price_adjustment = Number(formData.get('price_adjustment') || 0);
-  const stock_quantity = Number(formData.get('stock_quantity') || 0);
-  const is_active = formData.get('is_active') === 'on';
-
-  if (id) {
-    const { error } = await admin
-      .from('product_variants')
-      .update({ name, sku, price_adjustment, stock_quantity, is_active, updated_at: new Date().toISOString() })
-      .eq('id', id);
-    if (error) return { error: error.message };
-  } else {
-    const { error } = await admin
-      .from('product_variants')
-      .insert({ product_id: productId, name, sku, price_adjustment, stock_quantity, is_active });
-    if (error) return { error: error.message };
-  }
-  revalidatePath('/admin/inventory');
-  revalidatePath('/admin/products');
-  return { success: true };
-}
-
-export async function deleteVariantAction(id: string): Promise<VariantResult> {
-  const admin = await requireAdmin();
-  const { error } = await admin.from('product_variants').delete().eq('id', id);
-  if (error) return { error: error.message };
-  revalidatePath('/admin/inventory');
-  return { success: true };
-}
-
 // ============================================================
-// Matrix editor — structured material × size inventory
+// Matrix editor — the one stock surface (brass/steel × S/M/L)
 // ============================================================
 
 export type MatrixRowInput = {
@@ -132,14 +87,11 @@ export async function saveVariantMatrixAction(
   // Validate every row before writing anything so a save is all-or-nothing
   // at the input level.
   for (const r of rows) {
-    if (!r.material) return { error: 'Every row needs a material' };
-    if (product.kind === 'charm') {
-      if (!CHARM_MATERIALS.includes(r.material as never)) {
-        return { error: `Unknown material: ${r.material}` };
-      }
-      if (!r.size || !CHARM_SIZES.includes(r.size as never)) {
-        return { error: `Unknown size: ${r.size}` };
-      }
+    if (!CHARM_MATERIALS.includes(r.material as never)) {
+      return { error: `Unknown material: ${r.material}` };
+    }
+    if (!r.size || !CHARM_SIZES.includes(r.size as never)) {
+      return { error: `Unknown size: ${r.size}` };
     }
     if (!Number.isFinite(r.stock_quantity) || r.stock_quantity < 0) {
       return { error: 'Stock must be a number, zero or more' };
@@ -186,19 +138,4 @@ export async function saveVariantMatrixAction(
   revalidatePath('/admin/products');
   revalidatePath('/shop');
   return { success: true };
-}
-
-/**
- * Creates a single structured variant for a product that has no matrix yet
- * (the inventory page's "Add option" control). Idempotent per combo thanks
- * to the unique indexes.
- */
-export async function createMatrixVariantAction(
-  productId: string,
-  material: string,
-  size: string | null,
-): Promise<MatrixSaveResult> {
-  return saveVariantMatrixAction(productId, [
-    { material, size, stock_quantity: 0, price_adjustment: 0, is_active: true },
-  ]);
 }

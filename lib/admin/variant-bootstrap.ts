@@ -1,28 +1,26 @@
 /**
- * Variant bootstrap helpers — plain functions (not server actions) shared by
- * the product create/update actions. Each is idempotent: existing variant
- * rows are never touched, only missing matrix cells are inserted.
+ * Variant bootstrap — creates the standard 6-cell charm matrix for a product
+ * (brass / stainless steel × S / M / L), with the stock counts the admin
+ * entered on the product form.
+ *
+ * Plain functions (not server actions), shared by the product create/update
+ * actions. Existing variant rows are never touched — only missing matrix
+ * cells are inserted, so re-running never resets stock.
  */
-import {
-  CHARM_MATERIALS,
-  CHARM_SIZES,
-  JEWELRY_MATERIALS,
-  variantDisplayName,
-  variantSku,
-} from '@/lib/shop/variants';
+import { CHARM_MATERIALS, CHARM_SIZES, variantDisplayName, variantSku } from '@/lib/shop/variants';
 
 type AdminClient = {
   from: (table: string) => any;
 };
 
-/** Standard jewelry price adjustments matching the live catalog. */
-const JEWELRY_ADJUSTMENTS: Record<string, number> = {
-  sterling_silver: 0,
-  rose_gold: 100,
-  gold_14k: 120,
+/** Stock entered per material/size on the product form; absent = 0. */
+export type InitialStock = {
+  [K in (typeof CHARM_MATERIALS)[number]]?: Partial<
+    Record<(typeof CHARM_SIZES)[number], number>
+  >;
 };
 
-/** Charm matrix price adjustments. */
+/** Charm matrix price adjustments: stainless steel carries the +$25 upgrade. */
 const CHARM_ADJUSTMENTS: Record<string, number> = {
   brass: 0,
   stainless_steel: 25,
@@ -30,12 +28,14 @@ const CHARM_ADJUSTMENTS: Record<string, number> = {
 
 /**
  * Creates any missing charm variants (2 materials × 3 sizes = 6 cells).
- * Existing rows are left untouched, so stock is never reset.
+ * Existing rows are left untouched, so stock is never reset. New rows get
+ * their stock from `initialStock`; the rest start at zero.
  */
 export async function bootstrapCharmVariants(
   admin: AdminClient,
   productId: string,
   slug: string,
+  initialStock: InitialStock = {},
 ): Promise<void> {
   const { data: existing } = await admin
     .from('product_variants')
@@ -57,47 +57,10 @@ export async function bootstrapCharmVariants(
     name: variantDisplayName(c.material, c.size),
     sku: variantSku(slug, c.material, c.size),
     price_adjustment: CHARM_ADJUSTMENTS[c.material] || 0,
-    stock_quantity: 0,
+    stock_quantity: Math.max(0, Math.round(initialStock[c.material]?.[c.size] ?? 0)),
     is_active: true,
     material: c.material,
     size: c.size,
-  }));
-
-  const { error } = await admin.from('product_variants').insert(rows);
-  if (error) throw new Error(error.message);
-}
-
-/**
- * Creates any missing jewelry variants (one per standard material).
- * Size stays null — jewelry is not sold in sizes yet.
- */
-export async function bootstrapJewelryVariants(
-  admin: AdminClient,
-  productId: string,
-  slug: string,
-): Promise<void> {
-  const { data: existing } = await admin
-    .from('product_variants')
-    .select('material, size')
-    .eq('product_id', productId);
-
-  const have = new Set(
-    (existing || []).map((v: any) => v.material as string),
-  );
-
-  const missing = JEWELRY_MATERIALS.filter((m) => !have.has(m));
-
-  if (missing.length === 0) return;
-
-  const rows = missing.map((material) => ({
-    product_id: productId,
-    name: variantDisplayName(material, null),
-    sku: variantSku(slug, material, null),
-    price_adjustment: JEWELRY_ADJUSTMENTS[material] || 0,
-    stock_quantity: 0,
-    is_active: true,
-    material,
-    size: null,
   }));
 
   const { error } = await admin.from('product_variants').insert(rows);

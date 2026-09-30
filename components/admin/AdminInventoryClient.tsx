@@ -6,7 +6,6 @@ import { updateVariantStockAction } from '@/lib/admin/actions';
 import {
   CHARM_MATERIALS,
   CHARM_SIZES,
-  JEWELRY_MATERIALS,
   MATERIAL_LABELS,
   SIZE_LABELS,
   variantDisplayName,
@@ -60,34 +59,25 @@ export function AdminInventoryClient({
           No products yet. Create products first, then manage their inventory here.
         </div>
       ) : (
-        productCards.map((card) =>
-          card.kind === 'charm' ? (
-            <CharmMatrixCard
-              key={card.productId}
-              card={card}
-              onSaved={() => flash(`${card.productName} saved.`)}
-              onError={setError}
-            />
-          ) : (
-            <JewelryCard
-              key={card.productId}
-              card={card}
-              onSaved={() => flash(`${card.productName} saved.`)}
-              onError={setError}
-            />
-          ),
-        )
+        productCards.map((card) => (
+          <CharmMatrixCard
+            key={card.productId}
+            card={card}
+            onSaved={() => flash(`${card.productName} saved.`)}
+            onError={setError}
+          />
+        ))
       )}
     </div>
   );
 }
 
-/** Charm products: an editable 2-material × 3-size matrix, saved per product. */
+/** Every product: an editable 2-material × 3-size matrix, saved per product. */
 function CharmMatrixCard({ card, onSaved, onError }: CardProps) {
   const [, startTransition] = useTransition();
 
   // Local editable state, seeded from the server rows. Missing matrix cells
-  // are synthesized as zero-stock rows so charms always show all 6 combos.
+  // are synthesized as zero-stock rows so every product shows all 6 combos.
   const [rows, setRows] = useState<VariantCell[]>(() => {
     const have = new Map(
       card.variants.map((v) => [`${v.material}|${v.size}`, v] as const),
@@ -143,7 +133,7 @@ function CharmMatrixCard({ card, onSaved, onError }: CardProps) {
         <div>
           <h2 className="font-display text-lg font-semibold text-plum-900">{card.productName}</h2>
           <p className="text-xs text-ink-500">
-            Charm — stock tracked per material and size · /{card.productSlug} · {totalStock} in stock
+            Stock tracked per material and size · /{card.productSlug} · {totalStock} in stock
           </p>
         </div>
         <button type="button" onClick={save} className="btn-plum px-5 py-2 text-xs">
@@ -207,87 +197,6 @@ function CharmMatrixCard({ card, onSaved, onError }: CardProps) {
           </tbody>
         </table>
       </div>
-    </div>
-  );
-}
-
-/** Jewelry products: material-only rows with inline stock editing. */
-function JewelryCard({ card, onSaved, onError }: CardProps) {
-  const [stock, setStock] = useState<Record<string, number>>(() =>
-    Object.fromEntries(
-      card.variants.map((v) => [v.id as string, v.stock_quantity]),
-    ),
-  );
-  const [savingId, setSavingId] = useState<string | null>(null);
-  const [, startTransition] = useTransition();
-
-  // Missing jewelry materials (e.g. a charm product not yet switched) surface
-  // as an explicit "not set up" row instead of silently disappearing.
-  const missing = JEWELRY_MATERIALS.filter(
-    (m) => !card.variants.some((v) => v.material === m),
-  );
-
-  const handleStock = (id: string, value: number) => {
-    setStock((prev) => ({ ...prev, [id]: value }));
-    setSavingId(id);
-    startTransition(async () => {
-      const res = await updateVariantStockAction(id, value);
-      setSavingId(null);
-      if (res.error) onError(res.error);
-      else onSaved();
-    });
-  };
-
-  return (
-    <div className="surface-card p-5">
-      <div className="mb-4">
-        <h2 className="font-display text-lg font-semibold text-plum-900">{card.productName}</h2>
-        <p className="text-xs text-ink-500">
-          Jewelry — stock tracked per material · /{card.productSlug}
-        </p>
-      </div>
-      <table className="w-full">
-        <thead>
-          <tr className="bg-cream-100 text-left text-xs uppercase tracking-wider text-ink-500">
-            <th className="px-3 py-2">Material</th>
-            <th className="px-3 py-2">SKU</th>
-            <th className="px-3 py-2 w-28">Stock</th>
-            <th className="px-3 py-2">Active</th>
-          </tr>
-        </thead>
-        <tbody>
-          {card.variants.map((v) => (
-            <tr key={v.id} className="border-t border-cream-200 text-sm">
-              <td className="px-3 py-2 font-medium text-ink-800">
-                {MATERIAL_LABELS[v.material as string] || v.name}
-              </td>
-              <td className="px-3 py-2 text-xs font-mono text-ink-500">{v.sku || '—'}</td>
-              <td className="px-3 py-2">
-                <input
-                  type="number"
-                  min="0"
-                  value={stock[v.id as string] ?? v.stock_quantity}
-                  onChange={(e) => handleStock(v.id as string, Number(e.target.value))}
-                  disabled={savingId === v.id}
-                  className="input-base w-24 py-1.5 text-sm"
-                  aria-label={`${v.name} stock`}
-                />
-              </td>
-              <td className="px-3 py-2">
-                {v.is_active ? <span className="badge-mint">Yes</span> : <span className="badge-soft">No</span>}
-              </td>
-            </tr>
-          ))}
-          {missing.map((m) => (
-            <tr key={m} className="border-t border-cream-200 text-sm text-ink-500">
-              <td className="px-3 py-2">{MATERIAL_LABELS[m]}</td>
-              <td className="px-3 py-2 text-xs">—</td>
-              <td className="px-3 py-2 text-xs">not set up</td>
-              <td className="px-3 py-2 text-xs">edit the product to add</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
     </div>
   );
 }

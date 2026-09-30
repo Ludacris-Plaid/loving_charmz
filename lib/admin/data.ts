@@ -135,7 +135,7 @@ export async function getInventoryRows() {
     product_id: row.product_id,
     product_name: row.products?.name || '—',
     product_slug: row.products?.slug || '',
-    product_kind: row.products?.kind || 'jewelry',
+    product_kind: row.products?.kind || 'charm',
   }));
 }
 

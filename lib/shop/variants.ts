@@ -1,32 +1,23 @@
 /**
- * Shared variant-matrix helpers.
+ * Variant-matrix helpers.
  *
- * A "charm" product has one variant row per material×size combination
- * (6 cells). Jewelry has material-only variants (size = null). These
- * pure functions are used by the storefront selectors and the admin
- * matrix editor, and are unit-tested in tests/unit/variant-matrix.test.ts.
+ * The shop sells one kind of product: charms in brass or stainless steel,
+ * each in small / medium / large. One variant row per material×size
+ * combination (6 cells per product). These pure functions are used by the
+ * storefront selectors and the admin matrix editor, and are unit-tested in
+ * tests/unit/variant-matrix.test.ts.
  */
 
 export const CHARM_MATERIALS = ['brass', 'stainless_steel'] as const;
 export const CHARM_SIZES = ['small', 'medium', 'large'] as const;
 
-export const JEWELRY_MATERIALS = [
-  'sterling_silver',
-  'gold_14k',
-  'rose_gold',
-] as const;
-
 export type CharmMaterial = (typeof CHARM_MATERIALS)[number];
-export type JewelryMaterial = (typeof JEWELRY_MATERIALS)[number];
-export type VariantMaterial = CharmMaterial | JewelryMaterial;
+export type VariantMaterial = CharmMaterial;
 export type VariantSize = (typeof CHARM_SIZES)[number];
 
 export const MATERIAL_LABELS: Record<string, string> = {
   brass: 'Brass',
   stainless_steel: 'Stainless Steel',
-  sterling_silver: 'Sterling Silver',
-  gold_14k: '14K Gold',
-  rose_gold: 'Rose Gold',
 };
 
 export const SIZE_LABELS: Record<string, string> = {
@@ -39,9 +30,6 @@ export const SIZE_LABELS: Record<string, string> = {
 const MATERIAL_SKU_CODES: Record<VariantMaterial, string> = {
   brass: 'BRASS',
   stainless_steel: 'STL',
-  sterling_silver: 'SS',
-  gold_14k: '14K',
-  rose_gold: 'RG',
 };
 
 const SIZE_SKU_CODES: Record<VariantSize, string> = {
@@ -62,18 +50,16 @@ export type VariantLike = {
 };
 
 export type ProductLike = {
-  kind: string | null;
   base_price: number;
   slug?: string;
 };
 
 /** Materials present among a product's variants, in canonical order. */
 export function availableMaterials(variants: VariantLike[]): string[] {
-  const order = [...CHARM_MATERIALS, ...JEWELRY_MATERIALS];
   const present = new Set(
     variants.filter((v) => v.is_active && v.material).map((v) => v.material as string),
   );
-  return order.filter((m) => present.has(m));
+  return CHARM_MATERIALS.filter((m) => present.has(m));
 }
 
 /** Sizes available for a given material among the product's variants. */
@@ -86,14 +72,14 @@ export function availableSizes(variants: VariantLike[], material: string): strin
   return CHARM_SIZES.filter((s) => present.has(s));
 }
 
-/** Finds the variant for a material (+ optional size) combo. */
+/** Finds the variant for a material + size combo. */
 export function findVariant(
   variants: VariantLike[],
   material: string,
-  size: string | null,
+  size: string,
 ): VariantLike | undefined {
   return variants.find(
-    (v) => v.is_active && v.material === material && (size ? v.size === size : !v.size),
+    (v) => v.is_active && v.material === material && v.size === size,
   );
 }
 

@@ -62,7 +62,7 @@ export default async function AdminInventoryPage() {
       productId: p.id as string,
       productName: p.name as string,
       productSlug: p.slug as string,
-      kind: (p.kind as string) || 'jewelry',
+      kind: (p.kind as string) || 'charm',
       variants: [],
     }));
 
@@ -72,7 +72,7 @@ export default async function AdminInventoryPage() {
         <span className="badge-plum">Inventory</span>
         <h1 className="font-display text-3xl font-semibold text-plum-900 mt-3">Stock &amp; variants</h1>
         <p className="text-sm text-ink-600 mt-1">
-          Charms track stock per material and size; jewelry tracks stock per material. Update counts inline — every save is per-product.
+          Every piece tracks stock per material (brass / stainless steel) and size (S / M / L). Type the counts, then press Save — one save per product.
         </p>
       </div>
       <AdminInventoryClient productCards={[...productCards, ...variantless]} />

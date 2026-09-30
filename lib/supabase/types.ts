@@ -5,8 +5,8 @@ export interface Product {
   description: string | null;
   tagline: string | null;
   base_price: number;
-  /** 'charm' products carry a material×size matrix; 'jewelry' is material-only. */
-  kind: 'charm' | 'jewelry';
+  /** Kept as a string for forward-compat; the catalog is charm-only today. */
+  kind: string;
   images: string[];
   is_active: boolean;
   is_personalizable: boolean;

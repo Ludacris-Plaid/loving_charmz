@@ -61,12 +61,9 @@ export default function ProductDetailClient({
   // material doesn't offer the current size, fall back to its first size.
   const effectiveSize = sizes.includes(size) ? size : sizes[0] || '';
 
-  // With no size dimension (jewelry), the size selector is hidden entirely.
-  const hasSizes = sizes.length > 0;
-
   const selected = useMemo(
-    () => findVariant(variants as unknown as VariantLike[], material, hasSizes ? effectiveSize : null) ?? null,
-    [variants, material, hasSizes, effectiveSize],
+    () => findVariant(variants as unknown as VariantLike[], material, effectiveSize) ?? null,
+    [variants, material, effectiveSize],
   );
 
   const totalPrice = variantPrice(product as any, selected as any);
@@ -274,7 +271,7 @@ export default function ProductDetailClient({
             </div>
           )}
 
-          <div className={hasSizes ? 'grid grid-cols-2 gap-4' : 'grid grid-cols-1 gap-4'}>
+          <div className="grid grid-cols-2 gap-4">
             <AnimatedSelect
               label="Material"
               options={materialOptions}
@@ -284,19 +281,17 @@ export default function ProductDetailClient({
                 setFeedback(null);
               }}
             />
-            {hasSizes && (
-              <AnimatedSelect
-                label="Size"
-                options={sizeOptions}
-                value={effectiveSize}
-            onChange={(s) => {
-              setSize(s);
-              setFeedback(null);
-              setCartAdds(0); // per-variant count; refetches happen at cart/checkout
-            }}
-          />
-        )}
-      </div>
+            <AnimatedSelect
+              label="Size"
+              options={sizeOptions}
+              value={effectiveSize}
+              onChange={(s) => {
+                setSize(s);
+                setFeedback(null);
+                setCartAdds(0); // per-variant count; refetches happen at cart/checkout
+              }}
+            />
+          </div>
 
           {/* Live per-combination availability from the selected variant row. */}
           <p

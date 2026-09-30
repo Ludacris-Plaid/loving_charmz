@@ -41,27 +41,12 @@ describe('availableMaterials', () => {
     const variants = charmMatrix().map((v) => ({ ...v, is_active: false }));
     expect(availableMaterials(variants)).toEqual([]);
   });
-
-  it('includes jewelry materials for material-only variant sets', () => {
-    const variants: VariantLike[] = [
-      { id: 'a', material: 'sterling_silver', size: null, price_adjustment: 0, stock_quantity: 5, is_active: true },
-      { id: 'b', material: 'gold_14k', size: null, price_adjustment: 120, stock_quantity: 5, is_active: true },
-    ];
-    expect(availableMaterials(variants)).toEqual(['sterling_silver', 'gold_14k']);
-  });
 });
 
 describe('availableSizes', () => {
   it('returns sizes only for the chosen material', () => {
     const variants = charmMatrix();
     expect(availableSizes(variants, 'brass')).toEqual(['small', 'medium', 'large']);
-  });
-
-  it('returns an empty list for materials without size data (jewelry)', () => {
-    const variants: VariantLike[] = [
-      { id: 'a', material: 'sterling_silver', size: null, price_adjustment: 0, stock_quantity: 5, is_active: true },
-    ];
-    expect(availableSizes(variants, 'sterling_silver')).toEqual([]);
   });
 
   it('excludes sizes whose only variant is inactive or out of the material', () => {
@@ -76,11 +61,11 @@ describe('findVariant', () => {
     expect(findVariant(variants, 'stainless_steel', 'large')?.id).toBe('stainless_steel-large');
   });
 
-  it('matches material-only variants when size is null', () => {
+  it('requires a size — there are no size-less variants', () => {
     const variants: VariantLike[] = [
-      { id: 'a', material: 'gold_14k', size: null, price_adjustment: 120, stock_quantity: 5, is_active: true },
+      { id: 'a', material: 'brass', size: null, price_adjustment: 0, stock_quantity: 5, is_active: true },
     ];
-    expect(findVariant(variants, 'gold_14k', null)?.id).toBe('a');
+    expect(findVariant(variants, 'brass', 'small')).toBeUndefined();
   });
 
   it('never returns inactive variants', () => {
@@ -91,7 +76,7 @@ describe('findVariant', () => {
 
 describe('pricing and labels', () => {
   it('adds the variant adjustment to the product base price', () => {
-    const product = { kind: 'charm', base_price: 25 };
+    const product = { base_price: 25 };
     const variants = charmMatrix();
     expect(variantPrice(product, findVariant(variants, 'brass', 'medium'))).toBe(25);
     expect(variantPrice(product, findVariant(variants, 'stainless_steel', 'medium'))).toBe(50);

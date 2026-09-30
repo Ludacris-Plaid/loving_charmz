@@ -5,6 +5,12 @@ import { Input } from '@/components/ui/Input';
 import { ProductImageUpload } from '@/components/admin/ProductImageUpload';
 import { DescriptionPreview } from '@/components/admin/DescriptionPreview';
 import {
+  CHARM_MATERIALS,
+  CHARM_SIZES,
+  MATERIAL_LABELS,
+  SIZE_LABELS,
+} from '@/lib/shop/variants';
+import {
   createProductAction,
   updateProductAction,
   deleteProductAction,
@@ -15,7 +21,7 @@ type Product = {
   name: string;
   slug: string;
   base_price: number;
-  kind?: 'charm' | 'jewelry';
+  kind?: string;
   is_active: boolean;
   is_personalizable: boolean;
   variant_count: number;
@@ -150,9 +156,6 @@ export function AdminProductsClient({ initialProducts }: Props) {
                     <span className={p.is_active ? 'badge-mint' : 'badge-soft'}>
                       {p.is_active ? 'Active' : 'Inactive'}
                     </span>
-                    {p.kind === 'charm' && (
-                      <span className="ml-1 badge-plum">Charm</span>
-                    )}
                     {p.is_personalizable && (
                       <span className="ml-1 badge-plum">Custom</span>
                     )}
@@ -249,24 +252,50 @@ function ProductForm({ initial, pending, onCancel, onSubmit }: FormProps) {
           defaultValue={initial?.tagline || ''}
           placeholder="Short, evocative line"
         />
-        <div>
-          <label htmlFor="kind" className="block text-sm font-medium text-ink-700 mb-1.5">
-            Product type
-          </label>
-          <select
-            id="kind"
-            name="kind"
-            defaultValue={initial?.kind || 'jewelry'}
-            className="input-base"
-          >
-            <option value="jewelry">Jewelry — one stock count per material</option>
-            <option value="charm">Charm — stock per material AND size (S/M/L)</option>
-          </select>
-          <p className="text-xs text-ink-500 mt-1">
-            {initial?.kind
-              ? 'Changing type auto-creates any missing variants; existing stock is never touched.'
-              : 'Charms are created with all 6 material/size combinations; jewelry with the 3 standard materials.'}
-          </p>
+      </div>
+      <div>
+        <p className="block text-sm font-medium text-ink-700 mb-1.5">
+          Starting stock — how many of each version you have right now
+        </p>
+        <p className="text-xs text-ink-500 mb-2">
+          Every piece is sold in brass and stainless steel, each in small, medium, and large. Enter what you have on hand; you can adjust these anytime on the Inventory page.
+        </p>
+        <div className="overflow-x-auto">
+          <table className="w-full max-w-md">
+            <thead>
+              <tr className="text-left text-xs uppercase tracking-wider text-ink-500">
+                <th className="px-3 py-2">Material</th>
+                {CHARM_SIZES.map((s) => (
+                  <th key={s} className="px-3 py-2">{SIZE_LABELS[s]}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {CHARM_MATERIALS.map((m) => (
+                <tr key={m} className="border-t border-cream-200">
+                  <td className="px-3 py-2 text-sm font-medium text-ink-800">{MATERIAL_LABELS[m]}</td>
+                  {CHARM_SIZES.map((s) => (
+                    <td key={s} className="px-3 py-2">
+                      <input
+                        type="number"
+                        min="0"
+                        name={`stock_${m}_${s}`}
+                        defaultValue={0}
+                        disabled={Boolean(initial)}
+                        className="input-base w-20 py-1.5 text-sm"
+                        aria-label={`${MATERIAL_LABELS[m]} ${SIZE_LABELS[s]} starting stock`}
+                      />
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {initial ? (
+            <p className="text-xs text-ink-500 mt-2">
+              Starting stock is entered once, when the product is created. Adjust the counts on the <strong>Inventory</strong> page after that.
+            </p>
+          ) : null}
         </div>
       </div>
       <div>
